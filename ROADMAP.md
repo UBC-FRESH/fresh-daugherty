@@ -15,8 +15,8 @@ synchronized with GitHub issues, planning notes, pull requests, and
 | P2 ws3 Model II LP formulation + solve | TBD | ws3 `feature/model-ii` | Deferred post-v0.1.0a1 (Model I suffices for the core result) |
 | P3 Sequential-replanning simulator + inconsistency measurement | [#4](https://github.com/UBC-FRESH/fresh-daugherty/issues/4) | `feature/p3-replanning` | Complete — PR pending |
 | P4 Consistent-solution construct + experiments | [#6](https://github.com/UBC-FRESH/fresh-daugherty/issues/6) | `feature/p4-experiments` | Complete (PR [#7](https://github.com/UBC-FRESH/fresh-daugherty/pull/7) merged) |
-| P5 Validation vs thesis + docs + release | [#8](https://github.com/UBC-FRESH/fresh-daugherty/issues/8) | `feature/p5-release` | Complete — PR pending |
-| P6 Paper | TBD | TBD | Planned |
+| P5 Validation vs thesis + docs + release | [#8](https://github.com/UBC-FRESH/fresh-daugherty/issues/8) | `feature/p5-release` | Complete (PR [#9](https://github.com/UBC-FRESH/fresh-daugherty/pull/9) merged; tag `v0.1.0a1`) |
+| P6 Paper | [#10](https://github.com/UBC-FRESH/fresh-daugherty/issues/10) | — | Draft complete (`planning/paper-draft.md`); submission pending |
 
 ## Project One-Liner
 
