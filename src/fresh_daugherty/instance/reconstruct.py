@@ -40,6 +40,8 @@ from fresh_daugherty.instance.thesis import (
     PRICE_ESCALATION_YEARS,
     ROTATION_RANGES,
     THESIS_DISCOUNT_RATE,
+    Ecoclass,
+    Prescription,
 )
 
 #: Documented reconstruction assumptions (recorded, not silently baked in).
@@ -196,19 +198,180 @@ def calibration_report() -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-# Placeholder for the calibrated parameter set (populated by the calibration
-# step). Keyed by (ecoclass, prescription); each value carries the yield
-# curve, economics, and intermediate (treatment) cash flows for that cell.
+# --------------------------------------------------------------------------
+# Calibration
+# --------------------------------------------------------------------------
+#
+# The reconstruction is calibrated to the Table 5.3 anchors. The yield-curve
+# *shape* is grounded in the real Umpqua LRMP data: the Chapman-Richards
+# growth rate ``k`` is set so the curve's MAI culminates at the ecoclass's
+# documented 95%-CMAI age (Table IV-3, ``CMAI_CULMINATION_AGE_YR``). The
+# yield-curve *level* (Vmax), net price, harvest cost, and the treatment
+# yield-effects are then fit by least squares so each (ecoclass,
+# prescription) cell's max-PNV matches its Table 5.3 anchor.
+
+from scipy.optimize import brentq, least_squares  # noqa: E402
+
+from fresh_daugherty.instance.thesis import CMAI_CULMINATION_AGE_YR  # noqa: E402
+
+#: Chapman-Richards shape parameter (shared; >1 gives an S-curve).
+CR_SHAPE_M = 3.0
+
+
+def k_for_culmination(culmination_age_yr: float, m: float = CR_SHAPE_M) -> float:
+    """Chapman-Richards ``k`` whose MAI culminates at ``culmination_age_yr``."""
+
+    def culm(k: float) -> float:
+        a = np.linspace(1.0, 400.0, 4000)
+        v = (1.0 - np.exp(-k * a)) ** m
+        return a[int(np.argmax(v / a))]
+
+    return float(brentq(lambda k: culm(k) - culmination_age_yr, 1e-4, 0.2))
+
+
+#: Treatments that distinguish the prescriptions (thesis p.73). ``vm`` and
+#: ``pct`` occur one period after planting; ``fert`` in the fourth period;
+#: ``ct`` (commercial thinning) is a mid-rotation revenue. Prescription 1 is
+#: natural regeneration (no planting cost); all others plant.
+PRESCRIPTION_TREATMENTS: dict[Prescription, tuple[str, ...]] = {
+    Prescription.NATURAL_REGEN: (),
+    Prescription.PLANT: (),
+    Prescription.PLANT_CT: ("ct",),
+    Prescription.PLANT_VM_PCT: ("vm", "pct"),
+    Prescription.PLANT_VM_PCT_FERT: ("vm", "pct", "fert"),
+    Prescription.PLANT_VM_PCT_CT: ("vm", "pct", "ct"),
+    Prescription.PLANT_VM_PCT_FERT_CT: ("vm", "pct", "fert", "ct"),
+}
+
+#: Treatment timings (years since the regenerated stand is established).
+_TREATMENT_YEAR = {"vm": 10.0, "pct": 10.0, "fert": 40.0, "ct": 40.0}
+
+
+class _CalibParams:
+    """Flat vector <-> structured calibration parameters.
+
+    Per-ecoclass economics (price, harvest cost, Vmax) — CM-CE is
+    negatively-valued because its harvest cost exceeds its timber value — plus
+    shared treatment yield-effects and the commercial-thinning revenue, and a
+    natural-regeneration yield penalty (unstocked/understocked natural regen
+    yields less than a planted stand).
+    """
+
+    def __init__(self, x: np.ndarray):
+        n = len(_ECOCLASS_ORDER)
+        self.price = dict(zip(_ECOCLASS_ORDER, x[0:n], strict=True))
+        self.hcost = dict(zip(_ECOCLASS_ORDER, x[n : 2 * n], strict=True))
+        self.vmax = dict(zip(_ECOCLASS_ORDER, x[2 * n : 3 * n], strict=True))
+        self.treat_ym = dict(zip(("vm", "pct", "fert", "ct"), x[3 * n : 3 * n + 4], strict=True))
+        self.ct_revenue = x[3 * n + 4]
+        self.natural_regen_ym = x[3 * n + 5]
+
+
+_ECOCLASS_ORDER = (Ecoclass.CH_CW, Ecoclass.CD_CP, Ecoclass.CR_CF, Ecoclass.CM_CE)
+
+
+def _cell_model(eco: Ecoclass, rx: Prescription, p: _CalibParams) -> dict:
+    """Build the per-cell model (yield curve, economics, intermediate flows)."""
+    ymult = 1.0
+    for t in PRESCRIPTION_TREATMENTS[rx]:
+        ymult *= p.treat_ym[t]
+    if rx is Prescription.NATURAL_REGEN:
+        ymult *= p.natural_regen_ym
+    yp = YieldParams(
+        vmax=p.vmax[eco] * ymult,
+        k=k_for_culmination(CMAI_CULMINATION_AGE_YR[eco]),
+        m=CR_SHAPE_M,
+    )
+    econ = EconomicsParams(net_price_per_mcf=p.price[eco], harvest_cost_per_mcf=p.hcost[eco])
+    inter: list[tuple[float, float]] = []
+    if "ct" in PRESCRIPTION_TREATMENTS[rx]:
+        # Commercial thinning: a mid-rotation revenue from the removed volume.
+        inter.append((_TREATMENT_YEAR["ct"], p.ct_revenue))
+    return {"yield": yp, "econ": econ, "intermediate": tuple(inter)}
+
+
+def _cell_pnv_rotation(eco: Ecoclass, rx: Prescription, p: _CalibParams) -> tuple[float, float]:
+    model = _cell_model(eco, rx, p)
+    rng = ROTATION_RANGES[(eco, rx)]
+    assert rng is not None
+    return best_rotation(
+        model["yield"],
+        model["econ"],
+        (rng.lo, rng.hi),
+        intermediate_cash_flows=model["intermediate"],
+    )
+
+
+def _fit_residuals(x: np.ndarray) -> np.ndarray:
+    p = _CalibParams(x)
+    errs: list[float] = []
+    for (eco, rx), anchor in PNV_ROTATION_ANCHORS.items():
+        if anchor is None:
+            continue
+        opt_r, max_lev = _cell_pnv_rotation(eco, rx, p)
+        # Fit PNV magnitude (scaled) primarily; rotation secondarily.
+        errs.append((max_lev - anchor.max_pnv_per_ac) / 100.0)
+        errs.append((opt_r - anchor.optimal_rotation_yr) / 25.0)
+    return np.array(errs)
+
+
+def calibrate() -> dict:
+    """Calibrate the reconstruction to the Table 5.3 anchors (least squares).
+
+    Populates and returns the per-cell model parameters. The yield-curve
+    shapes are grounded in the Umpqua LRMP CMAI culmination ages; the levels
+    and economics are fit to the thesis's Table 5.3 max-PNV/rotation anchors.
+    """
+    global _CALIBRATED
+    n = len(_ECOCLASS_ORDER)
+    # x = [price(4), hcost(4), Vmax(4), ym(vm,pct,fert,ct), ct_revenue,
+    #      natural_regen_ym]
+    x0 = np.array(
+        [
+            200.0,
+            180.0,
+            150.0,
+            60.0,  # price per ecoclass
+            90.0,
+            95.0,
+            100.0,
+            200.0,  # harvest cost per ecoclass (CM-CE highest)
+            30.0,
+            22.0,
+            18.0,
+            12.0,  # Vmax per ecoclass
+            1.1,
+            1.1,
+            1.25,
+            1.1,  # treatment yield mults (vm, pct, fert, ct)
+            300.0,  # commercial-thinning revenue
+            0.8,  # natural-regen yield penalty
+        ]
+    )
+    lb = np.array([20.0] * n + [30.0] * n + [5.0] * n + [1.0, 1.0, 1.0, 0.8] + [0.0] + [0.5])
+    ub = np.array([600.0] * n + [400.0] * n + [60.0] * n + [1.6, 1.6, 2.5, 1.5] + [1500.0] + [1.0])
+    sol = least_squares(_fit_residuals, x0, bounds=(lb, ub), max_nfev=6000)
+    if not sol.success:
+        raise RuntimeError(f"reconstruction calibration did not converge: {sol.message}")
+    p = _CalibParams(sol.x)
+    _CALIBRATED = {
+        (eco, rx): _cell_model(eco, rx, p)
+        for (eco, rx), anchor in PNV_ROTATION_ANCHORS.items()
+        if anchor is not None
+    }
+    return _CALIBRATED
+
+
+# Calibrated parameter set (populated by :func:`calibrate`).
 _CALIBRATED: dict | None = None
 
 
 def calibrated_params() -> dict:
-    """Return the calibrated per-cell reconstruction parameters."""
+    """Return the calibrated per-cell reconstruction parameters (runs the
+    calibration on first call)."""
+    global _CALIBRATED
     if _CALIBRATED is None:
-        raise RuntimeError(
-            "reconstruction parameters not calibrated yet; run the "
-            "calibration (fresh_daugherty.instance.reconstruct.calibrate)"
-        )
+        calibrate()
     return _CALIBRATED
 
 
@@ -217,9 +380,11 @@ __all__ = [
     "EconomicsParams",
     "YieldParams",
     "best_rotation",
+    "calibrate",
     "calibrated_params",
     "calibration_report",
     "escalated_price",
     "faustmann_lev",
+    "k_for_culmination",
     "yield_volume",
 ]

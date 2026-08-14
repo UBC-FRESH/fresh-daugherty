@@ -10,6 +10,7 @@
 """
 
 from .thesis import (
+    CMAI_CULMINATION_AGE_YR,
     HORIZON_YEARS,
     LANDBASE_ACRES,
     LANDBASES,
@@ -31,6 +32,7 @@ from .thesis import (
 )
 
 __all__ = [
+    "CMAI_CULMINATION_AGE_YR",
     "HORIZON_YEARS",
     "LANDBASES",
     "LANDBASE_ACRES",

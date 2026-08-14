@@ -255,6 +255,22 @@ class LandbaseSpec(BaseModel):
     description: str
 
 
+#: 95% CMAI (mean annual increment) culmination age in years per ecoclass,
+#: transcribed from the Umpqua National Forest Land and Resource Management
+#: Plan (USFS PNW Region), Table IV-3 (Forest Plan ch. IV, p.46; Google Books
+#: id lqbvYRGYkpUC), "Intensive Volume" prescription. This is the real
+#: structural grounding for the reconstructed yield-curve shapes: the age at
+#: which MAI culminates pins the economically relevant rotation. Provenance:
+#: the Umpqua LRMP (a public-domain USFS work), NOT the thesis. The LRMP
+#: labels the third ecoclass "CF-CR"; the thesis uses "CR-CF" (same ecoclass).
+CMAI_CULMINATION_AGE_YR: dict[Ecoclass, int] = {
+    Ecoclass.CH_CW: 85,
+    Ecoclass.CD_CP: 120,  # 115/125 in Table IV-3; midpoint recorded
+    Ecoclass.CR_CF: 115,  # CF-CR 105/125; midpoint recorded
+    Ecoclass.CM_CE: 175,
+}
+
+
 #: Table 5.5 (p.78): the 18 initial forest conditions, each 10,000 acres.
 LANDBASE_ACRES = 10_000.0
 LANDBASES: tuple[LandbaseSpec, ...] = (
@@ -278,6 +294,7 @@ LANDBASES: tuple[LandbaseSpec, ...] = (
 
 
 __all__ = [
+    "CMAI_CULMINATION_AGE_YR",
     "HORIZON_YEARS",
     "LANDBASES",
     "LANDBASE_ACRES",
