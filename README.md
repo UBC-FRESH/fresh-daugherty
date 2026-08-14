@@ -39,8 +39,10 @@ peer-reviewed paper.
 
 ## Status
 
-Phase 0 (skeleton scaffold). See `ROADMAP.md` for the phase/issue tracker map
-and `planning/v0.1.0a1-plan.md` for the detailed master plan.
+`v0.1.0a1`. The reproduction pipeline (case-study instance, open-loop Model I
+LP, sequential-replanning simulator, experiment grid) is implemented and
+tested; the dynamic-inconsistency result is reproduced. See `ROADMAP.md` and
+`planning/v0.1.0a1-plan.md`.
 
 ## Quick Start
 

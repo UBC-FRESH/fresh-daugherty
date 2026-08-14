@@ -46,3 +46,15 @@ Phase 4 (experiments + consistent-solution construct) on
 - Findings: inconsistency occurs across all conditions; discount-rate
   invariant (the thesis's counter-intuitive result reproduced); tighter flow
   -> more inconsistency; disequilibrium structure drives it.
+
+## 0.1.0a1 — 2026-08-14
+
+Phase 5 (validation + docs + release) on `feature/p5-release`; version bumped
+to `0.1.0a1`.
+
+- Docs (quickstart, model semantics, CLI reference, architecture) updated to
+  the working pipeline; CLI `open-loop`/`replan-run` wired to the real
+  implementations.
+- RELEASE_NOTES 0.1.0a1 entry; validation record finalized; version bumped.
+- Model II (P2) scoped: the reproduction uses Model I (ws3-supported); the
+  ws3 Model II LP path is deferred post-v0.1.0a1 (documented rationale).
