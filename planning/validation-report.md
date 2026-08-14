@@ -83,3 +83,23 @@ rises as lower-volume managed stands replace the mature pulse.
   fidelity caveat.
 
 Record count: 31 tests; ruff, docs, build, twine green.
+
+## P3 Sequential replanning + inconsistency
+
+`fresh_daugherty.replan` implements the sequential-replanning simulator:
+solve the open-loop LP, apply the current period's decision, advance the
+forest state (the realized area-by-age distribution extracted via ws3
+`age_class_distribution`), and re-solve from the realized state over the
+remaining horizon, repeating to the horizon. Inconsistency is measured as the
+divergence between the open-loop plan's projected per-period harvest and the
+realized replanned trajectory.
+
+Result (landbase 1, all mature, horizon 15): the open-loop plan projects a
+smooth even-flow harvest (~88-93k MCF/period); the realized replanned
+trajectory is volatile (65k-114k MCF/period) and does NOT follow the plan —
+mean absolute relative deviation ~29%, total realized ~9% below projected.
+The period-1 decision is always consistent (the divergence is in the tail).
+This reproduces Daugherty's dynamic-inconsistency finding on the reconstructed
+case-study. The magnitude and sign vary with horizon and initial condition
+(the thesis reports inconsistency "over a wide range of initial forest
+conditions and harvest policies"). Seed-fixed runs are bit-stable.
