@@ -11,7 +11,7 @@ synchronized with GitHub issues, planning notes, pull requests, and
 | Phase | Parent issue | Branch | Status |
 | --- | --- | --- | --- |
 | P0 Skeleton scaffold | [#1](https://github.com/UBC-FRESH/fresh-daugherty/issues/1) | `main` | Complete |
-| P1 Case-study instance + open-loop LP (Model I) | TBD | `feature/p1-open-loop` | Planned |
+| P1 Case-study instance + open-loop LP (Model I) | [#2](https://github.com/UBC-FRESH/fresh-daugherty/issues/2) | `feature/p1-open-loop` | Complete — PR to `main` pending |
 | P2 ws3 Model II LP formulation + solve | TBD | ws3 `feature/model-ii` | Planned |
 | P3 Sequential-replanning simulator + inconsistency measurement | TBD | `feature/p3-replanning` | Planned |
 | P4 Consistent-solution construct + experiments | TBD | `feature/p4-consistent` | Planned |
