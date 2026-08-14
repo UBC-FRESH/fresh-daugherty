@@ -31,4 +31,7 @@ in ``planning/v0.1.0a1-plan.md``; ``ROADMAP.md`` is the issue-tracker view.
 
    installation
    quickstart
+   model_semantics
+   cli
+   architecture
    development
