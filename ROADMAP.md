@@ -12,10 +12,10 @@ synchronized with GitHub issues, planning notes, pull requests, and
 | --- | --- | --- | --- |
 | P0 Skeleton scaffold | [#1](https://github.com/UBC-FRESH/fresh-daugherty/issues/1) | `main` | Complete |
 | P1 Case-study instance + open-loop LP (Model I) | [#2](https://github.com/UBC-FRESH/fresh-daugherty/issues/2) | `feature/p1-open-loop` | Complete — PR to `main` pending |
-| P2 ws3 Model II LP formulation + solve | TBD | ws3 `feature/model-ii` | Planned |
+| P2 ws3 Model II LP formulation + solve | TBD | ws3 `feature/model-ii` | Deferred post-v0.1.0a1 (Model I suffices for the core result) |
 | P3 Sequential-replanning simulator + inconsistency measurement | [#4](https://github.com/UBC-FRESH/fresh-daugherty/issues/4) | `feature/p3-replanning` | Complete — PR pending |
-| P4 Consistent-solution construct + experiments | [#6](https://github.com/UBC-FRESH/fresh-daugherty/issues/6) | `feature/p4-experiments` | Complete — PR pending |
-| P5 Validation vs thesis + docs + release | TBD | `feature/p5-release` | Planned |
+| P4 Consistent-solution construct + experiments | [#6](https://github.com/UBC-FRESH/fresh-daugherty/issues/6) | `feature/p4-experiments` | Complete (PR [#7](https://github.com/UBC-FRESH/fresh-daugherty/pull/7) merged) |
+| P5 Validation vs thesis + docs + release | [#8](https://github.com/UBC-FRESH/fresh-daugherty/issues/8) | `feature/p5-release` | Complete — PR pending |
 | P6 Paper | TBD | TBD | Planned |
 
 ## Project One-Liner

@@ -20,8 +20,10 @@ only), so the modelling trap it documents is repeatedly rediscovered.
 This project reproduces the thesis stack openly so the result becomes citable
 and the trap detectable, and it backs a short peer-reviewed paper.
 
-Status: Phase 0 (skeleton scaffold). The master plan lives in
-``planning/v0.1.0a1-plan.md``; ``ROADMAP.md`` is the issue-tracker view.
+Status: ``v0.1.0a1``. The case-study instance, open-loop Model I LP,
+sequential-replanning simulator, and experiment grid are implemented and
+tested; the dynamic-inconsistency result is reproduced. The master plan lives
+in ``planning/v0.1.0a1-plan.md``; ``ROADMAP.md`` is the issue-tracker view.
 
 .. toctree::
    :maxdepth: 2
@@ -29,4 +31,7 @@ Status: Phase 0 (skeleton scaffold). The master plan lives in
 
    installation
    quickstart
+   model_semantics
+   cli
+   architecture
    development

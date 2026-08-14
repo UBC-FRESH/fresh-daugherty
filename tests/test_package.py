@@ -27,10 +27,10 @@ def test_cli_version_command() -> None:
     assert result.stdout.strip() == __version__
 
 
-def test_cli_lists_stub_commands() -> None:
+def test_cli_lists_commands() -> None:
     result = runner.invoke(app, ["--help"])
     assert result.exit_code == 0
-    for command in ("build-model", "open-loop", "replan-run", "consistency-run"):
+    for command in ("open-loop", "replan-run", "consistency-run", "version"):
         assert command in result.stdout
 
 
