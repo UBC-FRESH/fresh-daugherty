@@ -47,9 +47,18 @@ def add_open_loop_problem(
     flow_coefficient: float = 0.05,
     discount_rate: float = THESIS_DISCOUNT_RATE,
     price_escalation: bool = True,
+    target_flow_mcf: float | None = None,
     name: str = "open-loop",
 ) -> object:
-    """Add the open-loop NPV-max even-flow LP to ``model`` and return it."""
+    """Add the open-loop NPV-max LP to ``model`` and return it.
+
+    Harvest policy (the thesis's "harvest flow and ending period
+    constraints"): by default an even-flow band ties each period's harvest
+    volume to within ``flow_coefficient`` of period 1. If ``target_flow_mcf``
+    is given, a target harvest-flow floor/ceiling is used instead — required
+    for young-growth forests, where period-1 harvest is zero and the
+    period-1-anchored even-flow is degenerate.
+    """
     period_length = model.period_length
     econ = _ecoclass_economics()
 
@@ -79,12 +88,25 @@ def add_open_loop_problem(
         return out
 
     coeff_funcs = {"z": coeff_c_z, "cflw_hv": coeff_c_hv}
-    cflw_e = {"cflw_hv": (dict.fromkeys(model.periods, flow_coefficient), 1)}
+    cflw_e = None
+    cgen_data = None
+    if target_flow_mcf is None:
+        cflw_e = {"cflw_hv": (dict.fromkeys(model.periods, flow_coefficient), 1)}
+    else:
+        # Target harvest flow (an AAC ceiling): harvest <= target each period.
+        # lb=0 so a young forest is not forced to harvest before stands reach
+        # rotation age; the ceiling caps the rate once they do.
+        cgen_data = {
+            "cflw_hv": {
+                "lb": dict.fromkeys(model.periods, 0.0),
+                "ub": dict.fromkeys(model.periods, target_flow_mcf),
+            }
+        }
     return model.add_problem(
         name=name,
         coeff_funcs=coeff_funcs,
         cflw_e=cflw_e,
-        cgen_data=None,
+        cgen_data=cgen_data,
         acodes=("null", "harvest"),
         sense=ws3.opt.SENSE_MAXIMIZE,
         mask=tuple(["?"] * model.nthemes()),

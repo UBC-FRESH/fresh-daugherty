@@ -31,3 +31,18 @@ Phase 3 (sequential-replanning simulator + inconsistency measurement) on
   the open-loop even-flow plan is not followed on replan (mean deviation
   ~29%, total realized ~9% below projected); period 1 always consistent;
   seed-fixed bit-stable.
+
+## 0.1.0a0 — 2026-08-14 (Phase 4)
+
+Phase 4 (experiments + consistent-solution construct) on
+`feature/p4-experiments`.
+
+- `experiments.py`: experiment runner sweeping landbases x discount rates x
+  harvest-flow policies, producing the inconsistency occurrence/magnitude
+  table. Rolling-horizon sequential replanning (default) avoids the
+  terminal artifact; shrinking-horizon also available.
+- Young-growth landbases corrected to regulated forests (full age-class
+  distribution); target-flow (AAC ceiling) harvest policy added to the LP.
+- Findings: inconsistency occurs across all conditions; discount-rate
+  invariant (the thesis's counter-intuitive result reproduced); tighter flow
+  -> more inconsistency; disequilibrium structure drives it.

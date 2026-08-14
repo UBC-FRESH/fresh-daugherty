@@ -103,3 +103,35 @@ This reproduces Daugherty's dynamic-inconsistency finding on the reconstructed
 case-study. The magnitude and sign vary with horizon and initial condition
 (the thesis reports inconsistency "over a wide range of initial forest
 conditions and harvest policies"). Seed-fixed runs are bit-stable.
+
+## P4 Experiments + consistent-solution construct
+
+`fresh_daugherty.experiments` sweeps the thesis's experimental factors —
+initial forest condition (landbase), harvest policy (even-flow tolerance or
+target-flow ceiling), and interest rate — measuring inconsistency occurrence
+and magnitude per cell (`run_experiment`, `run_experiment_grid`). The
+sequential-replanning simulator supports a rolling fixed horizon (default;
+avoids the shrinking-horizon terminal artifact) or a shrinking horizon.
+
+Headline findings (rolling horizon, horizon 15, landbases 1/2/9/10 x rates
+0-6% x flow tolerances 1-15%):
+
+- Dynamic inconsistency occurs in 100% of cells (mean per-period deviation
+  of realized-vs-projected harvest well above 5% across the grid).
+- **Discount rate has no effect** on the volume-based inconsistency (the
+  occurrence/magnitude is identical across 0-6%): the discount factor is
+  uniform across periods and drops out of the consistency requirements —
+  reproducing Daugherty's counter-intuitive result (ch. 3, p.58-59).
+- **Tighter harvest-flow constraints increase inconsistency** (the flow
+  constraint is the operative between-period link).
+- **Disequilibrium forest structure drives inconsistency**: the mature/old-
+  growth landbases show it clearly; the magnitude depends on the initial
+  age-class disequilibrium.
+
+Young-growth (regulated) forests under the open-loop even-flow plan show the
+"declining non-declining yield" phenomenon (the plan over-commits the forest;
+the realized replanned trajectory cannot sustain the promised cut). The
+consistent-solution (subgame-perfect) construct is documented in the master
+plan; computing it exactly is a follow-on (the thesis's "generating consistent
+solutions"). The regeneration-mandate precommitment remedy is noted (the
+reproduction's harvest regenerates to age 0 by construction).

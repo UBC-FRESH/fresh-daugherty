@@ -22,6 +22,7 @@ import numpy as np
 import pandas as pd
 import ws3.forest
 
+from fresh_daugherty.instance.thesis import THESIS_DISCOUNT_RATE
 from fresh_daugherty.lp import add_open_loop_problem
 from fresh_daugherty.model import (
     bootstrap_model,
@@ -65,10 +66,23 @@ def build_model(areas: pd.DataFrame, horizon: int, workdir: str | Path) -> ws3.f
     return prepare_optimization(model, horizon=horizon)
 
 
-def _solve_and_apply(model, *, max_period: int | None) -> list[float]:
+def _solve_and_apply(
+    model,
+    *,
+    max_period: int | None,
+    discount_rate: float,
+    flow_tolerance: float,
+    target_flow_mcf: float | None,
+) -> list[float]:
     """Solve the open-loop LP, apply its schedule (up to ``max_period``), and
     return the realized per-period harvest volume."""
-    problem = add_open_loop_problem(model, name="open")
+    problem = add_open_loop_problem(
+        model,
+        flow_coefficient=flow_tolerance,
+        discount_rate=discount_rate,
+        target_flow_mcf=target_flow_mcf,
+        name="open",
+    )
     problem.solve(verbose=False)
     schedule = model.compile_schedule(problem)
     model.reset()
@@ -84,22 +98,41 @@ def _solve_and_apply(model, *, max_period: int | None) -> list[float]:
     return [model.compile_product(p, "totvol", acode="harvest") for p in model.periods]
 
 
-def open_loop_projection(model: ws3.forest.ForestModel) -> list[float]:
+def open_loop_projection(
+    model: ws3.forest.ForestModel,
+    *,
+    discount_rate: float = THESIS_DISCOUNT_RATE,
+    flow_tolerance: float = 0.05,
+    target_flow_mcf: float | None = None,
+) -> list[float]:
     """The open-loop plan's projected per-period harvest volume (full horizon)."""
-    return _solve_and_apply(model, max_period=None)
+    return _solve_and_apply(
+        model,
+        max_period=None,
+        discount_rate=discount_rate,
+        flow_tolerance=flow_tolerance,
+        target_flow_mcf=target_flow_mcf,
+    )
 
 
 def sequential_replan(
     model: ws3.forest.ForestModel,
     *,
     workdir: str | Path,
+    discount_rate: float = THESIS_DISCOUNT_RATE,
+    flow_tolerance: float = 0.05,
+    target_flow_mcf: float | None = None,
+    rolling_horizon: bool = True,
 ) -> pd.DataFrame:
     """Run the sequential-replanning simulation.
 
     At each period, re-solve the open-loop LP from the realized state, take
-    the current period's decision, apply it, and advance. Returns a frame of
-    the realized per-period harvest volume. The model passed in is used for
-    the first (full-horizon) solve and is not modified beyond that.
+    the current period's decision, apply it, and advance. With
+    ``rolling_horizon=True`` (default) each replan solves a full-length
+    problem from the realized state (the horizon rolls forward with the
+    present), avoiding the terminal-period artifact of a shrinking horizon;
+    with ``rolling_horizon=False`` the replan is over the shrinking remaining
+    horizon. Returns a frame of the realized per-period harvest volume.
     """
     workdir = Path(workdir)
     horizon = model.horizon
@@ -108,14 +141,21 @@ def sequential_replan(
     for t in range(1, horizon + 1):
         # Re-solve the open-loop LP from the current state, take the current
         # period's decision (apply only period 1 of this sub-horizon).
-        volumes = _solve_and_apply(current, max_period=1)
+        volumes = _solve_and_apply(
+            current,
+            max_period=1,
+            discount_rate=discount_rate,
+            flow_tolerance=flow_tolerance,
+            target_flow_mcf=target_flow_mcf,
+        )
         realized.append(volumes[0])
         if t == horizon:
             break
         # Extract the realized state at the start of the next period and build
-        # a fresh model over the remaining horizon.
+        # a fresh model for the next replan.
         state = extract_areas(current, 1)
-        current = build_model(state, current.horizon - 1, workdir / f"replan_{t}")
+        next_horizon = horizon if rolling_horizon else current.horizon - 1
+        current = build_model(state, next_horizon, workdir / f"replan_{t}")
     return pd.DataFrame({"period": list(range(1, horizon + 1)), "harvest_volume_mcf": realized})
 
 
