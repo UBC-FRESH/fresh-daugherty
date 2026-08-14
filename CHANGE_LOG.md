@@ -19,3 +19,15 @@ Phase 1 (case-study instance + open-loop LP, Model I) in progress on
 - P1.2 Open-loop Model I LP: case-study ws3 model (`model.py`) + NPV-max
   even-flow LP (`lp.py`, 4% discount, price escalation). Verified on
   landbase 1: optimal, even-flow holds, mature timber drawn down.
+
+## 0.1.0a0 — 2026-08-14 (Phase 3)
+
+Phase 3 (sequential-replanning simulator + inconsistency measurement) on
+`feature/p3-replanning`.
+
+- `replan.py`: the sequential-replanning simulator (solve, apply period t,
+  advance state, re-solve) over the case-study Model I LP, plus
+  inconsistency metrics. Reproduces dynamic inconsistency on landbase 1:
+  the open-loop even-flow plan is not followed on replan (mean deviation
+  ~29%, total realized ~9% below projected); period 1 always consistent;
+  seed-fixed bit-stable.
