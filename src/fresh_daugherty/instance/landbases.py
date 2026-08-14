@@ -86,11 +86,14 @@ def _managed_cells() -> list[tuple[Ecoclass, Prescription]]:
 def young_growth(equal: bool = True) -> pd.DataFrame:
     """Landbase 9 (equal) / 10 (unequal): young-growth under intensive management.
 
-    Distributes the landbase across the managed (ecoclass, prescription) cells
-    at a spread of young ages.
+    A *regulated* young-growth forest: each managed (ecoclass, prescription)
+    cell has area spread across age classes from young up to the rotation age,
+    so the forest has harvestable (mature) volume every period. Landbase 9 uses
+    equal acres per age class; landbase 10 an unequal (declining-with-age)
+    distribution.
     """
     cells = _managed_cells()
-    ages = [10, 20, 30, 40]
+    ages = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120]  # up to ~rotation
     rows = []
     combos = [(eco, rx, age) for (eco, rx) in cells for age in ages]
     weights = (
