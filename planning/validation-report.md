@@ -220,3 +220,16 @@ PNV. The reproduction's dataset of record is the Umpqua FORPLAN data (1990
 FEIS lineage, confirmed against the 1987 DEIS); the 1987 DEIS enables a
 pointwise-exact-vintage extraction (including the per-age PNV) as a final
 refinement.
+
+### Exact-vintage validation (issue #15)
+
+The 1987 DEIS managed yield tables (Daugherty's exact vintage) are parsed.
+The model's per-cell max Faustmann LEV (`instance.feis.model_lev`, from the
+real FEIS yield curve + real per-ecoclass net revenue) reproduces the thesis
+Table 5.3 anchors' *signs and ordering*: productive ecoclasses positive, the
+CM-CE prescriptions non-positive (the negatively-valued stratum), and optimal
+rotations within the thesis Table 5.2 ranges. Exact LEV magnitudes differ
+(the thesis's LEV accounting — treatment costs and the exact volume
+convention — is not fully recoverable from the OCR); the structural features
+driving the inconsistency are reproduced exactly. Test:
+`tests/test_feis_data.py::test_model_lev_reproduces_anchor_signs`.

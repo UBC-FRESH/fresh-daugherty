@@ -45,3 +45,24 @@ def test_species_economics() -> None:
     # Mountain hemlock is the low-value (negatively-valued-stratum) species.
     assert SPECIES_ECONOMICS["Mountain Hemlock"][0] == 27.0
     assert SPECIES_ECONOMICS["Douglas-Fir"][0] == 255.0
+
+
+def test_model_lev_reproduces_anchor_signs() -> None:
+    """Exact-vintage validation: the real-data model reproduces the Table 5.3
+    anchors' signs (productive ecoclasses positive, CM-CE non-positive)."""
+    from fresh_daugherty.instance.feis import model_lev
+    from fresh_daugherty.instance.thesis import PNV_ROTATION_ANCHORS, ROTATION_RANGES
+
+    for (eco, rx), anchor in PNV_ROTATION_ANCHORS.items():
+        if anchor is None:
+            continue
+        opt_r, lev = model_lev(eco, rx)
+        rng = ROTATION_RANGES[(eco, rx)]
+        assert rng is not None
+        # Optimal rotation within the thesis range.
+        assert rng.lo <= opt_r <= rng.hi
+        # Sign matches the anchor (CM-CE non-positive, others positive).
+        if anchor.max_pnv_per_ac < 0:
+            assert lev <= 0, f"{eco.value} rx{int(rx)} should be non-positive"
+        else:
+            assert lev > 0, f"{eco.value} rx{int(rx)} should be positive"
