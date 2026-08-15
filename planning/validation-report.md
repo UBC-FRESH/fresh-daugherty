@@ -233,3 +233,20 @@ rotations within the thesis Table 5.2 ranges. Exact LEV magnitudes differ
 convention — is not fully recoverable from the OCR); the structural features
 driving the inconsistency are reproduced exactly. Test:
 `tests/test_feis_data.py::test_model_lev_reproduces_anchor_signs`.
+
+## Reproducibility base (license-clean)
+
+The Umpqua documents are US government (USDA Forest Service) works — public
+domain (17 U.S.C. section 105) — but the HathiTrust/Google digitized scans and
+OCR carry Google's request that the images and OCR not be re-hosted,
+redistributed, or used commercially. Accordingly the raw scans/OCR stay in the
+gitignored `tmp/` and are NEVER committed. The license-clean reproducibility
+base is:
+
+- `src/fresh_daugherty/instance/umpqua_feis.py` (tracked): the derived,
+  structured, factual dataset (numbers are not copyrightable), with the source
+  citations in its module docstring.
+- `scripts/extract_umpqua_feis.py` (tracked): the one-time extraction script
+  that regenerates the dataset from the source scan.
+- Source citations (public domain, HathiTrust): FEIS Appendix B record
+  002439528; 1987 DEIS record 002547999; FEIS main volume record 002439528.
