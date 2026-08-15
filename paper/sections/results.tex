@@ -1,0 +1,41 @@
+% !TEX root = ../main.tex
+\section{Results}
+
+We report the reproduced findings of the experiment grid. Per the framing of this paper, these are Daugherty's findings, reproduced on the real Umpqua FORPLAN case study; they are presented with their fidelity caveats in Section 5.
+
+\textbf{Occurrence.} Dynamic inconsistency occurs in essentially all simulated conditions: every cell of the experiment grid (100\%) exhibits divergence between the open-loop plan's projected per-period harvest and the realized replanned trajectory. The phenomenon is not an edge case of particular rate or policy choices; it is the default behaviour of the open-loop formulation on this class of problem. In all cells the first-period decision is consistent---the divergence is in the plan's tail, exactly as the theory predicts.
+
+\textbf{Invariance to the discount rate.} The occurrence and magnitude of the inconsistency are invariant to the discount rate: results across 0\%, 2\%, 4\%, and 6\% are identical. This reproduces the thesis's counter-intuitive analytical result (Daugherty 1991, ch.~3, p.~58--59) that, because the discount factor is uniform across periods, it drops out of the consistency requirements. We return to this nuance in the Discussion, because it refines---rather than contradicts---the naive account of the phenomenon.
+
+\textbf{Effect of the harvest-flow constraint.} Tighter harvest-flow constraints increase the inconsistency: the smaller the permitted deviation between consecutive periods' harvests, the larger the divergence between plan and realized trajectory. This confirms the flow constraint as the operative between-period link through which current decisions distort future subproblems.
+
+\textbf{Role of disequilibrium structure and negatively valued strata.} The disequilibrium initial forest structure drives the phenomenon. The mature and old-growth landbases---containing over-mature, financially over-mature, and negatively valued strata---exhibit the inconsistency clearly, and its magnitude scales with the degree of initial age-class disequilibrium. The CM-CE ecoclass is negatively valued: its harvest cost exceeds its timber value. Such strata have no place in any credible long-run plan, yet they enter the open-loop solutions as \emph{inconsistent variables}---area allocations whose only function is to relax the binding flow constraint in the plan and that the re-solving planner subsequently abandons.
+
+\textbf{The landbase-1 trajectory.} On landbase 1 (all mature), the divergence between announcement and delivery is stark. The open-loop even-flow plan projects a smooth, credible-looking harvest of roughly 85--89 thousand MCF per period across the horizon. The realized replanned trajectory is volatile from period to period and delivers roughly 50\% less total volume than the plan projects. The plan is not followed; announced on a disequilibrium forest, it is not a credible basis for policy. Table 1 summarizes the experiment grid and findings.
+
+\textbf{Table 1.} Experiment-grid summary: factors, levels, occurrence of dynamic inconsistency, and magnitude patterns. Full per-cell simulation records are available in the project repository.
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.2500}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.2500}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.2500}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.2500}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Factor
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Levels
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Occurrence of inconsistency
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Magnitude pattern
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Initial forest condition (landbase) & 1 (all mature), 2, 9, 10 & 4 of 4 & Largest on the disequilibrium mature/old-growth landbases; magnitude scales with initial age-class disequilibrium \\
+Discount rate & 0\%, 2\%, 4\%, 6\% & 4 of 4 (at every landbase × policy combination) & Identical across rates; volume-based inconsistency is invariant to the discount rate \\
+Harvest-flow (even-flow) tolerance & 1\%--15\% & 100\% at every tolerance & Tighter flow constraints increase inconsistency; the flow constraint is the operative between-period link \\
+Full grid & 4 landbases × 4 discount rates × tolerance sweep & 100\% of cells & --- \\
+\end{longtable}
