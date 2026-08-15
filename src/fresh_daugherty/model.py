@@ -52,6 +52,21 @@ def _yield_points(yp, max_age: int) -> list[tuple[int, float]]:
     ]
 
 
+def _yield_points_for(eco, rx, recon_model, max_age: int) -> list[tuple[int, float]]:
+    """Yield points for a managed DT: the real FEIS curve when available, else
+    the calibrated reconstruction."""
+    from fresh_daugherty.instance.feis import real_yield_curve
+
+    try:
+        curve = real_yield_curve(eco, rx, max_age=max_age)
+        return [
+            (age, round(curve.get(age, 0.0), 6))
+            for age in range(0, max_age + 1, PERIOD_LENGTH_YEARS)
+        ]
+    except (ValueError, KeyError):
+        return _yield_points(recon_model["yield"], max_age)
+
+
 def mature_volume_mcf(mt, net_price_per_mcf: float) -> float:
     """Recover the mature stand volume (MCF/ac) from its Table 5.4 PNV anchor.
 
@@ -113,11 +128,12 @@ def build_woodstock_sections(
 
     # --- yields ---
     with open(out / f"{model_name}.yld", "w") as f:
-        # Managed young-growth DTs.
+        # Managed young-growth DTs. Prefer the real FEIS yield curves when the
+        # table exists, else the calibrated reconstruction.
         for (eco, rx), model in params.items():
             dtk = _dtk(eco, f"rx{int(rx)}", "regenerated")
             f.write(f"*Y ? {dtk[1]} {dtk[2]} {dtk[3]} {dtk[4]}\n_AGE totvol\n")
-            for age, vol in _yield_points(model["yield"], max_age):
+            for age, vol in _yield_points_for(eco, rx, model, max_age):
                 f.write(f"{age} {vol:.6f}\n")
             f.write("\n")
         # Mature DTs (existing, over-mature).
