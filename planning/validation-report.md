@@ -135,3 +135,40 @@ consistent-solution (subgame-perfect) construct is documented in the master
 plan; computing it exactly is a follow-on (the thesis's "generating consistent
 solutions"). The regeneration-mandate precommitment remedy is noted (the
 reproduction's harvest regenerates to age 0 by construction).
+
+## Data sourcing (post-v0.1.0a1): Umpqua FEIS secured
+
+Following the paper-review finding that the data-availability claim was
+overstated, the archival documents were located. The 1990 Umpqua FEIS (Final
+Environmental Impact Statement, LRMP) is secured (HathiTrust record
+002439528, full-view public domain, held locally in `tmp/`, gitignored).
+
+Real Umpqua economics extracted (FEIS main volume; corroborate the thesis
+anchors with primary data, not just the thesis's secondary summary):
+
+- Economics framework (FEIS ch. II): PNV, 4% discount rate, constant real
+  1982 dollars, purchaser logging/road/slash costs rising at a 1% real rate
+  for the first 50 years — exactly the thesis's structure.
+- Stage II "Financial Analysis of Timber Prescriptions" (FEIS ch. II, p.
+  II-6): mature-timber PNV $1,800-$7,700 per acre (roads not required), 6-22%
+  less with road construction; immature managed/unmanaged prescriptions
+  $27-$290 per acre (precommercial thins, fertilization, 2-3 commercial thins
+  before harvest); CH/CW ecoform consistently highest and strongly positive;
+  mountain hemlock (CM-CE) timber prescriptions lose money (best case loses
+  $4-$17/ac; natural-regen + harvest-without-intermediate-treatments loses
+  $92/ac on 10-yr managed, $312/ac on low-cost non-accessed mature, $894/ac
+  on moderate-cost accessed mature lands). This is the negatively-valued
+  stratum, confirmed from primary data.
+- Benchmark table (Table II-1A): ASQ / LTSY / PNV / discounted costs /
+  benefits / old-growth per benchmark alternative.
+
+Still in a separate bound volume (not in this 711-page FEIS main volume):
+FEIS Appendix B (the FORPLAN model + detailed per-age yield schedules and the
+full per-prescription financial-analysis tables). That volume is the final
+item to source for pointwise-exact yield curves; the yield-curve *shapes* are
+already grounded in the LRMP CMAI culmination ages and the economics are now
+grounded in the FEIS Stage II analysis.
+
+The 1987 DEIS (Daugherty's exact data vintage) is located on HathiTrust
+(record 002547999) but is bot-blocked to scripted download; it would give the
+exact 1987 data.
