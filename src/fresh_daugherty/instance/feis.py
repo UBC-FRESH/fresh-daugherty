@@ -158,6 +158,31 @@ def real_ecoclass_net_revenue(ecoclass: Ecoclass) -> float:
     return gross - ECOCLASS_ACCESS_COST_PER_MCF[ecoclass]
 
 
+def model_lev(
+    ecoclass: Ecoclass, prescription: Prescription, *, max_age: int = 200
+) -> tuple[int, float]:
+    """The model's max Faustmann LEV ($/ac) + optimal rotation for a cell.
+
+    Computed from the real FEIS yield curve and the real per-ecoclass net
+    revenue (stumpage less access cost) at the thesis 4% discount rate. This
+    is the exact-vintage validation against the thesis's Table 5.3 anchors.
+    """
+    from fresh_daugherty.instance.thesis import ROTATION_RANGES, THESIS_DISCOUNT_RATE
+
+    curve = real_yield_curve(ecoclass, prescription, max_age=max_age)
+    net = real_ecoclass_net_revenue(ecoclass)
+    rng = ROTATION_RANGES[(ecoclass, prescription)]
+    assert rng is not None
+    best_r, best_lev = rng.lo, -np.inf
+    for r in range(rng.lo, rng.hi + 1):
+        vol = curve.get(min(r, max_age), 0.0)
+        npv = net * vol * np.exp(-THESIS_DISCOUNT_RATE * r)
+        lev = npv / (1.0 - np.exp(-THESIS_DISCOUNT_RATE * r))
+        if lev > best_lev:
+            best_r, best_lev = r, lev
+    return best_r, float(best_lev)
+
+
 __all__ = [
     "DF_PRICE_DIAMETER",
     "ECOCLASS_ACCESS_COST_PER_MCF",
@@ -165,6 +190,7 @@ __all__ = [
     "SITE_INDEX_BY_ECOCLASS",
     "SPECIES_ECONOMICS",
     "UMPQUA_YIELD_TABLES",
+    "model_lev",
     "real_ecoclass_net_revenue",
     "real_yield_curve",
     "real_yield_table",
