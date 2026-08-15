@@ -58,3 +58,10 @@ to `0.1.0a1`.
 - RELEASE_NOTES 0.1.0a1 entry; validation record finalized; version bumped.
 - Model II (P2) scoped: the reproduction uses Model I (ws3-supported); the
   ws3 Model II LP path is deferred post-v0.1.0a1 (documented rationale).
+
+## 0.1.0a2 — 2026-08-15
+
+Real-data reconstruction release. Case study rebuilt on the real Umpqua
+FORPLAN data (FEIS Appendix B); exact-vintage validation vs the 1987 DEIS;
+license-clean reproducibility base; paper updated to real data with completed
+references.
