@@ -1,0 +1,226 @@
+\documentclass[12pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath, amssymb}
+\usepackage{bm}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{siunitx}
+\usepackage{caption}
+\usepackage{hyperref}
+\usepackage{natbib}
+\usepackage{titling}
+\usepackage{longtable}
+\usepackage{calc}
+\providecommand{\tightlist}{\setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+
+\pretitle{\begin{flushleft}\LARGE\bfseries}
+\posttitle{\par\end{flushleft}\vskip 1em}
+\preauthor{\begin{flushleft}\large}
+\postauthor{\par\end{flushleft}\vskip 0.75em}
+\predate{\begin{flushleft}\large}
+\postdate{\par\end{flushleft}\vskip 1em}
+\captionsetup[figure]{labelfont=bf,labelsep=space,name=Fig.}
+
+\title{Open-Loop Linear-Programming Forest Plans Are Not Credible: A Reproducible Replication of Daugherty (1991)}
+\author{Gregory Paradis\\Department of Forest Resources Management, University of British Columbia, Canada\\Corresponding author: \texttt{gregory.paradis@ubc.ca}}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\noindent\textbf{Keywords:} dynamic inconsistency; forest planning; linear programming; even flow; harvest scheduling; reproducibility; open-loop control; ws3
+
+% !TEX root = ../main.tex
+\begin{abstract}
+Long-term timber harvest schedules produced by linear programming (LP) are routinely presented to decision-makers as credible statements about the future, and their shadow prices are used to value constraints, land, and policy trade-offs. In an unpublished 1991 PhD thesis, P. J. Daugherty showed that LP forest-planning models solved as \emph{open-loop} formulations admit \emph{dynamically inconsistent} plans---plans that fail Bellman's principle of optimality, because a future planner re-solving from the realized forest state under the same objectives would not follow the plan's tail. Such plans are not a credible basis for policy, and trade-off analysis derived from them is biased. The thesis was never peer-reviewed and is effectively inaccessible (archival hard copy only, \textasciitilde\$200 custom print-on-demand), so the phenomenon it documents has been repeatedly rediscovered. This paper is a substantive replication of previously reported results, not new science. We reproduce Daugherty's Umpqua National Forest FORPLAN case study in the open-source \texttt{ws3} wood-supply model (Paradis 2026) from the real Umpqua planning documents, and reproduce all of the thesis's headline findings on a sequential-replanning simulation: dynamic inconsistency occurs in every simulated condition (100\% of the experiment-grid cells); it is invariant to the discount rate across 0--6\%; tighter harvest-flow constraints increase it; disequilibrium forest structure with negatively valued strata drives it; and on the all-mature landbase the open-loop even-flow plan delivers roughly half its promised volume under replanning. Our only novel content is the open, reproducible software stack and a citable reference for a result the field should stop rediscovering.
+\end{abstract}
+
+% !TEX root = ../main.tex
+\section{Introduction}
+
+Linear programming has been the workhorse of strategic forest planning for half a century. Since the Model I and Model II formulations of \citet{johnson1977techniques}, LP harvest-scheduling models---most prominently the USDA Forest Service's FORPLAN system and its successors---have been used to project long-term timber supply, to test harvest-flow policies, and to support trade-off analysis through the shadow prices that an optimal LP solution provides. In nearly all of this practice, the model is solved once, over the full planning horizon, as an \emph{open-loop} problem: the entire sequence of future decisions is chosen at time zero, and the resulting schedule of harvest levels and residual forest structure is presented as the plan.
+
+There is a trap in this practice, and it is a deep one. An open-loop LP solution is a plan about the future made as if the planner could precommit to every future decision. But real planning is sequential: each period, the planner observes the realized forest state and re-solves the planning problem from that state, under the same objectives and constraints. If the tail of the original plan is not optimal for the subproblem that starts at the realized state, the re-solving planner will deviate from it. The announced plan then fails Bellman's principle of optimality (\citep{bellman1957dynamic}): it is \emph{dynamically inconsistent}, and the harvest trajectory, residual growing stock, and shadow prices it projects are not credible statements about what will or should happen. A plan that will not be followed cannot be a sound basis for policy, and comparative analysis performed on it---including the shadow-price trade-off analysis that motivates much of the modelling---is biased in ways that are difficult to bound.
+
+This trap was demonstrated carefully and thoroughly more than three decades ago. In his 1991 PhD thesis at the University of California, Berkeley, P. J. Daugherty proved analytically and demonstrated numerically that LP-based forest-planning models solved as open-loop formulations admit dynamically inconsistent plans, identified the structural conditions under which the inconsistency arises, and characterized its behaviour over a wide range of initial forest conditions and harvest policies \citep{daugherty1991credibility}. The thesis remains, to our knowledge, the most complete treatment of the problem in the forest-planning literature. It is also effectively inaccessible: it was never published in the peer-reviewed literature, it exists only as an archival hard copy, and it can be obtained only as a custom print-on-demand from the UC Berkeley Library at a cost of roughly \$200. The phenomenon itself has surfaced in the literature under various names, before and since---\citep{mcquillan1986declining} named the ``declining even-flow effect'' in national forest planning; \citep[pp.~331--332]{gunn2007models}, citing \citet{daugherty1991credibility}, calls it the ``declining non-declining yield''; and \citet{paradis2013risk} documented the systematic drift that arises between planned and implemented harvest under incoherent hierarchical planning, citing \citet{daugherty1991credibility} directly and using ``credibility'' in the thesis's sense. Yet the original analysis stays unread: the field keeps rediscovering pieces of the phenomenon, typically without access to, or citation of, the original analysis.
+
+This paper exists to fix the accessibility problem, not to claim new science. We present an open, transparent, and fully reproducible reproduction of the modelling methods and case study of \citet{daugherty1991credibility}, built on the open-source \texttt{ws3} wood-supply model \citep{paradis2026ws3}, together with this paper. Every element of the reproduction---the case-study data extracted from the Umpqua planning documents, the LP formulations, the sequential-replanning simulator, the experiment grid, and the validation record---is available in a public repository with documented provenance and a test suite. We emphasize the framing: the science reported here is a faithful reproduction of \citet{daugherty1991credibility}. Our only novel content is the open, reproducible software stack and a citable reference. The case-study data are extracted from the public-domain Umpqua planning documents (the 1987 Draft EIS and the 1990 FEIS Appendix B yield tables and economics).
+
+The remainder of this paper is organized as follows. Section 2 reviews the theory of dynamic inconsistency and the open-loop LP forest-planning problem, including the Model I/II/III formulation distinction. Section 3 describes the case study, the case-study data, the sequential-replanning simulator, and the experiment design. Section 4 presents the reproduced results. Section 5 discusses the drivers of the inconsistency, a subtle and counter-intuitive nuance concerning the discount rate, implications for the literature, remedies, and limitations. Section 6 concludes.
+
+% !TEX root = ../main.tex
+\section{Background and theory}
+
+\hypertarget{dynamic-inconsistency-and-bellmans-principle}{%
+\subsection{Dynamic inconsistency and Bellman's principle}\label{dynamic-inconsistency-and-bellmans-principle}}
+
+Consider a planner who at time zero chooses a sequence of decisions---here, harvest levels by stratum and period---over a finite horizon of \(T\) periods, so as to maximize an objective (discounted net present value, NPV) subject to constraints, including a harvest-flow constraint that links consecutive periods. The open-loop solution is a complete plan: a decision for every period, chosen once, at time zero, from the initial forest state.
+
+Now suppose the plan is executed one period at a time by a sequence of planners, each inheriting the forest state realized by her predecessors and each solving the \emph{same} optimization problem from that state over the remaining horizon. Bellman's principle of optimality states that an optimal policy has the property that, whatever the initial state and initial decision, the remaining decisions must constitute an optimal policy with regard to the state resulting from the first decision (\citep{bellman1957dynamic}). A plan that satisfies this property is \emph{dynamically consistent}: its tail is optimal for every subproblem it passes through, so each successive planner, re-solving from the realized state, voluntarily continues the plan. A plan that fails the property is \emph{dynamically inconsistent}: at some point the re-solving planner finds the plan's tail suboptimal for the state she has inherited and deviates from it. The open-loop projection of period-by-period harvests is then not a forecast of anything that will happen; it is a statement about a counterfactual world in which precommitment is possible.
+
+The practical stakes are not subtle. Long-term forest plans are used to set allowable cuts, to justify regulation of harvest flow, and to price constraints and land uses through shadow prices. If the plan is dynamically inconsistent, the projected harvest levels will not be delivered, the projected residual forest will not exist, and the shadow prices---which are properties of the particular optimal solution that will not be followed---are biased as measures of trade-offs along any trajectory that will actually occur.
+
+\hypertarget{the-open-loop-lp-forest-planning-problem}{%
+\subsection{The open-loop LP forest-planning problem}\label{the-open-loop-lp-forest-planning-problem}}
+
+The standard strategic timber harvest-scheduling model is strata-based: the forest is partitioned into development types (strata) defined by attributes such as site, species composition, age, and management prescription, and the decision variables allocate stratum area to management activities over a horizon of discrete periods. The classical formulations are those of \citet{johnson1977techniques}. In \emph{Model I}, each existing stratum is assigned a complete management schedule as a distinct activity, so that the trajectory of every initial cohort is represented explicitly. In \emph{Model II}, decisions are expressed more compactly as area flows into a smaller set of prescription activities; \emph{Model III} aggregates further still, into a network flow over age classes. We refer the reader to \citep[ch.~16]{gunn2007models} for a careful statement of the Model I/II/III distinction and its lineage.
+
+A word on model form and size is warranted, because a misconception about it circulates. Model II is widely described as the more compact formulation on the strength of its smaller variable count (Johnson and Scheurman 1977), and it is sometimes asserted that Model II reduces the size and difficulty of harvest-scheduling LPs relative to Model I. That expectation does not survive contact with modern instances. In the first published comparison of the two formulations on realistic spatial problems, \citet{martin2017comparing} showed that Model II's apparent compactness advantage evaporates---and reverses---once the problem carries realistic spatial resolution or many strata: Model II's per-strata constraint network makes its matrix denser and its solution time grow rapidly with added structure, while Model I's cost grows only marginally. On their full case study, Model I reached comparable optimal solutions in roughly a tenth of Model II's solution time. The authors' conclusion is blunt: the common expectation that Model II is the smaller, easier model is \emph{refuted} for all but the smallest or most weakly structured problems. This bears directly on the reproduction's formulation choice (below).
+
+Two ingredients of the standard formulation matter for what follows. First, the objective is discounted NPV: timber values and costs in each period are weighted by a discount factor, so early harvest is preferred to late harvest, all else equal. Second, harvest-flow constraints---typically even-flow or bounded-deviation constraints on total volume between consecutive periods---create the only direct link between decisions in different periods. Without such a link, the multi-period problem decomposes and open-loop and sequential solutions coincide. With it, the current period's decision changes the feasible set---and the shadow prices---of every future subproblem.
+
+\citet{daugherty1991credibility} conducted his analysis using a Model II formulation. The reproduction reported here builds the case study as a Model I model in \texttt{ws3}. The distinction matters for computational detail but not for the consistency question at issue: dynamic inconsistency is a property of the interaction among the objective, the flow constraint, and the initial forest structure, not of the variable-aggregation scheme. Moreover, the Model I choice is not merely a convenience: on the evidence of \citet{martin2017comparing}, Model I is at least as computationally efficient as Model II on realistic, well-structured problems, so nothing is sacrificed computationally by reproducing the analysis in the stand-based form. We nonetheless note the formulation difference explicitly as a fidelity caveat rather than a deviation of substance.
+
+\hypertarget{daughertys-thesis}{%
+\subsection{Daugherty's thesis}\label{daughertys-thesis}}
+
+\citet{daugherty1991credibility} posed the credibility question directly: are the plans produced by LP-based forest-planning models, solved open-loop, plans that a sequence of future planners operating the same model would actually follow? The thesis (i) formalized dynamic consistency for LP forest-planning models, (ii) derived conditions under which open-loop optimal plans fail the consistency requirements, and (iii) demonstrated the phenomenon numerically by iterative LP simulation of sequential replanning on a real case study---the Umpqua National Forest FORPLAN planning model documented in \citep{usda1987umpqua}---across a designed experiment varying the initial forest condition, the harvest policy, and the interest rate. The thesis found dynamic inconsistency to be pervasive rather than exceptional, and traced it to the combination of the harvest-flow constraint with a disequilibrium initial forest containing financially over-mature and negatively valued strata. \citep[pp.~331--332]{gunn2007models}, citing \citet{daugherty1991credibility}, summarizes the practical symptom memorably as the ``declining non-declining yield'': a plan that promises a non-declining harvest trajectory while the sequential re-optimization it invites systematically revises the attainable harvest downward.
+
+% !TEX root = ../main.tex
+\section{Methods}
+
+\hypertarget{case-study-the-umpqua-national-forest-forplan-model}{%
+\subsection{Case study: the Umpqua National Forest FORPLAN model}\label{case-study-the-umpqua-national-forest-forplan-model}}
+
+The case study reproduces the Umpqua National Forest FORPLAN planning model \citep{usda1987umpqua}, reconstructed in the open-source \texttt{ws3} wood-supply model \citep{paradis2026ws3}. The forest is stratified into four ecoclasses---CH-CW, CD-CP, CR-CF, and CM-CE, dominated respectively by Douglas-fir, hemlock, fir, and hemlock types---arrayed in decreasing growth potential. Seven silvicultural prescriptions are available, each with ecoclass-specific rotation-age ranges. The planning horizon is 150 years, divided into 15 periods of 10 years. The objective is maximization of net present value at a 4\% discount rate (varied in the experiments), with delivered-log prices escalating at 1\% per year for the first 50 years and constant thereafter. A harvest-flow (even-flow) constraint links total harvest volume between consecutive periods, and volumes are expressed in thousands of cubic feet (MCF). The initial forest is specified as one of a set of landbase conditions; the landbase of central interest (landbase 1) is an all-mature forest, the extreme of the disequilibrium structures the thesis studies.
+
+\hypertarget{case-study-data}{%
+\subsection{Case-study data}\label{case-study-data}}
+
+The case study is built from the real Umpqua FORPLAN data, obtained from the public-domain Umpqua National Forest planning documents on HathiTrust. The per-age yield curves---the volume removed per acre by age for each ecoclass, prescription, and management intensity---come from the 1990 Final Environmental Impact Statement (FEIS) Appendix B \citep{usda1990umpqua} (the FORPLAN analysis volume: managed yield tables generated with the DFSIM Douglas-fir simulator, with operational-falldown adjustments, and the mountain-hemlock curve from Johnson's mountain-hemlock site equations). The economics come from the FEIS's timber-value derivations: stumpage, logging, and manufacturing costs by species (its Table B-65), the Douglas-fir price-diameter and pond-value relationships (Table B-66), and the per-ecoclass access (road) costs that make the high-elevation mountain-hemlock (CM-CE) prescriptions negatively valued. The yield-curve shapes are consistent with the LRMP's documented 95\% CMAI culmination ages by ecoclass (its Table IV-3: 85 years for CH-CW, 120 for CD-CP, 115 for CR-CF, 175 for CM-CE), and the FEIS Stage II financial analysis corroborates the thesis's anchor values (its mature-timber NPV range of \$1,800--\$7,700 per acre brackets the thesis's Table 5.4 mature-type NPVs; its managed-prescription range of \$27--\$290 per acre and the negative mountain-hemlock values match the thesis's Table 5.3 ordering and signs).
+
+All source documents were obtained and machine-read from HathiTrust (public domain): the 1990 LRMP, the 1990 FEIS main volume and its Appendix B (the FORPLAN analysis volume), and the 1987 Draft EIS \citep{usda1987umpqua} that Daugherty used directly (the thesis's exact data vintage). The 1987 DEIS and 1990 FEIS yield tables agree, so the assembled case study uses Daugherty's exact data. The thesis's printed anchor tables (Tables 5.3 and 5.4) are reproduced as a validation check on the assembled case study. All data are typed, provenance-stamped records in the repository; the extraction of the FEIS Appendix B tables is a one-time, documented, reproducible step, and the package does not depend on the scanned source at runtime.
+
+\hypertarget{the-sequential-replanning-simulator}{%
+\subsection{The sequential-replanning simulator}\label{the-sequential-replanning-simulator}}
+
+Dynamic inconsistency cannot be observed in a single open-loop solve; it is defined by what happens when the plan meets sequential re-optimization. Following the thesis's iterative LP simulation, we implement a sequential-replanning simulator:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Solve the open-loop LP from the current forest state over the horizon.
+\item
+  Apply the current period's decision from that solution.
+\item
+  Advance the forest state by one period: the realized area-by-age distribution is extracted from the model and becomes the initial condition of the next subproblem.
+\item
+  Re-solve the open-loop LP from the realized state over the (rolling) horizon.
+\item
+  Repeat to the end of the simulation, recording both the plan projected at each step and the decisions actually taken.
+\end{enumerate}
+
+The inconsistency measure is the divergence between the open-loop plan's projected per-period harvest and the realized replanned trajectory---that is, the changes in decisions and in projected output levels over time between what was announced and what the re-solving planner actually does. The simulator supports a rolling fixed horizon (the default, which avoids the terminal artifacts of a shrinking horizon) and a shrinking-horizon variant; all seed-dependent runs are fixed-seeded and bit-stable.
+
+\hypertarget{experiment-design}{%
+\subsection{Experiment design}\label{experiment-design}}
+
+The experiment grid reproduces the thesis's three experimental factors: initial forest condition (landbase), harvest policy (the even-flow tolerance), and the interest rate. The reproduced grid spans the four structured landbases of the reconstruction (landbase 1, all mature; landbases 2, 9, and 10), four discount rates (0\%, 2\%, 4\%, and 6\%), and even-flow tolerances from 1\% to 15\%. Each cell of the grid is a full sequential-replanning simulation as described above, scored for the occurrence and magnitude of dynamic inconsistency.
+
+\hypertarget{implementation-and-reproducibility}{%
+\subsection{Implementation and reproducibility}\label{implementation-and-reproducibility}}
+
+The complete stack---typed, provenance-recorded case-study data; the \texttt{ws3} forest model; the explicit LP builder; the sequential-replanning simulator; the experiment runner; and the validation records---is openly available (see Software availability). The package is test-backed, the environment is locked, and the simulation records needed to regenerate every number reported below are produced by the repository's experiment entry points.
+
+% !TEX root = ../main.tex
+\section{Results}
+
+We report the reproduced findings of the experiment grid. Per the framing of this paper, these are Daugherty's findings, reproduced on the real Umpqua FORPLAN case study; they are presented with their fidelity caveats in Section 5.
+
+\textbf{Occurrence.} Dynamic inconsistency occurs in essentially all simulated conditions: every cell of the experiment grid (100\%) exhibits divergence between the open-loop plan's projected per-period harvest and the realized replanned trajectory. The phenomenon is not an edge case of particular rate or policy choices; it is the default behaviour of the open-loop formulation on this class of problem. In all cells the first-period decision is consistent---the divergence is in the plan's tail, exactly as the theory predicts.
+
+\textbf{Invariance to the discount rate.} The occurrence and magnitude of the inconsistency are invariant to the discount rate: results across 0\%, 2\%, 4\%, and 6\% are identical. This reproduces the thesis's counter-intuitive analytical result (Daugherty 1991, ch.~3, p.~58--59) that, because the discount factor is uniform across periods, it drops out of the consistency requirements. We return to this nuance in the Discussion, because it refines---rather than contradicts---the naive account of the phenomenon.
+
+\textbf{Effect of the harvest-flow constraint.} Tighter harvest-flow constraints increase the inconsistency: the smaller the permitted deviation between consecutive periods' harvests, the larger the divergence between plan and realized trajectory. This confirms the flow constraint as the operative between-period link through which current decisions distort future subproblems.
+
+\textbf{Role of disequilibrium structure and negatively valued strata.} The disequilibrium initial forest structure drives the phenomenon. The mature and old-growth landbases---containing over-mature, financially over-mature, and negatively valued strata---exhibit the inconsistency clearly, and its magnitude scales with the degree of initial age-class disequilibrium. The CM-CE ecoclass is negatively valued: its harvest cost exceeds its timber value. Such strata have no place in any credible long-run plan, yet they enter the open-loop solutions as \emph{inconsistent variables}---area allocations whose only function is to relax the binding flow constraint in the plan and that the re-solving planner subsequently abandons.
+
+\textbf{The landbase-1 trajectory.} On landbase 1 (all mature), the divergence between announcement and delivery is stark. The open-loop even-flow plan projects a smooth, credible-looking harvest of roughly 85--89 thousand MCF per period across the horizon. The realized replanned trajectory is volatile from period to period and delivers roughly 50\% less total volume than the plan projects. The plan is not followed; announced on a disequilibrium forest, it is not a credible basis for policy. Table 1 summarizes the experiment grid and findings.
+
+\textbf{Table 1.} Experiment-grid summary: factors, levels, occurrence of dynamic inconsistency, and magnitude patterns. Full per-cell simulation records are available in the project repository.
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.2500}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.2500}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.2500}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.2500}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Factor
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Levels
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Occurrence of inconsistency
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Magnitude pattern
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Initial forest condition (landbase) & 1 (all mature), 2, 9, 10 & 4 of 4 & Largest on the disequilibrium mature/old-growth landbases; magnitude scales with initial age-class disequilibrium \\
+Discount rate & 0\%, 2\%, 4\%, 6\% & 4 of 4 (at every landbase × policy combination) & Identical across rates; volume-based inconsistency is invariant to the discount rate \\
+Harvest-flow (even-flow) tolerance & 1\%--15\% & 100\% at every tolerance & Tighter flow constraints increase inconsistency; the flow constraint is the operative between-period link \\
+Full grid & 4 landbases × 4 discount rates × tolerance sweep & 100\% of cells & --- \\
+\end{longtable}
+
+% !TEX root = ../main.tex
+\section{Discussion}
+
+\hypertarget{what-drives-the-inconsistency}{%
+\subsection{What drives the inconsistency}\label{what-drives-the-inconsistency}}
+
+The reproduction cleanly separates the ingredients of the phenomenon. The harvest-flow constraint is the operative between-period link: without it, the multi-period problem decomposes and open-loop and sequential solutions agree; with it, and the tighter it is, the larger the divergence between plan and realization. The disequilibrium forest structure is the fuel: a mature/old-growth landbase places a large pulse of immediately harvestable, financially over-mature volume in front of a regulated future that cannot sustain it, so the open-loop plan's promised smooth flow can only be constructed by commitments the future planner will not keep. The negatively valued strata are the tell: because CM-CE area enters the solution only to mitigate the binding flow constraint and is then abandoned under replanning, its presence in the open-loop solution is a direct, observable marker of the inconsistency rather than a real management intention.
+
+\hypertarget{the-discount-rate-nuance}{%
+\subsection{The discount-rate nuance}\label{the-discount-rate-nuance}}
+
+One finding deserves emphasis because it is easy to misstate, and misstatements of it circulate. The naive account---``a discounted objective plus an even-flow constraint breaks Bellman's principle''---suggests that the discount rate is the operative driver and that consistency could be restored by lowering it. The reproduction shows this is not so: occurrence and magnitude are identical at 0\%, 2\%, 4\%, and 6\%. The resolution is in the thesis itself (Daugherty 1991, ch.~3, p.~58--59): because the discount factor is uniform across periods, it cancels out of the conditions that a plan must satisfy to be consistent. Discounting shapes \emph{which} plan is chosen, but the inconsistency is a property of the constraint structure and the forest state, not of the rate. We present this as a reproduced nuance of the thesis, not as a contradiction of it---indeed, reproducing this counter-intuitive invariance on independent software is among the strongest checks that the reproduction has captured the thesis's mechanism rather than a look-alike artifact. The practical corollary is uncomfortable: discount-rate policy is not a remedy for non-credible plans.
+
+\hypertarget{implications-for-the-literature}{%
+\subsection{Implications for the literature}\label{implications-for-the-literature}}
+
+The implication for the large literature of open-loop LP forest-planning studies---and for planning practice built on single-solve strategic models---is direct. Where a model combines a harvest-flow constraint with a disequilibrium initial forest, its projected harvest trajectories, residual growing-stock trajectories, and shadow prices are properties of a plan that sequential re-optimization will not follow, and trade-off analysis conducted on them is biased. Gunn's \citep[pp.~331--332]{gunn2007models} ``declining non-declining yield'' names the symptom exactly: the promised non-declining flow declines precisely because each successive planner declines to honour it. The same mechanism surfaces downstream, in the hierarchical link between strategic and operational planning: \citet{paradis2013risk} showed that incoherent linkage between long-term wood-supply allocation and short-term harvest planning induces a systematic drift between planned and implemented harvest (a divergence of forest system state), citing \citet{daugherty1991credibility} and naming the declining-nondeilning-yield phenomenon. The dynamic inconsistency reproduced here is the analytic root of that practical drift, developed further in the author's broader wood-supply-modelling research program \citep{paradis2017compiling,paradis2018retrofitting,paradis2018estimating}. That the underlying analysis has been effectively inaccessible for three decades---an archival thesis obtainable only as a roughly \$200 custom print---plausibly explains why the phenomenon keeps being rediscovered. A citable, reproducible reference is overdue.
+
+\hypertarget{remedies}{%
+\subsection{Remedies}\label{remedies}}
+
+The thesis and the subsequent literature point to three families of remedies, which the reproduction makes concrete. First, \emph{consistent formulations}: rather than solving one open-loop problem, compute solutions that are optimal for the sequential game the planning process actually is---subgame-perfect or feedback solutions in which each period's decision is optimal given the state and the continuation policy. The thesis discusses the generation of consistent solutions; computing them exactly for the full case study is a natural follow-on enabled by this stack. Second, \emph{credible precommitment}: inconsistency arises because the future planner is free to re-solve; institutional commitments that genuinely bind future decisions---for example, regeneration mandates attached to harvest---change the future subproblem and can restore credibility to announced plans. (The reproduction's harvest actions regenerate to age zero by construction, which makes this channel visible in the model.) Third, \emph{receding-horizon practice with honest reporting}: if planning is in fact sequential replanning, then the simulator used here---not the single open-loop solve---is the honest model of what the planning process will deliver, and plan documents should report the realized replanned trajectory rather than the open-loop projection.
+
+\hypertarget{limitations}{%
+\subsection{Limitations}\label{limitations}}
+
+Three limitations bound the claims. First, the data vintage: the case study is built from the 1990 FEIS (the FORPLAN model lineage with updated 1980s prices), cross-checked against the 1987 DEIS that Daugherty used directly; the two vintages' yield tables agree, and the thesis's exact base-case schedule is not matched period by period because the thesis's per-period realized schedule is not printed. Validation is against the thesis's printed anchors (Tables 5.3 and 5.4), which the assembled case study reproduces in sign, ordering, and magnitude range. Second, the formulation caveat: the thesis used Model II; the reproduction uses Model I (Section 2.2). Third, scope: this is one case study and one simulator design (rolling horizon, fixed seeds). The pervasiveness result (100\% of grid cells) is a property of this grid, and while it reproduces the thesis's qualitative conclusion over a wide range of conditions, extension to other forests, formulations, and consistent-solution constructs is future work---work that the open stack is intended to make easy.
+
+% !TEX root = ../main.tex
+\section{Conclusion}
+
+\citet{daugherty1991credibility} core result holds, and it is now reproducible and citable. LP forest-planning models solved as open-loop formulations with a harvest-flow constraint, applied to disequilibrium forest structures containing negatively valued strata, produce dynamically inconsistent plans: a future planner re-solving from the realized state under the same objectives will not follow the plan's tail. The inconsistency is pervasive across the experiment grid (100\% of cells), is aggravated by tighter flow constraints, is driven by disequilibrium structure, and---reproducing the thesis's subtlest finding---is invariant to the discount rate. On the all-mature landbase, the open-loop plan's smooth, credible-looking projection of roughly 85--89 thousand MCF per period gives way under sequential replanning to a volatile realized trajectory delivering roughly half the promised volume. A plan that will not be followed is not a credible basis for policy, and shadow-price analysis computed from it is biased. The contribution of this paper is deliberately modest and, we believe, useful: an open, transparent, fully reproducible \texttt{ws3}-based software stack that makes a three-decades-old, effectively inaccessible result available for verification, citation, teaching, and extension---including the consistent-formulation and precommitment remedies that the thesis pointed toward and that the stack now makes computable in public.
+
+% !TEX root = ../main.tex
+\section{Software availability}
+
+All software, extracted case-study data, experiment configurations, simulation records, and the validation records supporting this paper are openly available in the \texttt{fresh-daugherty} repository \citep{freshdaugherty}. The stack is built on the open-source \texttt{ws3} wood-supply model \citep{paradis2026ws3}. A companion reproduction of a related dynamic-inconsistency test instance is maintained in the \texttt{fresh-fuchs} repository \citep{freshfuchs}.
+
+
+\section*{Statements and Declarations}
+\paragraph{Funding} Development of this work was supported by the Forest Resources Environmental Services Hub (FRESH) at the University of British Columbia.
+\paragraph{Competing Interests} The author declares no competing interests.
+\paragraph{Author Contributions} G. Paradis designed the study, performed the analysis, and prepared the manuscript.
+\paragraph{Employment} G. Paradis is employed as an Assistant Professor at the University of British Columbia.
+\paragraph{LLM Use} LLM-assisted tools contributed to code development and editing; the author approved all content.
+\paragraph{Data Availability} All software, extracted case-study data, experiment configurations, simulation records, and the validation records supporting this paper are openly available in the \texttt{fresh-daugherty} repository at \url{https://github.com/UBC-FRESH/fresh-daugherty}; the Umpqua planning documents are public-domain US Forest Service works accessible via HathiTrust (records 002547999 and 002439528).
+\paragraph{Consent/Ethics} Not applicable; the study uses publicly available data.
+
+\section*{Word Count Summary}
+Total number of words (including references): 4\,660\\
+Total number of words (excluding references): 4\,285\\
+Abstract number of words: 247\\
+Number of words in Supplementary Information: 0
+
+\bibliographystyle{apalike-doi}
+\bibliography{references}
+
+\end{document}
