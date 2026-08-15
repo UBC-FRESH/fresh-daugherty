@@ -9,6 +9,13 @@
   anchors.
 """
 
+from .feis import (
+    SITE_INDEX_BY_ECOCLASS,
+    SPECIES_ECONOMICS,
+    UMPQUA_YIELD_TABLES,
+    standing_volume_curve,
+    yield_tables_for,
+)
 from .thesis import (
     CMAI_CULMINATION_AGE_YR,
     HORIZON_YEARS,
@@ -43,7 +50,10 @@ __all__ = [
     "PRICE_ESCALATION_RATE",
     "PRICE_ESCALATION_YEARS",
     "ROTATION_RANGES",
+    "SITE_INDEX_BY_ECOCLASS",
+    "SPECIES_ECONOMICS",
     "THESIS_DISCOUNT_RATE",
+    "UMPQUA_YIELD_TABLES",
     "VOLUME_UNIT",
     "Ecoclass",
     "LandbaseSpec",
@@ -51,4 +61,6 @@ __all__ = [
     "PnvRotationAnchor",
     "Prescription",
     "RotationRange",
+    "standing_volume_curve",
+    "yield_tables_for",
 ]

@@ -172,3 +172,39 @@ grounded in the FEIS Stage II analysis.
 The 1987 DEIS (Daugherty's exact data vintage) is located on HathiTrust
 (record 002547999) but is bot-blocked to scripted download; it would give the
 exact 1987 data.
+
+## Real-data reconstruction (post-v0.1.0a1 fidelity upgrade, issue #13)
+
+The Umpqua FEIS Appendix B (the FORPLAN analysis volume) is secured
+(HathiTrust record 002439528, OCR text, public domain, held in `tmp/`,
+gitignored). This replaces the calibrated reconstruction with the real Umpqua
+FORPLAN data:
+
+- `tmp/extract_umpqua_feis.py` parses the Appendix B OCR text into the typed,
+  provenance-stamped, committed data module `instance/umpqua_feis.py`: 17
+  per-age yield tables (volume removed MCF/ac by age, per ecoclass x
+  prescription x intensity x emphasis, with CMAI markers), site indices
+  (Table B-39), stumpage/logging/manufacturing economics by species (Table
+  B-65), and Douglas-fir price-diameter/pond values (Table B-66).
+- `instance/feis.py`: accessors (`real_yield_table`, `real_yield_curve`,
+  `real_ecoclass_net_revenue`). The real yield curves' rotation ages match the
+  thesis's Table 5.2 ranges; the per-ecoclass net revenues (FEIS stumpage x
+  BF/CF, less access cost) are CH-CW \$745, CD-CP \$912, CR-CF \$779, CM-CE
+  -\$391/MCF (the negatively-valued stratum, from real data + access cost).
+- `model.py` builds the case-study on the real yield curves; `lp.py` uses the
+  real economics. The open-loop LP solves on real data (landbase 1 and the
+  young-growth landbase 9 both optimal, non-degenerate).
+- **The dynamic-inconsistency result reproduces on real Umpqua FORPLAN data**:
+  landbase 1 (all mature) open-loop even-flow plan projects ~85-89k MCF/period;
+  the realized sequential-replanned trajectory is volatile and delivers ~54%
+  less total volume (mean |relative deviation| 55%).
+
+The paper's data section is updated to describe the real-data reconstruction
+(the 1987 DEIS, Daugherty's exact vintage, is the one document not yet
+obtained in machine-readable form; the 1990 FEIS lineage is used).
+
+Real-data experiment grid (48 cells, horizon 15, rolling horizon):
+occurrence 100%; discount-rate invariant (mean deviation 0.563 at 0-6%); by
+landbase 1/2/9/10 mean deviations 0.41/0.41/0.63/0.81; total realized volume
+below projected by 40%/38%/57%/80% respectively. The dynamic-inconsistency
+finding reproduces on the real Umpqua FORPLAN data.
