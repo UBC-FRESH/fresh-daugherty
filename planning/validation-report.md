@@ -208,3 +208,15 @@ occurrence 100%; discount-rate invariant (mean deviation 0.563 at 0-6%); by
 landbase 1/2/9/10 mean deviations 0.41/0.41/0.63/0.81; total realized volume
 below projected by 40%/38%/57%/80% respectively. The dynamic-inconsistency
 finding reproduces on the real Umpqua FORPLAN data.
+
+## 1987 DEIS secured (Daugherty's exact data vintage)
+
+The 1987 Umpqua Draft EIS (the document Daugherty 1991 used) is secured
+(HathiTrust record 002547999; the `mdp-39015025002364` item, OCR text, public
+domain, held in `tmp/`, gitignored). Its managed yield tables match the 1990
+FEIS Appendix B volumes exactly, AND they carry the per-age PNV columns that
+the 1990 OCR garbled — Daugherty's exact data, with both volumes and per-age
+PNV. The reproduction's dataset of record is the Umpqua FORPLAN data (1990
+FEIS lineage, confirmed against the 1987 DEIS); the 1987 DEIS enables a
+pointwise-exact-vintage extraction (including the per-age PNV) as a final
+refinement.
