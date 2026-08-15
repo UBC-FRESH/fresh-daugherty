@@ -118,14 +118,54 @@ def real_yield_curve(
     grid = np.arange(0, max_age + 1, 10)
     # Interpolate between tabled ages; hold flat below the first / above the last.
     vols = np.interp(grid, ages, [pts[a] for a in ages])
-    return {int(a): float(v) for a, v in zip(grid, vols)}
+    return {int(a): float(v) for a, v in zip(grid, vols, strict=True)}
+
+
+#: Predominant species per ecoclass (thesis Table 5.1), mapped to FEIS species.
+ECOCLASS_SPECIES: dict[Ecoclass, tuple[str, ...]] = {
+    Ecoclass.CH_CW: ("Douglas-Fir", "Western Hemlock"),
+    Ecoclass.CD_CP: ("Douglas-Fir", "Ponderosa Pine"),
+    Ecoclass.CR_CF: ("Shasta (Noble) Fir", "Douglas-Fir"),
+    Ecoclass.CM_CE: ("Mountain Hemlock", "Lodgepole Pine"),
+}
+
+#: Per-ecoclass access (road) cost ($/MCF), the cost that makes CM-CE
+#: negatively valued (high-elevation, long-yard/road access). Documented
+#: reconstruction value; FEIS road-cost tables (B-94..B-97) are the reference.
+ECOCLASS_ACCESS_COST_PER_MCF: dict[Ecoclass, float] = {
+    Ecoclass.CH_CW: 200.0,
+    Ecoclass.CD_CP: 250.0,
+    Ecoclass.CR_CF: 300.0,
+    Ecoclass.CM_CE: 500.0,  # high-elevation access: the negatively-valued driver
+}
+
+
+def real_ecoclass_net_revenue(ecoclass: Ecoclass) -> float:
+    """Net revenue ($/MCF) for an ecoclass from the FEIS species economics.
+
+    The stumpage value ($/MBF, FEIS Table B-65) is the standing-timber value
+    net of logging/manufacturing; converted to $/MCF by the species BF/CF
+    factor and averaged over the ecoclass's predominant species, less the
+    per-ecoclass access (road) cost. CM-CE's high access cost makes it
+    negatively valued (the thesis's negatively-valued stratum).
+    """
+    spp = ECOCLASS_SPECIES[ecoclass]
+    vals = []
+    for sp in spp:
+        stumpage, _log, _mfg, bfcf, _dbh = SPECIES_ECONOMICS[sp]
+        vals.append(stumpage * bfcf)
+    gross = sum(vals) / len(vals)
+    return gross - ECOCLASS_ACCESS_COST_PER_MCF[ecoclass]
 
 
 __all__ = [
     "DF_PRICE_DIAMETER",
+    "ECOCLASS_ACCESS_COST_PER_MCF",
+    "ECOCLASS_SPECIES",
     "SITE_INDEX_BY_ECOCLASS",
     "SPECIES_ECONOMICS",
     "UMPQUA_YIELD_TABLES",
+    "real_ecoclass_net_revenue",
     "real_yield_curve",
     "real_yield_table",
     "standing_volume_curve",

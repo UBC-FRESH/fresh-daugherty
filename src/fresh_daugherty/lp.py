@@ -26,15 +26,37 @@ from fresh_daugherty.model import ecoclass_code
 
 
 def _ecoclass_economics() -> dict[str, tuple[float, float]]:
-    """Net delivered log price and harvest cost ($/MCF) per ecoclass code."""
+    """Net delivered log price and harvest cost ($/MCF) per ecoclass code.
+
+    Uses the real Umpqua FEIS economics (stumpage value net of logging, less
+    the per-ecoclass access/road cost) — CM-CE is negatively valued. The
+    calibrated reconstruction is the fallback if a real value is unavailable.
+    """
+    from fresh_daugherty.instance.feis import real_ecoclass_net_revenue
+    from fresh_daugherty.instance.thesis import Ecoclass
+
     params = calibrated_params()
     econ: dict[str, tuple[float, float]] = {}
     for (eco, _rx), model in params.items():
-        econ[ecoclass_code(eco)] = (
-            model["econ"].net_price_per_mcf,
-            model["econ"].harvest_cost_per_mcf,
-        )
+        code = ecoclass_code(eco)
+        if code in econ:
+            continue
+        try:
+            net = real_ecoclass_net_revenue(Ecoclass(eco.value))
+            # price = net + nominal harvest cost; net = price - hcost.
+            econ[code] = (net + _NOMINAL_HARVEST_COST, _NOMINAL_HARVEST_COST)
+        except (ValueError, KeyError):
+            econ[code] = (
+                model["econ"].net_price_per_mcf,
+                model["econ"].harvest_cost_per_mcf,
+            )
     return econ
+
+
+#: Nominal harvest cost ($/MCF) folded out of the FEIS stumpage (which is
+#: already net of logging/manufacturing); used only to keep the LP's
+#: price-minus-cost structure explicit.
+_NOMINAL_HARVEST_COST = 0.0
 
 
 def _escalated(base: float, year: float) -> float:
