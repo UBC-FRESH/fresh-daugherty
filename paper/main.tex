@@ -1,0 +1,59 @@
+\documentclass[12pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath, amssymb}
+\usepackage{bm}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{siunitx}
+\usepackage{caption}
+\usepackage{hyperref}
+\usepackage{natbib}
+\usepackage{titling}
+\usepackage{longtable}
+
+\pretitle{\begin{flushleft}\LARGE\bfseries}
+\posttitle{\par\end{flushleft}\vskip 1em}
+\preauthor{\begin{flushleft}\large}
+\postauthor{\par\end{flushleft}\vskip 0.75em}
+\predate{\begin{flushleft}\large}
+\postdate{\par\end{flushleft}\vskip 1em}
+\captionsetup[figure]{labelfont=bf,labelsep=space,name=Fig.}
+
+\title{Open-Loop Linear-Programming Forest Plans Are Not Credible: A Reproducible Replication of Daugherty (1991)}
+\author{Gregory Paradis\\Department of Forest Resources Management, University of British Columbia, Canada\\Corresponding author: \texttt{gregory.paradis@ubc.ca}}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\noindent\textbf{Keywords:} dynamic inconsistency; forest planning; linear programming; even flow; harvest scheduling; reproducibility; open-loop control; ws3
+
+\input{sections/abstract}
+\input{sections/introduction}
+\input{sections/background}
+\input{sections/methods}
+\input{sections/results}
+\input{sections/discussion}
+\input{sections/conclusion}
+\input{sections/software-availability}
+
+\section*{Statements and Declarations}
+\paragraph{Funding} Development of this work was supported by the Forest Resources Environmental Services Hub (FRESH) at the University of British Columbia.
+\paragraph{Competing Interests} The author declares no competing interests.
+\paragraph{Author Contributions} G. Paradis designed the study, performed the analysis, and prepared the manuscript.
+\paragraph{Employment} G. Paradis is employed as an Assistant Professor at the University of British Columbia.
+\paragraph{LLM Use} LLM-assisted tools contributed to code development and editing; the author approved all content.
+\paragraph{Data Availability} All software, extracted case-study data, experiment configurations, simulation records, and the validation records supporting this paper are openly available in the \texttt{fresh-daugherty} repository at \url{https://github.com/UBC-FRESH/fresh-daugherty}; the Umpqua planning documents are public-domain US Forest Service works accessible via HathiTrust (records 002547999 and 002439528).
+\paragraph{Consent/Ethics} Not applicable; the study uses publicly available data.
+
+\section*{Word Count Summary}
+Total number of words (including references): 4\,660\\
+Total number of words (excluding references): 4\,285\\
+Abstract number of words: 247\\
+Number of words in Supplementary Information: 0
+
+\bibliographystyle{apalike-doi}
+\bibliography{references}
+
+\end{document}
