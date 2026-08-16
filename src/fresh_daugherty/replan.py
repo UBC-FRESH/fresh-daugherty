@@ -32,6 +32,15 @@ from fresh_daugherty.model import (
 
 _AREA_COLS = ("forest", "ecoclass", "rx", "origin", "state", "age", "area_ac")
 
+#: Occurrence threshold for dynamic inconsistency: a plan is judged dynamically
+#: inconsistent when the mean per-period relative divergence between the
+#: open-loop projection and the realized replanned trajectory exceeds this
+#: tolerance. The default (5%) is far above LP-solver numerical noise (~1e-6)
+#: and far below the magnitudes observed on this case study, so the occurrence
+#: classification is robust to the exact choice; it is stated explicitly here
+#: (and in the paper) so the "occurs in N% of cells" claim is well-defined.
+OCCURRENCE_TOLERANCE = 0.05
+
 
 def extract_areas(model: ws3.forest.ForestModel, period: int) -> pd.DataFrame:
     """Extract the realized area per (development type, age) at ``period``.
@@ -159,28 +168,49 @@ def sequential_replan(
     return pd.DataFrame({"period": list(range(1, horizon + 1)), "harvest_volume_mcf": realized})
 
 
-def inconsistency_metrics(projected: list[float], realized: list[float]) -> dict[str, float]:
+def inconsistency_metrics(
+    projected: list[float],
+    realized: list[float],
+    *,
+    occurrence_tolerance: float = OCCURRENCE_TOLERANCE,
+) -> dict[str, float]:
     """Dynamic-inconsistency metrics from the projected vs realized volumes.
 
     The open-loop plan's projected per-period harvest volume vs the realized
-    replanned trajectory. Metrics: max and mean absolute deviation, and the
-    relative change in total volume.
+    replanned trajectory. Formally, with projection ``p = (p_1, ..., p_T)`` and
+    realized trajectory ``r = (r_1, ..., r_T)``, the per-period relative
+    deviation is
+
+        delta_t = |p_t - r_t| / max(|p_t|, 1),
+
+    and the reported magnitudes are the mean and max of ``delta_t`` over the
+    horizon and the relative change in total volume
+    ``(sum r - sum p) / max(|sum p|, 1)``. A plan is judged dynamically
+    inconsistent (``occurrence``) when the mean relative deviation exceeds
+    ``occurrence_tolerance`` (default ``OCCURRENCE_TOLERANCE``). The
+    first-period decision is consistent by construction (the realized period-1
+    harvest is the open-loop period-1 decision), so the divergence is in the
+    plan's tail, exactly as the theory predicts.
     """
     n = min(len(projected), len(realized))
     p = np.array(projected[:n], dtype=float)
     r = np.array(realized[:n], dtype=float)
     denom = np.maximum(np.abs(p), 1.0)
     rel = np.abs(p - r) / denom
+    mean_rel = float(rel.mean())
     return {
         "max_abs_rel_deviation": float(rel.max()),
-        "mean_abs_rel_deviation": float(rel.mean()),
+        "mean_abs_rel_deviation": mean_rel,
         "total_projected": float(p.sum()),
         "total_realized": float(r.sum()),
         "total_rel_change": float((r.sum() - p.sum()) / max(abs(p.sum()), 1.0)),
+        "occurrence": bool(mean_rel > occurrence_tolerance),
+        "occurrence_tolerance": float(occurrence_tolerance),
     }
 
 
 __all__ = [
+    "OCCURRENCE_TOLERANCE",
     "build_model",
     "extract_areas",
     "inconsistency_metrics",

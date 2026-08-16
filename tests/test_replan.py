@@ -46,6 +46,25 @@ def test_plan_tail_is_not_followed(replan_result) -> None:
     projected, realized = replan_result
     m = inconsistency_metrics(projected, realized)
     assert m["mean_abs_rel_deviation"] > 0.10
+    # Occurrence criterion: mean relative deviation exceeds the stated threshold.
+    assert m["occurrence"] is True
+    assert m["occurrence_tolerance"] == pytest.approx(0.05)
+
+
+def test_occurrence_criterion_threshold() -> None:
+    """The occurrence flag follows the stated mean-deviation threshold."""
+    p = [100.0, 100.0, 100.0]
+    # Small deviation (below threshold): consistent.
+    m_ok = inconsistency_metrics(p, [100.0, 99.0, 101.0])
+    assert m_ok["mean_abs_rel_deviation"] < m_ok["occurrence_tolerance"]
+    assert m_ok["occurrence"] is False
+    # Large deviation (above threshold): inconsistent.
+    m_bad = inconsistency_metrics(p, [100.0, 50.0, 150.0])
+    assert m_bad["mean_abs_rel_deviation"] > m_bad["occurrence_tolerance"]
+    assert m_bad["occurrence"] is True
+    # A stricter threshold flips the classification of a marginal case.
+    m_strict = inconsistency_metrics(p, [100.0, 90.0, 110.0], occurrence_tolerance=0.05)
+    assert m_strict["occurrence"] is True
 
 
 def test_replanning_is_reproducible(tmp_path) -> None:

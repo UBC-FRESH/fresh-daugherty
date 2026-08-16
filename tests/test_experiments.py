@@ -41,6 +41,9 @@ def test_experiment_grid_shape(tmp_path: Path) -> None:
     assert len(df) == 2
     assert set(df["landbase"]) == {1, 2}
     assert (df["mean_abs_rel_deviation"] >= 0).all()
+    # The occurrence criterion flows through to the grid output.
+    assert "occurrence" in df.columns
+    assert df["occurrence"].dtype == bool
 
 
 def test_flow_tolerance_changes_projection(tmp_path: Path) -> None:
