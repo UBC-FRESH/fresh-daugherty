@@ -102,6 +102,42 @@ def replan_run(
     typer.echo("  -> the open-loop plan is not followed (dynamic inconsistency)")
 
 
+@app.command("grid")
+def grid(
+    landbases: str = typer.Option("1,2,9,10", "--landbases", help="Comma-separated landbase ids."),
+    discount_rates: str = typer.Option("0.0,0.02,0.04,0.06", "--discount-rates", help="Comma-separated rates."),
+    policies: str = typer.Option(
+        "NHF,NDY,-10%,-20%,+/-10%,+/-20%", "--policies", help="Comma-separated Table 5.6 policy codes."
+    ),
+    horizon: int = typer.Option(15, "--horizon", min=1),
+    out: Path = typer.Option(Path("outputs") / "experiments" / "grid.csv", "--out"),
+) -> None:
+    """Run the thesis experiment grid (landbase x discount rate x harvest-flow policy).
+
+    Reproduces Daugherty (1991)'s experiment design: the Table 5.6 harvest-flow
+    policies (consecutive sequential flow) crossed with discount rates and
+    landbases. Writes one row per cell (occurrence + magnitude metrics) to
+    ``--out``. This is the tracked entry point that regenerates the results CSV.
+    """
+    from fresh_daugherty.experiments import run_policy_grid
+    from fresh_daugherty.instance.reconstruct import calibrate
+    from fresh_daugherty.instance.thesis import HARVEST_FLOW_POLICIES
+
+    calibrate()
+    lbs = tuple(int(x) for x in landbases.split(","))
+    rates = tuple(float(x) for x in discount_rates.split(","))
+    pol_by_code = {p.code: p for p in HARVEST_FLOW_POLICIES}
+    pols = tuple(pol_by_code[c] for c in policies.split(","))
+    df = run_policy_grid(
+        landbases=lbs, discount_rates=rates, policies=pols, horizon=horizon,
+        workdir=out.parent / "grid_work",
+    )
+    out.parent.mkdir(parents=True, exist_ok=True)
+    df.to_csv(out, index=False)
+    typer.echo(f"wrote {out} ({len(df)} cells)")
+    typer.echo(f"  occurrence rate: {df['occurrence'].mean():.0%} of cells")
+
+
 @app.command("consistency-run")
 def consistency_run() -> None:
     """Run the consistent-solution (subgame-perfect) analysis (post-v0.1.0a1)."""

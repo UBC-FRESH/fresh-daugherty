@@ -15,6 +15,8 @@ from pathlib import Path
 import pandas as pd
 
 from fresh_daugherty.instance.landbases import landbase_areas
+from fresh_daugherty.instance.thesis import HarvestFlowPolicy
+from fresh_daugherty.lp import flow_kwargs_for_policy
 from fresh_daugherty.model import bootstrap_model, build_woodstock_sections, prepare_optimization
 from fresh_daugherty.replan import (
     inconsistency_metrics,
@@ -47,8 +49,19 @@ def run_experiment(
     flow_geometry: str = "period1",
     flow_decrease: float | None = None,
     flow_increase: float | None = None,
+    flow_policy: HarvestFlowPolicy | None = None,
 ) -> ExperimentResult:
-    """Run one experiment cell (open-loop projection + sequential replan)."""
+    """Run one experiment cell (open-loop projection + sequential replan).
+
+    If ``flow_policy`` (a thesis Table 5.6 harvest-flow policy) is given, it
+    overrides ``flow_geometry``/``flow_decrease``/``flow_increase`` with the
+    policy's consecutive sequential-flow form.
+    """
+    if flow_policy is not None:
+        flow_kwargs = flow_kwargs_for_policy(flow_policy)
+        flow_geometry = flow_kwargs.get("flow_geometry", flow_geometry)
+        flow_decrease = flow_kwargs.get("flow_decrease")
+        flow_increase = flow_kwargs.get("flow_increase")
     workdir = Path(workdir)
     areas = landbase_areas(landbase)
     build_woodstock_sections(workdir / "model", areas=areas)
@@ -132,4 +145,47 @@ def run_experiment_grid(
     return pd.DataFrame(rows)
 
 
-__all__ = ["ExperimentResult", "run_experiment", "run_experiment_grid"]
+def run_policy_grid(
+    *,
+    landbases: tuple[int, ...],
+    discount_rates: tuple[float, ...],
+    policies: tuple[HarvestFlowPolicy, ...],
+    horizon: int,
+    workdir: str | Path,
+) -> pd.DataFrame:
+    """Run the thesis experiment grid: landbase x discount rate x harvest-flow policy.
+
+    Reproduces Daugherty (1991)'s experiment design — the Table 5.6
+    harvest-flow policies (NHF, NDY, -10%, -20%, +/-10%, +/-20%) crossed with
+    discount rates and landbases. Each cell is a full sequential-replanning
+    simulation under the policy's consecutive sequential-flow constraint.
+    Returns one row per cell with the occurrence/magnitude metrics.
+    """
+    workdir = Path(workdir)
+    rows = []
+    for lb in landbases:
+        for rate in discount_rates:
+            for pol in policies:
+                result = run_experiment(
+                    landbase=lb,
+                    discount_rate=rate,
+                    flow_tolerance=0.0,  # unused when flow_policy is given
+                    horizon=horizon,
+                    workdir=workdir / f"lb{lb}_r{rate}_{pol.code.replace('/', '').replace('%', 'pct')}",
+                    flow_policy=pol,
+                )
+                rows.append(
+                    {
+                        "landbase": lb,
+                        "discount_rate": rate,
+                        "flow_policy": pol.code,
+                        "max_decrease": pol.max_decrease,
+                        "max_increase": pol.max_increase,
+                        "horizon": horizon,
+                        **result.metrics,
+                    }
+                )
+    return pd.DataFrame(rows)
+
+
+__all__ = ["ExperimentResult", "run_experiment", "run_experiment_grid", "run_policy_grid"]

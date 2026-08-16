@@ -31,6 +31,7 @@ from fresh_daugherty.instance.thesis import (
     PRICE_ESCALATION_RATE,
     PRICE_ESCALATION_YEARS,
     THESIS_DISCOUNT_RATE,
+    HarvestFlowPolicy,
 )
 from fresh_daugherty.model import ecoclass_code
 
@@ -127,8 +128,10 @@ def add_open_loop_problem(
                     out[t] = vol
         return out
 
-    if flow_geometry not in ("period1", "consecutive"):
-        raise ValueError(f"flow_geometry must be 'period1' or 'consecutive', got {flow_geometry!r}")
+    if flow_geometry not in ("period1", "consecutive", "none"):
+        raise ValueError(
+            f"flow_geometry must be 'period1', 'consecutive', or 'none', got {flow_geometry!r}"
+        )
 
     coeff_funcs = {"z": coeff_c_z, "cflw_hv": coeff_c_hv}
     cflw_e = None
@@ -143,6 +146,9 @@ def add_open_loop_problem(
                 "ub": dict.fromkeys(model.periods, target_flow_mcf),
             }
         }
+    elif flow_geometry == "none":
+        # No harvest-flow constraint (the thesis's NHF policy, Table 5.6).
+        cflw_e = None
     elif flow_geometry == "period1":
         cflw_e = {"cflw_hv": (dict.fromkeys(model.periods, flow_coefficient), 1)}
     else:  # consecutive (thesis "sequential flow", Table 5.6)
@@ -167,6 +173,22 @@ def add_open_loop_problem(
         workers=1,
         verbose=False,
     )
+
+
+def flow_kwargs_for_policy(policy: HarvestFlowPolicy) -> dict:
+    """Map a thesis harvest-flow policy (Table 5.6) to ``add_open_loop_problem`` kwargs.
+
+    NHF (no decrease/increase) -> no flow constraint; the sequential-flow sets
+    (NDY, -10%, -20%, +/-10%, +/-20%) -> the consecutive-period geometry with
+    the policy's max-decrease and (optional) max-increase tolerances.
+    """
+    if policy.max_decrease is None and policy.max_increase is None:
+        return {"flow_geometry": "none"}
+    return {
+        "flow_geometry": "consecutive",
+        "flow_decrease": policy.max_decrease,
+        "flow_increase": policy.max_increase,
+    }
 
 
 def solve_open_loop(model: ws3.forest.ForestModel, problem: object) -> pd.DataFrame:
