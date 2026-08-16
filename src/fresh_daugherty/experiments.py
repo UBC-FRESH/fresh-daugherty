@@ -145,6 +145,11 @@ def run_experiment_grid(
     return pd.DataFrame(rows)
 
 
+def _policy_slug(code: str) -> str:
+    """Filesystem-safe slug for a harvest-flow policy code (e.g. '+/-10%' -> 'pm10pct')."""
+    return code.replace("+", "p").replace("/", "").replace("-", "m").replace("%", "pct")
+
+
 def run_policy_grid(
     *,
     landbases: tuple[int, ...],
@@ -171,7 +176,7 @@ def run_policy_grid(
                     discount_rate=rate,
                     flow_tolerance=0.0,  # unused when flow_policy is given
                     horizon=horizon,
-                    workdir=workdir / f"lb{lb}_r{rate}_{pol.code.replace('/', '').replace('%', 'pct')}",
+                    workdir=workdir / f"lb{lb}_r{rate}_{_policy_slug(pol.code)}",
                     flow_policy=pol,
                 )
                 rows.append(

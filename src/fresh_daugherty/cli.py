@@ -105,9 +105,13 @@ def replan_run(
 @app.command("grid")
 def grid(
     landbases: str = typer.Option("1,2,9,10", "--landbases", help="Comma-separated landbase ids."),
-    discount_rates: str = typer.Option("0.0,0.02,0.04,0.06", "--discount-rates", help="Comma-separated rates."),
+    discount_rates: str = typer.Option(
+        "0.0,0.02,0.04,0.06", "--discount-rates", help="Comma-separated rates."
+    ),
     policies: str = typer.Option(
-        "NHF,NDY,-10%,-20%,+/-10%,+/-20%", "--policies", help="Comma-separated Table 5.6 policy codes."
+        "NHF,NDY,-10%,-20%,+/-10%,+/-20%",
+        "--policies",
+        help="Comma-separated Table 5.6 policy codes.",
     ),
     horizon: int = typer.Option(15, "--horizon", min=1),
     out: Path = typer.Option(Path("outputs") / "experiments" / "grid.csv", "--out"),
@@ -129,7 +133,10 @@ def grid(
     pol_by_code = {p.code: p for p in HARVEST_FLOW_POLICIES}
     pols = tuple(pol_by_code[c] for c in policies.split(","))
     df = run_policy_grid(
-        landbases=lbs, discount_rates=rates, policies=pols, horizon=horizon,
+        landbases=lbs,
+        discount_rates=rates,
+        policies=pols,
+        horizon=horizon,
         workdir=out.parent / "grid_work",
     )
     out.parent.mkdir(parents=True, exist_ok=True)
