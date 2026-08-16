@@ -206,23 +206,26 @@ def inconsistency_metrics(
     The open-loop plan's projected per-period harvest volume vs the realized
     replanned trajectory. Formally, with projection ``p = (p_1, ..., p_T)`` and
     realized trajectory ``r = (r_1, ..., r_T)``, the per-period relative
-    deviation is
+    deviation is the *symmetric* relative change
 
-        delta_t = |p_t - r_t| / max(|p_t|, 1),
+        delta_t = |p_t - r_t| / max(|p_t|, |r_t|, eps),
 
-    and the reported magnitudes are the mean and max of ``delta_t`` over the
-    horizon and the relative change in total volume
-    ``(sum r - sum p) / max(|sum p|, 1)``. A plan is judged dynamically
-    inconsistent (``occurrence``) when the mean relative deviation exceeds
-    ``occurrence_tolerance`` (default ``OCCURRENCE_TOLERANCE``). The
-    first-period decision is consistent by construction (the realized period-1
-    harvest is the open-loop period-1 decision), so the divergence is in the
-    plan's tail, exactly as the theory predicts.
+    which is bounded in [0, 1] and robust to near-zero baselines (a projected
+    lull that the replanning fills, or vice versa, gives delta_t ~ 1 rather than
+    an exploding ratio). ``eps`` is a small floor so a both-zero period scores 0.
+    The reported magnitudes are the mean and max of ``delta_t`` over the horizon
+    and the relative change in total volume ``(sum r - sum p) / max(|sum p|, 1)``.
+    A plan is judged dynamically inconsistent (``occurrence``) when the mean
+    relative deviation exceeds ``occurrence_tolerance`` (default
+    ``OCCURRENCE_TOLERANCE``). The first-period decision is consistent by
+    construction, so the divergence is in the plan's tail, as the theory predicts.
     """
     n = min(len(projected), len(realized))
     p = np.array(projected[:n], dtype=float)
     r = np.array(realized[:n], dtype=float)
-    denom = np.maximum(np.abs(p), 1.0)
+    # Symmetric denominator, bounded in [0, 1]; a small floor handles both-zero.
+    floor = max(float(np.abs(p).mean()), float(np.abs(r).mean()), 1.0) * 1e-6
+    denom = np.maximum(np.maximum(np.abs(p), np.abs(r)), floor)
     rel = np.abs(p - r) / denom
     mean_rel = float(rel.mean())
     return {
