@@ -48,8 +48,19 @@ thesis's policy sets.**
 Used with all harvest-flow-constrained runs (not with NHF): (i) ending
 inventory >= 80% of the average inventory of the forest regulated under the
 selected regenerated prescriptions; (ii) final-period harvest <= 120% of the
-long-term sustained yield under the chosen regenerated prescriptions. Not
-currently reproduced — note as a fidelity gap.
+long-term sustained yield under the chosen regenerated prescriptions.
+
+**Resolution (P1.6b, decided with the maintainer):** we implemented and tested
+the ending-period constraints in the ws3 Model I stack. Two findings: (a) the
+horizon-end growing-stock liquidation they guard against was partly an artifact
+of a mature-volume/economics miscalibration (fixed — mature PNVs now match
+Table 5.4 exactly); with the corrected data the model does not exhibit the
+liquidation artifact, so the terminal constraints are largely non-binding here.
+(b) A faithful Model I ending-inventory coefficient that matches ws3's
+growing-stock accounting is non-trivial (regenerated-DT handling), so the
+constraint is present but opt-in (`terminal_constraints=False`) and flagged
+experimental. The paper states this honestly (Methods/limitations) rather than
+carrying a silent caveat.
 
 ## Experiment design (ch. 5)
 

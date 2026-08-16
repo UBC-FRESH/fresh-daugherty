@@ -87,7 +87,7 @@ def add_open_loop_problem(
     flow_geometry: str = "period1",
     flow_decrease: float | None = None,
     flow_increase: float | None = None,
-    terminal_constraints: bool = False,
+    terminal_constraints: bool = False,  # EXPERIMENTAL: see note in docstring
     name: str = "open-loop",
 ) -> object:
     """Add the open-loop NPV-max LP to ``model`` and return it.
@@ -103,6 +103,15 @@ def add_open_loop_problem(
     non-declining yield (NDY). If ``target_flow_mcf`` is given, a target
     harvest-flow floor/ceiling is used instead (an AAC ceiling; overrides
     ``flow_geometry``).
+
+    ``terminal_constraints`` (EXPERIMENTAL, default off): adds the thesis's
+    ending-period inventory floor (ending growing stock >= 80% of the regulated
+    forest's average inventory; thesis p.77). Known issue: the per-path
+    ending-inventory coefficient does not yet match ws3's growing-stock
+    accounting (regenerated-DT handling), so the floor can be infeasible. With
+    the corrected (Table 5.4-faithful) case-study data the model does not
+    exhibit the horizon-end liquidation these constraints guard against, so they
+    are off by default; see `planning/thesis-formulation.md` and issue #42.
     """
     period_length = model.period_length
     econ = _ecoclass_economics()
