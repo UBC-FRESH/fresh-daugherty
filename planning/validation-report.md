@@ -37,6 +37,34 @@ Forest Plan Draft EIS). They are reconstructed in
 `fresh_daugherty.instance.reconstruct` under documented assumptions
 (`RECONSTRUCTION_ASSUMPTIONS`), calibrated to the Table 5.3 / 5.4 anchors.
 
+### Mature-volume derivation: disclosure + independent cross-check (P1.4)
+
+The five mature (existing over-mature) vegetation types' standing volumes are
+**back-computed from the Table 5.4 PNV anchors**
+(`model.mature_volume_mcf = pnv_period1 / net_price`). Consequently, matching
+Table 5.4 is **by construction, not independent validation** — this is now
+disclosed here and in the paper.
+
+The genuine independent check is `feis.mature_volume_crosscheck()`, which
+compares the back-computed volumes against the FEIS standing-volume-by-age
+curves evaluated at each mature type's age (a source independent of Table 5.4):
+
+| Mature type | age | back-calc (MCF/ac) | FEIS indep (MCF/ac) | FEIS/back-calc |
+|---|---|---|---|---|
+| CH-CW sawtimber | 195 | 10.3 | 13.1 | 1.28 |
+| CH-CW two-storied | 115 | 4.7 | 11.8 | 2.53 |
+| CD-CP sawtimber | 125 | 3.8 | 9.2 | 2.45 |
+| CR-CF sawtimber | 225 | 8.4 | 10.7 | 1.27 |
+| CM-CE sawtimber | 175 | n/a (neg. PNV) | 6.4 | n/a |
+
+The two sources agree in **order of magnitude**; the back-calc is
+systematically lower (1.3-2.5x), consistent with the thesis's Table 5.4 PNV
+reflecting the merchantable sawtimber/premium-log portion net of costs rather
+than total standing volume. This is reported honestly as a fidelity caveat; the
+mature types use the thesis-faithful back-calc (so the thesis's own Table 5.4
+anchors are reproduced), with the FEIS curves as the independent order-of-
+magnitude cross-check.
+
 Grounding data (real, from the Umpqua LRMP — a public-domain USFS work,
 Google Books id `lqbvYRGYkpUC`): the 95%-CMAI culmination ages per ecoclass
 (Table IV-3) pin the reconstructed yield-curve shapes

@@ -15,6 +15,7 @@ decade).
 from __future__ import annotations
 
 import numpy as np
+import pandas as pd
 
 from fresh_daugherty.instance.thesis import Ecoclass, Prescription
 from fresh_daugherty.instance.umpqua_feis import (
@@ -119,6 +120,45 @@ def real_yield_curve(
     # Interpolate between tabled ages; hold flat below the first / above the last.
     vols = np.interp(grid, ages, [pts[a] for a in ages])
     return {int(a): float(v) for a, v in zip(grid, vols, strict=True)}
+
+
+def mature_volume_crosscheck() -> pd.DataFrame:
+    """Independent cross-check on the mature-type volumes.
+
+    The case study's mature (existing over-mature) volumes are back-computed
+    from the thesis's Table 5.4 PNV anchors (``model.mature_volume_mcf``), so
+    matching Table 5.4 is *by construction*, not independent validation. This
+    function compares those back-computed volumes against an **independent**
+    source — the FEIS standing-volume-by-age curves evaluated at each mature
+    type's age — to check they are at least the same order of magnitude.
+
+    Returns a DataFrame with the back-computed volume, the independent FEIS
+    volume, and their ratio per mature type.
+    """
+    from fresh_daugherty.instance.thesis import MATURE_TYPE_PNV
+
+    rows = []
+    for mt in MATURE_TYPE_PNV:
+        net = real_ecoclass_net_revenue(mt.ecoclass)
+        backcalc = mt.pnv_period1_per_ac / net if net > 0 else float("nan")
+        curve = standing_volume_curve(mt.ecoclass)
+        ages = sorted(curve)
+        feis = float(np.interp(mt.age_yr, ages, [curve[a] for a in ages])) if ages else float("nan")
+        rows.append(
+            {
+                "ecoclass": mt.ecoclass.value,
+                "vegetation_type": mt.vegetation_type,
+                "age_yr": mt.age_yr,
+                "pnv_period1_per_ac": mt.pnv_period1_per_ac,
+                "net_price_per_mcf": net,
+                "backcalc_volume_mcf": backcalc,
+                "feis_volume_mcf": feis,
+                "ratio_feis_over_backcalc": (feis / backcalc)
+                if backcalc == backcalc
+                else float("nan"),
+            }
+        )
+    return pd.DataFrame(rows)
 
 
 #: Predominant species per ecoclass (thesis Table 5.1), mapped to FEIS species.
