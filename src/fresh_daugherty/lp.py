@@ -7,8 +7,18 @@ and regeneration transitions. This is an open-loop formulation — the object
 whose dynamic inconsistency the thesis (and this reproduction) studies.
 
 Built on the ws3 Model I machinery (``model.add_problem``), so the LP
-objective coefficient per prescription path is the discounted net cash flow
-and the even-flow band ties each period's harvest volume to period 1.
+objective coefficient per prescription path is the discounted net cash flow.
+
+The harvest-flow (even-flow) constraint supports two geometries:
+
+- ``period1``: each period's harvest volume is tied to within
+  ``flow_coefficient`` of period 1 (ws3's ``cflw_e`` reference-period band).
+- ``consecutive``: each period's harvest volume is tied to within
+  ``flow_coefficient`` of the *previous* period (the FORPLAN / thesis
+  bounded-deviation-between-adjacent-periods form). This is implemented in
+  fresh-daugherty (not via ws3 ``cflw_e``, which only anchors to a single
+  reference period) by adding consecutive-period constraints directly to the
+  compiled problem, so it works with the pinned PyPI ws3.
 """
 
 from __future__ import annotations
@@ -70,16 +80,24 @@ def add_open_loop_problem(
     discount_rate: float = THESIS_DISCOUNT_RATE,
     price_escalation: bool = True,
     target_flow_mcf: float | None = None,
+    flow_geometry: str = "period1",
+    flow_decrease: float | None = None,
+    flow_increase: float | None = None,
     name: str = "open-loop",
 ) -> object:
     """Add the open-loop NPV-max LP to ``model`` and return it.
 
     Harvest policy (the thesis's "harvest flow and ending period
-    constraints"): by default an even-flow band ties each period's harvest
-    volume to within ``flow_coefficient`` of period 1. If ``target_flow_mcf``
-    is given, a target harvest-flow floor/ceiling is used instead — required
-    for young-growth forests, where period-1 harvest is zero and the
-    period-1-anchored even-flow is degenerate.
+    constraints"). With ``flow_geometry = "period1"`` an even-flow band ties
+    each period's harvest volume to within ``flow_coefficient`` of period 1.
+    With ``flow_geometry = "consecutive"`` (the thesis / FORPLAN "sequential
+    flow" form, Table 5.6) each period's harvest is tied to the *previous*
+    period: it may decrease by at most ``flow_decrease`` (default
+    ``flow_coefficient``) and, if ``flow_increase`` is set, increase by at most
+    ``flow_increase``. Set ``flow_decrease=0.0, flow_increase=None`` for
+    non-declining yield (NDY). If ``target_flow_mcf`` is given, a target
+    harvest-flow floor/ceiling is used instead (an AAC ceiling; overrides
+    ``flow_geometry``).
     """
     period_length = model.period_length
     econ = _ecoclass_economics()
@@ -109,12 +127,13 @@ def add_open_loop_problem(
                     out[t] = vol
         return out
 
+    if flow_geometry not in ("period1", "consecutive"):
+        raise ValueError(f"flow_geometry must be 'period1' or 'consecutive', got {flow_geometry!r}")
+
     coeff_funcs = {"z": coeff_c_z, "cflw_hv": coeff_c_hv}
     cflw_e = None
     cgen_data = None
-    if target_flow_mcf is None:
-        cflw_e = {"cflw_hv": (dict.fromkeys(model.periods, flow_coefficient), 1)}
-    else:
+    if target_flow_mcf is not None:
         # Target harvest flow (an AAC ceiling): harvest <= target each period.
         # lb=0 so a young forest is not forced to harvest before stands reach
         # rotation age; the ceiling caps the rate once they do.
@@ -124,6 +143,19 @@ def add_open_loop_problem(
                 "ub": dict.fromkeys(model.periods, target_flow_mcf),
             }
         }
+    elif flow_geometry == "period1":
+        cflw_e = {"cflw_hv": (dict.fromkeys(model.periods, flow_coefficient), 1)}
+    else:  # consecutive (thesis "sequential flow", Table 5.6)
+        # H_{n+1} >= (1 - flow_decrease) H_n  and, if flow_increase is set,
+        # H_{n+1} <= (1 + flow_increase) H_n. flow_decrease=0.0 gives NDY.
+        dec = flow_coefficient if flow_decrease is None else flow_decrease
+        spec: dict[str, object] = {
+            "decrease": dict.fromkeys(model.periods, dec),
+            "ref": "consecutive",
+        }
+        if flow_increase is not None:
+            spec["increase"] = dict.fromkeys(model.periods, flow_increase)
+        cflw_e = {"cflw_hv": spec}
     return model.add_problem(
         name=name,
         coeff_funcs=coeff_funcs,

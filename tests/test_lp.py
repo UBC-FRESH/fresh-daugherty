@@ -58,3 +58,37 @@ def test_landbase_area_conserved_initially() -> None:
     assert areas2["area_ac"].sum() == pytest.approx(10_000.0)
     # Landbase 2 excludes CM-CE.
     assert "CMCE" not in set(areas2["ecoclass"])
+
+
+def _solve_geometry(tmp_path, flow_geometry, **kw):
+    areas = landbase_areas(1)
+    build_woodstock_sections(tmp_path / "model", areas=areas)
+    model = prepare_optimization(bootstrap_model(tmp_path / "model", horizon=10), horizon=10)
+    problem = add_open_loop_problem(model, flow_geometry=flow_geometry, **kw)
+    df = solve_open_loop(model, problem)
+    return problem, df["harvest_volume_mcf"].to_numpy()
+
+
+def test_consecutive_ndy_is_nondeclining(tmp_path) -> None:
+    """Consecutive-period NDY (max_decrease=0): harvest never declines period over period."""
+    problem, v = _solve_geometry(tmp_path, "consecutive", flow_decrease=0.0)
+    assert problem.status() == "optimal"
+    for k in range(1, len(v)):
+        assert v[k] >= v[k - 1] - 1e-3
+
+
+def test_consecutive_bounded_deviation_band_holds(tmp_path) -> None:
+    """Consecutive +/-eps: each period's harvest is within eps of the previous."""
+    eps = 0.10
+    problem, v = _solve_geometry(tmp_path, "consecutive", flow_decrease=eps, flow_increase=eps)
+    assert problem.status() == "optimal"
+    for k in range(1, len(v)):
+        assert v[k] <= (1.0 + eps) * v[k - 1] + 1e-3
+        assert v[k] >= (1.0 - eps) * v[k - 1] - 1e-3
+
+
+def test_consecutive_geometry_differs_from_period1(tmp_path) -> None:
+    """The consecutive-period geometry is a different constraint than the period-1 band."""
+    _, v_consec = _solve_geometry(tmp_path / "c", "consecutive", flow_decrease=0.0)
+    _, v_p1 = _solve_geometry(tmp_path / "p", "period1", flow_coefficient=0.05)
+    assert not (abs(v_consec - v_p1) < 1e-6).all()

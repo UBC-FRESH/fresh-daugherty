@@ -44,6 +44,9 @@ def run_experiment(
     horizon: int,
     workdir: str | Path,
     target_flow_mcf: float | None = None,
+    flow_geometry: str = "period1",
+    flow_decrease: float | None = None,
+    flow_increase: float | None = None,
 ) -> ExperimentResult:
     """Run one experiment cell (open-loop projection + sequential replan)."""
     workdir = Path(workdir)
@@ -59,6 +62,9 @@ def run_experiment(
         discount_rate=discount_rate,
         flow_tolerance=flow_tolerance,
         target_flow_mcf=target_flow_mcf,
+        flow_geometry=flow_geometry,
+        flow_decrease=flow_decrease,
+        flow_increase=flow_increase,
     )
 
     # Sequential replanning under the same policy (the "same goals").
@@ -68,6 +74,9 @@ def run_experiment(
         discount_rate=discount_rate,
         flow_tolerance=flow_tolerance,
         target_flow_mcf=target_flow_mcf,
+        flow_geometry=flow_geometry,
+        flow_decrease=flow_decrease,
+        flow_increase=flow_increase,
     )
     realized = list(realized_df["harvest_volume_mcf"])
     return ExperimentResult(
@@ -89,6 +98,9 @@ def run_experiment_grid(
     horizon: int,
     workdir: str | Path,
     target_flow_by_landbase: dict[int, float] | None = None,
+    flow_geometry: str = "period1",
+    flow_decrease: float | None = None,
+    flow_increase: float | None = None,
 ) -> pd.DataFrame:
     """Run the experiment grid and return the occurrence/magnitude table."""
     workdir = Path(workdir)
@@ -103,12 +115,16 @@ def run_experiment_grid(
                     horizon=horizon,
                     workdir=workdir / f"lb{lb}_r{rate}_ft{ft}",
                     target_flow_mcf=(target_flow_by_landbase or {}).get(lb),
+                    flow_geometry=flow_geometry,
+                    flow_decrease=flow_decrease,
+                    flow_increase=flow_increase,
                 )
                 rows.append(
                     {
                         "landbase": lb,
                         "discount_rate": rate,
                         "flow_tolerance": ft,
+                        "flow_geometry": flow_geometry,
                         "horizon": horizon,
                         **result.metrics,
                     }

@@ -82,6 +82,9 @@ def _solve_and_apply(
     discount_rate: float,
     flow_tolerance: float,
     target_flow_mcf: float | None,
+    flow_geometry: str,
+    flow_decrease: float | None,
+    flow_increase: float | None,
 ) -> list[float]:
     """Solve the open-loop LP, apply its schedule (up to ``max_period``), and
     return the realized per-period harvest volume."""
@@ -90,6 +93,9 @@ def _solve_and_apply(
         flow_coefficient=flow_tolerance,
         discount_rate=discount_rate,
         target_flow_mcf=target_flow_mcf,
+        flow_geometry=flow_geometry,
+        flow_decrease=flow_decrease,
+        flow_increase=flow_increase,
         name="open",
     )
     problem.solve(verbose=False)
@@ -113,6 +119,9 @@ def open_loop_projection(
     discount_rate: float = THESIS_DISCOUNT_RATE,
     flow_tolerance: float = 0.05,
     target_flow_mcf: float | None = None,
+    flow_geometry: str = "period1",
+    flow_decrease: float | None = None,
+    flow_increase: float | None = None,
 ) -> list[float]:
     """The open-loop plan's projected per-period harvest volume (full horizon)."""
     return _solve_and_apply(
@@ -121,6 +130,9 @@ def open_loop_projection(
         discount_rate=discount_rate,
         flow_tolerance=flow_tolerance,
         target_flow_mcf=target_flow_mcf,
+        flow_geometry=flow_geometry,
+        flow_decrease=flow_decrease,
+        flow_increase=flow_increase,
     )
 
 
@@ -131,6 +143,9 @@ def sequential_replan(
     discount_rate: float = THESIS_DISCOUNT_RATE,
     flow_tolerance: float = 0.05,
     target_flow_mcf: float | None = None,
+    flow_geometry: str = "period1",
+    flow_decrease: float | None = None,
+    flow_increase: float | None = None,
     rolling_horizon: bool = True,
 ) -> pd.DataFrame:
     """Run the sequential-replanning simulation.
@@ -156,6 +171,9 @@ def sequential_replan(
             discount_rate=discount_rate,
             flow_tolerance=flow_tolerance,
             target_flow_mcf=target_flow_mcf,
+            flow_geometry=flow_geometry,
+            flow_decrease=flow_decrease,
+            flow_increase=flow_increase,
         )
         realized.append(volumes[0])
         if t == horizon:
