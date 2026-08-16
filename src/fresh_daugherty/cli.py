@@ -114,6 +114,9 @@ def grid(
         help="Comma-separated Table 5.6 policy codes.",
     ),
     horizon: int = typer.Option(15, "--horizon", min=1),
+    workers: int = typer.Option(
+        1, "--workers", min=1, help="Parallel processes (grid is embarrassingly parallel)."
+    ),
     out: Path = typer.Option(Path("outputs") / "experiments" / "grid.csv", "--out"),
 ) -> None:
     """Run the thesis experiment grid (landbase x discount rate x harvest-flow policy).
@@ -138,6 +141,7 @@ def grid(
         policies=pols,
         horizon=horizon,
         workdir=out.parent / "grid_work",
+        workers=workers,
     )
     out.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(out, index=False)

@@ -150,6 +150,32 @@ def _policy_slug(code: str) -> str:
     return code.replace("+", "p").replace("/", "").replace("-", "m").replace("%", "pct")
 
 
+def _run_policy_cell(args: tuple) -> dict:
+    """Run one (landbase, rate, policy) grid cell. Module-level so it is
+    picklable for the process pool."""
+    lb, rate, pol, horizon, cell_workdir = args
+    from fresh_daugherty.instance.reconstruct import calibrate
+
+    calibrate()
+    result = run_experiment(
+        landbase=lb,
+        discount_rate=rate,
+        flow_tolerance=0.0,  # unused when flow_policy is given
+        horizon=horizon,
+        workdir=cell_workdir,
+        flow_policy=pol,
+    )
+    return {
+        "landbase": lb,
+        "discount_rate": rate,
+        "flow_policy": pol.code,
+        "max_decrease": pol.max_decrease,
+        "max_increase": pol.max_increase,
+        "horizon": horizon,
+        **result.metrics,
+    }
+
+
 def run_policy_grid(
     *,
     landbases: tuple[int, ...],
@@ -157,6 +183,7 @@ def run_policy_grid(
     policies: tuple[HarvestFlowPolicy, ...],
     horizon: int,
     workdir: str | Path,
+    workers: int = 1,
 ) -> pd.DataFrame:
     """Run the thesis experiment grid: landbase x discount rate x harvest-flow policy.
 
@@ -164,32 +191,26 @@ def run_policy_grid(
     harvest-flow policies (NHF, NDY, -10%, -20%, +/-10%, +/-20%) crossed with
     discount rates and landbases. Each cell is a full sequential-replanning
     simulation under the policy's consecutive sequential-flow constraint.
-    Returns one row per cell with the occurrence/magnitude metrics.
+    Cells are independent and run in parallel across ``workers`` processes
+    (each cell gets a unique workdir). Returns one row per cell.
     """
     workdir = Path(workdir)
-    rows = []
-    for lb in landbases:
-        for rate in discount_rates:
-            for pol in policies:
-                result = run_experiment(
-                    landbase=lb,
-                    discount_rate=rate,
-                    flow_tolerance=0.0,  # unused when flow_policy is given
-                    horizon=horizon,
-                    workdir=workdir / f"lb{lb}_r{rate}_{_policy_slug(pol.code)}",
-                    flow_policy=pol,
-                )
-                rows.append(
-                    {
-                        "landbase": lb,
-                        "discount_rate": rate,
-                        "flow_policy": pol.code,
-                        "max_decrease": pol.max_decrease,
-                        "max_increase": pol.max_increase,
-                        "horizon": horizon,
-                        **result.metrics,
-                    }
-                )
+    cells = [
+        (lb, rate, pol, horizon, workdir / f"lb{lb}_r{rate}_{_policy_slug(pol.code)}")
+        for lb in landbases
+        for rate in discount_rates
+        for pol in policies
+    ]
+    if workers and workers > 1:
+        from concurrent.futures import ProcessPoolExecutor
+
+        from fresh_daugherty.instance.reconstruct import calibrate
+
+        calibrate()  # warm the parent so forked workers inherit the calibration
+        with ProcessPoolExecutor(max_workers=workers) as ex:
+            rows = list(ex.map(_run_policy_cell, cells))
+    else:
+        rows = [_run_policy_cell(c) for c in cells]
     return pd.DataFrame(rows)
 
 
