@@ -49,6 +49,8 @@ def extract_areas(model: ws3.forest.ForestModel, period: int) -> pd.DataFrame:
     lowercase-safe (forest/ecoclass/rx codes), so the dtk maps directly back
     to the area-record columns.
     """
+    from fresh_daugherty.model import OVER_MATURE_AGE_CAP
+
     rows = []
     for dtk in model.dtypes:
         dist = model.age_class_distribution(period, mask=dtk)
@@ -61,7 +63,11 @@ def extract_areas(model: ws3.forest.ForestModel, period: int) -> pd.DataFrame:
                         "rx": dtk[2],
                         "origin": dtk[3],
                         "state": dtk[4],
-                        "age": int(age),
+                        # Cap over-mature ages at the plateau: volume has
+                        # culminated (flat) past this age, so this is
+                        # economically neutral and keeps never-harvested
+                        # over-mature stands within the model's age grid.
+                        "age": min(int(age), OVER_MATURE_AGE_CAP),
                         "area_ac": float(area),
                     }
                 )
@@ -179,8 +185,11 @@ def sequential_replan(
         if t == horizon:
             break
         # Extract the realized state at the start of the next period and build
-        # a fresh model for the next replan.
-        state = extract_areas(current, 1)
+        # a fresh model for the next replan. After applying period 1 the model
+        # has advanced one period, so the "now" state for the next replan is the
+        # period-2 age distribution (extracting at period 1 would re-read the
+        # just-planted age-0 state and regenerated stands would never age).
+        state = extract_areas(current, 2)
         next_horizon = horizon if rolling_horizon else current.horizon - 1
         current = build_model(state, next_horizon, workdir / f"replan_{t}")
     return pd.DataFrame({"period": list(range(1, horizon + 1)), "harvest_volume_mcf": realized})
