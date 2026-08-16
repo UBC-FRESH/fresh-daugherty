@@ -85,6 +85,17 @@ currently reproduced — note as a fidelity gap.
   plan while the *occurrence* stays invariant. Rewrite the paper's claim to
   occurrence-invariance and drop "results are identical".
 
+**CONFIRMED (P1.5, commit 1b9d617).** Root cause found and fixed: a
+theme-lowercasing bug zeroed every NPV objective coefficient (the economics
+lookup was keyed by the uppercase ecoclass code, but ws3 lowercases theme
+values, so `_net_price` missed every lookup). With the objective fixed, the
+thesis's claim is reproduced correctly: **occurrence is rate-invariant** (100%
+of cells at 0/2/4/6%) while **magnitude is rate-dependent** (landbase 1 NDY
+mean deviation 0.60 at 0% vs 0.34 at 2-6%; total collapse -100% at 0% vs -34%
+at 2%+). The earlier "identical results across rates" was the bug's artifact.
+This also means the pre-fix grid CSV and the paper's numbers are stale and must
+be regenerated (P1.7).
+
 ## The mechanism (for the paper's framing)
 
 - p. 24 (Re-examination of McQuillan's Model): "When constrained by a NDY
