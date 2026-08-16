@@ -49,7 +49,9 @@ def _ecoclass_economics() -> dict[str, tuple[float, float]]:
     params = calibrated_params()
     econ: dict[str, tuple[float, float]] = {}
     for (eco, _rx), model in params.items():
-        code = ecoclass_code(eco)
+        # ws3 lowercases theme values, so the model's dtk ecoclass is lowercase;
+        # key the economics lookup by the lowercased code to match.
+        code = ecoclass_code(eco).lower()
         if code in econ:
             continue
         try:
@@ -104,7 +106,7 @@ def add_open_loop_problem(
     econ = _ecoclass_economics()
 
     def _net_price(dtk, year: float) -> float:
-        price, hcost = econ.get(dtk[1], (0.0, 0.0))
+        price, hcost = econ.get(str(dtk[1]).lower(), (0.0, 0.0))
         p = _escalated(price, year) if price_escalation else price
         return p - hcost
 

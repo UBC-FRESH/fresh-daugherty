@@ -92,3 +92,31 @@ def test_consecutive_geometry_differs_from_period1(tmp_path) -> None:
     _, v_consec = _solve_geometry(tmp_path / "c", "consecutive", flow_decrease=0.0)
     _, v_p1 = _solve_geometry(tmp_path / "p", "period1", flow_coefficient=0.05)
     assert not (abs(v_consec - v_p1) < 1e-6).all()
+
+
+def _solve_rate(tmp_path, rate, horizon=8):
+    areas = landbase_areas(1)
+    build_woodstock_sections(tmp_path / "model", areas=areas)
+    model = prepare_optimization(
+        bootstrap_model(tmp_path / "model", horizon=horizon), horizon=horizon
+    )
+    problem = add_open_loop_problem(
+        model, discount_rate=rate, flow_geometry="consecutive", flow_decrease=0.0
+    )
+    df = solve_open_loop(model, problem)
+    return problem, df["harvest_volume_mcf"].to_numpy()
+
+
+def test_objective_is_nonzero_and_rate_dependent(tmp_path) -> None:
+    """Regression (the inert-objective bug): the NPV objective must be nonzero and
+    the optimal plan must depend on the discount rate (the thesis's rate effect)."""
+    p0, v0 = _solve_rate(tmp_path / "r0", 0.0)
+    p6, v6 = _solve_rate(tmp_path / "r6", 0.06)
+    # The objective must actually value the harvest (the ws3 theme-lowercasing bug
+    # had silently zeroed every objective coefficient).
+    assert any(abs(c) > 1e-9 for c in p0._z.values())
+    assert p0.z() > 0
+    # The chosen plan differs across rates (0% back-loads; 6% flattens under NDY).
+    assert not (abs(v0 - v6) < 1e-6).all()
+    # Objective value decreases as the discount rate rises (discounting bites).
+    assert p6.z() < p0.z()
