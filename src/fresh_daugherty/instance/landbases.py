@@ -124,10 +124,16 @@ def young_growth(equal: bool = True) -> pd.DataFrame:
 
 
 def random_young_growth(seed: int) -> pd.DataFrame:
-    """Landbases 11-18: randomly generated young-growth (seed-fixed)."""
+    """Landbases 11-18: randomly generated young-growth (seed-fixed).
+
+    Ages span up to the rotation range (as the structured young-growth
+    landbases 9/10 do), so the forest has period-1 operable volume. (An earlier
+    version used only ages 10-40, below the rotation minimum, so period-1
+    harvest was zero and a symmetric flow constraint pinned the whole
+    trajectory to zero---a corner artifact, now fixed.)"""
     rng = np.random.default_rng(seed)
     cells = _managed_cells()
-    ages = [10, 20, 30, 40]
+    ages = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120]
     combos = [(eco, rx, age) for (eco, rx) in cells for age in ages]
     weights = rng.random(len(combos))
     weights = weights / weights.sum()
