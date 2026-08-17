@@ -33,3 +33,8 @@ constraint form):
 
 All seed-dependent runs are fixed-seeded. The experiment is deterministic (LP
 solves), so the grid CSVs regenerate bit-for-bit given the environment.
+
+Note: ws3's `apply_schedule` may emit "apply action error" warnings reporting
+~1e-14 negative areas on some cells; this is harmless floating-point noise in
+the area accounting and does not affect the results. The thesis re-solved for
+eleven periods over its horizon; we run the full fifteen-period horizon.

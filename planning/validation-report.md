@@ -141,20 +141,22 @@ and magnitude per cell (`run_experiment`, `run_experiment_grid`). The
 sequential-replanning simulator supports a rolling fixed horizon (default;
 avoids the shrinking-horizon terminal artifact) or a shrinking horizon.
 
-Headline findings (rolling horizon, horizon 15, landbases 1/2/9/10 x rates
-0-6% x flow tolerances 1-15%):
+Headline findings below are the BUG-ERA record (superseded). For the corrected,
+current results see `results/experiments/grid.csv` + `REPRODUCIBILITY.md` and
+the note at the end of this section.
 
-- Dynamic inconsistency occurs in 100% of cells (mean per-period deviation
-  of realized-vs-projected harvest well above 5% across the grid).
-- **Discount rate has no effect** on the volume-based inconsistency (the
-  occurrence/magnitude is identical across 0-6%): the discount factor is
-  uniform across periods and drops out of the consistency requirements —
-  reproducing Daugherty's counter-intuitive result (ch. 3, p.58-59).
-- **Tighter harvest-flow constraints increase inconsistency** (the flow
-  constraint is the operative between-period link).
-- **Disequilibrium forest structure drives inconsistency**: the mature/old-
-  growth landbases show it clearly; the magnitude depends on the initial
-  age-class disequilibrium.
+- ~~Dynamic inconsistency occurs in 100% of cells~~ (bug-era).
+- ~~Discount rate has no effect~~ (bug-era; this was an artifact of an inert
+  objective — a theme-lowercasing bug zeroed the NPV coefficients).
+
+> **Superseded (post-#46, current).** With the corrected stack (inert-objective
+> fix, replan state-carryover fix, mature-volume Table 5.4 fidelity fix, corner
+> -artifact fix, full 18-landbase grid): flow-constrained occurrence 73% vs NHF
+> 38% (NHF consistent at 4-6%); NDY is the most inconsistent policy (86%);
+> inconsistency occurs at every discount rate with magnitude rate-dependent
+> (larger at 0%); landbase occurrence 50-100%. The objective-gap diagnostic
+> separates genuine inconsistency from alternate LP optima. See
+> `results/experiments/grid.csv` and `planning/thesis-formulation.md`.
 
 Young-growth (regulated) forests under the open-loop even-flow plan show the
 "declining non-declining yield" phenomenon (the plan over-commits the forest;
