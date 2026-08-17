@@ -31,19 +31,37 @@ def fig_declining_ndy(out: Path) -> Path:
     calibrate()
     pol = {p.code: p for p in HARVEST_FLOW_POLICIES}
     r = run_experiment(
-        landbase=1, discount_rate=0.04, flow_tolerance=0.0, horizon=15,
-        workdir="/tmp/fig1", flow_policy=pol["NDY"],
+        landbase=1,
+        discount_rate=0.04,
+        flow_tolerance=0.0,
+        horizon=15,
+        workdir="/tmp/fig1",
+        flow_policy=pol["NDY"],
     )
     periods = list(range(1, len(r.projected) + 1))
     fig, ax = plt.subplots(figsize=(6.2, 3.6))
-    ax.plot(periods, [v / 1000 for v in r.projected], marker="o", ms=4,
-            label="Open-loop plan (projected)", color="#1f4e79")
-    ax.plot(periods, [v / 1000 for v in r.realized], marker="s", ms=4,
-            label="Sequential replanning (realized)", color="#c00000")
+    ax.plot(
+        periods,
+        [v / 1000 for v in r.projected],
+        marker="o",
+        ms=4,
+        label="Open-loop plan (projected)",
+        color="#1f4e79",
+    )
+    ax.plot(
+        periods,
+        [v / 1000 for v in r.realized],
+        marker="s",
+        ms=4,
+        label="Sequential replanning (realized)",
+        color="#c00000",
+    )
     ax.set_xlabel("Planning period (10 years each)")
     ax.set_ylabel("Harvest volume (thousand MCF)")
-    ax.set_title("Landbase 1 (all mature), non-declining yield:\n"
-                 "the plan's level flow is not delivered under replanning")
+    ax.set_title(
+        "Landbase 1 (all mature), non-declining yield:\n"
+        "the plan's level flow is not delivered under replanning"
+    )
     ax.legend()
     ax.grid(alpha=0.3)
     fig.tight_layout()
