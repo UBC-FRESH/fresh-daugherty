@@ -16,6 +16,7 @@ thesis page is recorded per table.
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from enum import IntEnum, StrEnum
 
 from pydantic import BaseModel, Field
@@ -36,6 +37,45 @@ THESIS_DISCOUNT_RATE = 0.04
 #: stumpage price rises 1%/yr for the first 50 years.
 PRICE_ESCALATION_RATE = 0.01
 PRICE_ESCALATION_YEARS = 50
+
+#: Sequential replanning: the thesis "updated and re-solved for eleven periods"
+#: (p.80), even though the planning horizon is 15 periods.
+REPLAN_PERIODS = 11
+
+#: Interest (discount) rates simulated (thesis p.80): base 4%, with runs at
+#: 0%, 2%, and 6% to determine the effect of interest rate on the occurrence
+#: of inconsistency.
+DISCOUNT_RATES: tuple[float, ...] = (0.0, 0.02, 0.04, 0.06)
+
+
+@dataclass(frozen=True)
+class HarvestFlowPolicy:
+    """A thesis harvest-flow ("sequential flow") constraint set (Table 5.6, p.80).
+
+    Consecutive-period bounded deviation on total harvest volume ``H``:
+
+        H_{n+1} - (1 - max_decrease) H_n >= 0   (maximum decrease)
+        H_{n+1} - (1 + max_increase) H_n <= 0   (maximum increase; if set)
+
+    ``max_decrease`` is the largest allowed fractional period-over-period
+    decline (0.0 = nondeclining yield). ``max_increase`` is the largest allowed
+    fractional increase; ``None`` means no upper bound (NDY, -10%, -20% sets).
+    """
+
+    code: str
+    max_decrease: float | None
+    max_increase: float | None
+
+
+#: The six harvest-flow constraint types simulated in the thesis (Table 5.6).
+HARVEST_FLOW_POLICIES: tuple[HarvestFlowPolicy, ...] = (
+    HarvestFlowPolicy("NHF", None, None),
+    HarvestFlowPolicy("NDY", 0.0, None),
+    HarvestFlowPolicy("-10%", 0.10, None),
+    HarvestFlowPolicy("-20%", 0.20, None),
+    HarvestFlowPolicy("+/-10%", 0.10, 0.10),
+    HarvestFlowPolicy("+/-20%", 0.20, 0.20),
+)
 
 
 class Ecoclass(StrEnum):
@@ -295,6 +335,8 @@ LANDBASES: tuple[LandbaseSpec, ...] = (
 
 __all__ = [
     "CMAI_CULMINATION_AGE_YR",
+    "DISCOUNT_RATES",
+    "HARVEST_FLOW_POLICIES",
     "HORIZON_YEARS",
     "LANDBASES",
     "LANDBASE_ACRES",
@@ -304,10 +346,12 @@ __all__ = [
     "PNV_ROTATION_ANCHORS",
     "PRICE_ESCALATION_RATE",
     "PRICE_ESCALATION_YEARS",
+    "REPLAN_PERIODS",
     "ROTATION_RANGES",
     "THESIS_DISCOUNT_RATE",
     "VOLUME_UNIT",
     "Ecoclass",
+    "HarvestFlowPolicy",
     "LandbaseSpec",
     "MatureTypePnv",
     "PnvRotationAnchor",

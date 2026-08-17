@@ -30,14 +30,20 @@ TECTONIC = "/tmp/tectonic"
 
 
 def flatten(tex: str, paper_dir: Path) -> str:
-    """Inline \\input{sections/x} (and \\input{...}) into a single flat source."""
+    """Inline \\input{sections/x} (and \\input{...}) into a single flat source,
+    and rewrite figure paths (``figures/x``) to bare filenames for the flat
+    EM structure."""
+
     def repl(m: re.Match) -> str:
         target = paper_dir / (m.group(1) + ".tex")
         if not target.exists():
             target = paper_dir / m.group(1)
         return target.read_text() if target.exists() else m.group(0)
 
-    return re.sub(r"\\input\{([^}]+)\}", repl, tex)
+    flat = re.sub(r"\\input\{([^}]+)\}", repl, tex)
+    # EM structure is flat: rewrite figures/x.pdf -> x.pdf in \includegraphics.
+    flat = re.sub(r"(\\includegraphics(?:\[[^\]]*\])?\{)figures/", r"\1", flat)
+    return flat
 
 
 def compile_pdf(tex_path: Path) -> None:
@@ -58,10 +64,18 @@ def main() -> None:
     flat = flatten(main_src, PAPER)
     (OUT / "main.tex").write_text(flat)
 
-    # 2. Copy the required support files.
+    # 2. Copy the required support files (flat) and any referenced figures.
     (OUT / "references.bib").write_text((PAPER / "references.bib").read_text())
     (OUT / "apalike-doi.bst").write_text((PAPER / "apalike-doi.bst").read_text())
     (OUT / "title-page.tex").write_text((PAPER / "title-page.tex").read_text())
+    # Find figures in the FLATTENED source (paths already rewritten to bare
+    # filenames by flatten()) and copy them from paper/figures/.
+    figures = []
+    fig_re = r"\\includegraphics(?:\[[^\]]*\])?\{([A-Za-z0-9_\-]+\.(?:pdf|png))\}"
+    for m in re.finditer(fig_re, flat):
+        fig = m.group(1)
+        (OUT / fig).write_bytes((PAPER / "figures" / fig).read_bytes())
+        figures.append(fig)
 
     # 3. Compile the flat main.tex and the title page.
     compile_pdf(OUT / "main.tex")
@@ -75,6 +89,7 @@ def main() -> None:
         "apalike-doi.bst",
         "title-page.tex",
         "title-page.pdf",
+        *figures,
     ]
     zip_path = OUT / "em-submission.zip"
     with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as z:

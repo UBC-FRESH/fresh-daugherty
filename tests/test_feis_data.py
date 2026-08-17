@@ -6,6 +6,7 @@ from fresh_daugherty.instance.feis import (
     SITE_INDEX_BY_ECOCLASS,
     SPECIES_ECONOMICS,
     UMPQUA_YIELD_TABLES,
+    mature_volume_crosscheck,
     standing_volume_curve,
     yield_tables_for,
 )
@@ -66,3 +67,18 @@ def test_model_lev_reproduces_anchor_signs() -> None:
             assert lev <= 0, f"{eco.value} rx{int(rx)} should be non-positive"
         else:
             assert lev > 0, f"{eco.value} rx{int(rx)} should be positive"
+
+
+def test_mature_volume_crosscheck_independent() -> None:
+    """The mature volumes back-computed from the Table 5.4 PNV anchors are
+    cross-checked against the independent FEIS standing-volume curves (P1.4).
+    The Table 5.4 match is by construction; this is the independent check that
+    the volumes are at least the same order of magnitude."""
+    df = mature_volume_crosscheck()
+    assert len(df) == 5
+    # Positively valued types: FEIS independent volume within ~3x of back-calc.
+    pos = df[df["pnv_period1_per_ac"] > 0]
+    assert (pos["ratio_feis_over_backcalc"].between(0.3, 3.0)).all()
+    # The negatively valued CM-CE sawtimber has a negative PNV (cost > value).
+    cmce = df[df["ecoclass"] == "CM-CE"].iloc[0]
+    assert cmce["pnv_period1_per_ac"] < 0

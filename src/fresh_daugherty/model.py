@@ -31,6 +31,17 @@ THEME_COUNT = 5
 BASE_YEAR = 1987  # the thesis data source vintage (USDA 1987 Umpqua model)
 FOREST = "umpqua"
 
+#: Model age grid. Must cover the oldest stand over the full horizon: the
+#: oldest initial (over-mature) stand plus the horizon's aging. Yields are flat
+#: past culmination, so extending the grid is economically neutral.
+MAX_AGE = 500
+
+#: Over-mature age plateau. Stands older than this are economically
+#: indistinguishable (volume has culminated and is flat); capping extracted
+#: stand ages here keeps never-harvested over-mature stands (e.g. negatively
+#: valued CM-CE) from aging past the age grid across sequential replans.
+OVER_MATURE_AGE_CAP = 250
+
 #: Mature (existing over-mature) vegetation types are modelled as
 #: prescription "mature" DTs at their Table 5.4 ages.
 MATURE_RX = "mature"
@@ -90,7 +101,7 @@ def build_woodstock_sections(
     out_dir: str | Path,
     *,
     areas: pd.DataFrame,
-    max_age: int = 220,
+    max_age: int = MAX_AGE,
     model_name: str = "daugherty",
 ) -> list[Path]:
     """Write the five Woodstock-format sections for the case-study model."""
@@ -98,12 +109,17 @@ def build_woodstock_sections(
     out.mkdir(parents=True, exist_ok=True)
     params = calibrated_params()
 
-    # Net price per ecoclass for mature-volume recovery.
+    # Net price per ecoclass for mature-volume recovery. Use the FEIS net
+    # revenue (the same economics the LP objective uses, see lp.py
+    # _ecoclass_economics) so that a mature stand's model PNV matches the
+    # thesis's Table 5.4 anchor (volume = PNV / net_price). (Previously this
+    # used the calibrated-reconstruction net price, which is ~12x lower and so
+    # inflated the mature volumes ~12x, breaking the Table 5.4 PNV match.)
+    from fresh_daugherty.instance.feis import real_ecoclass_net_revenue
+
     net_price = {}
     for eco in Ecoclass:
-        cell = next((m for (e, _rx), m in params.items() if e is eco), None)
-        if cell is not None:
-            net_price[eco] = cell["econ"].net_price_per_mcf - cell["econ"].harvest_cost_per_mcf
+        net_price[eco] = real_ecoclass_net_revenue(eco)
 
     # --- landscape / themes ---
     ecoclasses = sorted({ecoclass_code(e) for e in Ecoclass})
@@ -194,7 +210,7 @@ def bootstrap_model(
         base_year=BASE_YEAR,
         horizon=horizon,
         period_length=PERIOD_LENGTH_YEARS,
-        max_age=300,
+        max_age=MAX_AGE,
     )
     model.import_landscape_section()
     model.import_areas_section()

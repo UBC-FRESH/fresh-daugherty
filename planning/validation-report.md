@@ -37,6 +37,34 @@ Forest Plan Draft EIS). They are reconstructed in
 `fresh_daugherty.instance.reconstruct` under documented assumptions
 (`RECONSTRUCTION_ASSUMPTIONS`), calibrated to the Table 5.3 / 5.4 anchors.
 
+### Mature-volume derivation: disclosure + independent cross-check (P1.4)
+
+The five mature (existing over-mature) vegetation types' standing volumes are
+**back-computed from the Table 5.4 PNV anchors**
+(`model.mature_volume_mcf = pnv_period1 / net_price`). Consequently, matching
+Table 5.4 is **by construction, not independent validation** — this is now
+disclosed here and in the paper.
+
+The genuine independent check is `feis.mature_volume_crosscheck()`, which
+compares the back-computed volumes against the FEIS standing-volume-by-age
+curves evaluated at each mature type's age (a source independent of Table 5.4):
+
+| Mature type | age | back-calc (MCF/ac) | FEIS indep (MCF/ac) | FEIS/back-calc |
+|---|---|---|---|---|
+| CH-CW sawtimber | 195 | 10.3 | 13.1 | 1.28 |
+| CH-CW two-storied | 115 | 4.7 | 11.8 | 2.53 |
+| CD-CP sawtimber | 125 | 3.8 | 9.2 | 2.45 |
+| CR-CF sawtimber | 225 | 8.4 | 10.7 | 1.27 |
+| CM-CE sawtimber | 175 | n/a (neg. PNV) | 6.4 | n/a |
+
+The two sources agree in **order of magnitude**; the back-calc is
+systematically lower (1.3-2.5x), consistent with the thesis's Table 5.4 PNV
+reflecting the merchantable sawtimber/premium-log portion net of costs rather
+than total standing volume. This is reported honestly as a fidelity caveat; the
+mature types use the thesis-faithful back-calc (so the thesis's own Table 5.4
+anchors are reproduced), with the FEIS curves as the independent order-of-
+magnitude cross-check.
+
 Grounding data (real, from the Umpqua LRMP — a public-domain USFS work,
 Google Books id `lqbvYRGYkpUC`): the 95%-CMAI culmination ages per ecoclass
 (Table IV-3) pin the reconstructed yield-curve shapes
@@ -113,20 +141,22 @@ and magnitude per cell (`run_experiment`, `run_experiment_grid`). The
 sequential-replanning simulator supports a rolling fixed horizon (default;
 avoids the shrinking-horizon terminal artifact) or a shrinking horizon.
 
-Headline findings (rolling horizon, horizon 15, landbases 1/2/9/10 x rates
-0-6% x flow tolerances 1-15%):
+Headline findings below are the BUG-ERA record (superseded). For the corrected,
+current results see `results/experiments/grid.csv` + `REPRODUCIBILITY.md` and
+the note at the end of this section.
 
-- Dynamic inconsistency occurs in 100% of cells (mean per-period deviation
-  of realized-vs-projected harvest well above 5% across the grid).
-- **Discount rate has no effect** on the volume-based inconsistency (the
-  occurrence/magnitude is identical across 0-6%): the discount factor is
-  uniform across periods and drops out of the consistency requirements —
-  reproducing Daugherty's counter-intuitive result (ch. 3, p.58-59).
-- **Tighter harvest-flow constraints increase inconsistency** (the flow
-  constraint is the operative between-period link).
-- **Disequilibrium forest structure drives inconsistency**: the mature/old-
-  growth landbases show it clearly; the magnitude depends on the initial
-  age-class disequilibrium.
+- ~~Dynamic inconsistency occurs in 100% of cells~~ (bug-era).
+- ~~Discount rate has no effect~~ (bug-era; this was an artifact of an inert
+  objective — a theme-lowercasing bug zeroed the NPV coefficients).
+
+> **Superseded (post-#46, current).** With the corrected stack (inert-objective
+> fix, replan state-carryover fix, mature-volume Table 5.4 fidelity fix, corner
+> -artifact fix, full 18-landbase grid): flow-constrained occurrence 73% vs NHF
+> 38% (NHF consistent at 4-6%); NDY is the most inconsistent policy (86%);
+> inconsistency occurs at every discount rate with magnitude rate-dependent
+> (larger at 0%); landbase occurrence 50-100%. The objective-gap diagnostic
+> separates genuine inconsistency from alternate LP optima. See
+> `results/experiments/grid.csv` and `planning/thesis-formulation.md`.
 
 Young-growth (regulated) forests under the open-loop even-flow plan show the
 "declining non-declining yield" phenomenon (the plan over-commits the forest;

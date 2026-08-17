@@ -25,7 +25,7 @@ dependencies = [
   "pyyaml",
   "rich",
   "typer",
-  "ws3",
+  "ws3>=1.1.0a5",  # consecutive-period sequential-flow cflw (ws3 #152)
   "highspy",
   "pulp",
 ]
