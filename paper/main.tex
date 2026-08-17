@@ -8,6 +8,9 @@
 \usepackage{caption}
 \usepackage{hyperref}
 \usepackage{natbib}
+% CJFR / Canadian Science Publishing author-date style: no comma between
+% author and year in in-text citations, e.g. "(Paradis 2026)".
+\setcitestyle{aysep={}}
 \usepackage{titling}
 \usepackage{longtable}
 \usepackage{calc}
@@ -50,7 +53,7 @@ G. Paradis designed the study, performed the analysis, and prepared the manuscri
 The author is the developer of the open-source \texttt{ws3} framework used and extended in this work, and the paper provides a citable reference for it---a non-financial competing interest declared in the interest of transparency. The author declares no financial competing interests.
 
 \section*{Data availability}
-All software, extracted case-study data, experiment configurations, the full per-cell simulation records (projected and realized harvest trajectories for all 432 grid cells), and the validation records supporting this paper are openly available in the \texttt{fresh-daugherty} repository at \url{https://github.com/UBC-FRESH/fresh-daugherty} (the grid summary and per-cell trajectories are tracked under \texttt{results/experiments/}); the Umpqua planning documents are public-domain US Forest Service works accessible via HathiTrust (records 002547999 and 002439528).
+All software, extracted case-study data, experiment configurations, the full per-cell simulation records, and the validation records supporting this paper are openly available in the \texttt{fresh-daugherty} repository at \url{https://github.com/UBC-FRESH/fresh-daugherty}. The complete benchmark record---the grid summary and the per-cell projected and realized harvest trajectories for all 432 cells, together with the exact regeneration command and pinned dependency versions---is tracked under \texttt{results/experiments/}, and a versioned release archiving these artifacts with a DOI (Zenodo) will be cited at submission. The Umpqua planning documents are public-domain US Forest Service works accessible via HathiTrust (records 002547999 and 002439528).
 
 \bibliographystyle{apalike-doi}
 \bibliography{references}
