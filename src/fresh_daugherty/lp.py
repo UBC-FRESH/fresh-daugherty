@@ -88,6 +88,8 @@ def add_open_loop_problem(
     flow_decrease: float | None = None,
     flow_increase: float | None = None,
     terminal_constraints: bool = False,  # EXPERIMENTAL: see note in docstring
+    abs_period: int = 1,
+    fix_period1_harvest_mcf: float | None = None,
     name: str = "open-loop",
 ) -> object:
     """Add the open-loop NPV-max LP to ``model`` and return it.
@@ -127,7 +129,11 @@ def add_open_loop_problem(
             d = n.data()
             if fm.is_harvest(d["acode"]):
                 vol = fm.compile_product(t, "totvol", d["acode"], [d["dtk"]], d["age"], coeff=False)
-                net = _net_price(d["dtk"], t * period_length)
+                # Price escalation is an ABSOLUTE-calendar-time phenomenon: the
+                # replanning subproblem's relative period t is absolute year
+                # (abs_period - 1 + t) * period_length. (Discounting stays
+                # relative to the subproblem's present, per the Bellman tail.)
+                net = _net_price(d["dtk"], (abs_period - 1 + t) * period_length)
                 result += (1.0 + discount_rate) ** (-t * period_length) * (net * vol)
         return result
 
@@ -212,6 +218,18 @@ def add_open_loop_problem(
         if inv_target > 0:
             cgen_data = cgen_data or {}
             cgen_data["inventory"] = {"lb": {final_period: inv_target}}
+
+    if fix_period1_harvest_mcf is not None:
+        # Fix the period-1 harvest volume to a tight band around the announced
+        # value (used by the objective-gap consistency diagnostic to evaluate
+        # the announced plan's decision in a subproblem). A tight relative band
+        # (not exact equality) so discreteness in achievable harvest doesn't
+        # make a genuinely-implementable decision read as infeasible.
+        cgen_data = cgen_data or {}
+        hv_bounds = cgen_data.setdefault("cflw_hv", {"lb": {}, "ub": {}})
+        eps = 0.01
+        hv_bounds.setdefault("lb", {})[1] = fix_period1_harvest_mcf * (1.0 - eps)
+        hv_bounds.setdefault("ub", {})[1] = fix_period1_harvest_mcf * (1.0 + eps)
 
     problem = model.add_problem(
         name=name,

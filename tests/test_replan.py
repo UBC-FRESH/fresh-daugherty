@@ -78,3 +78,42 @@ def test_replanning_is_reproducible(tmp_path) -> None:
 
     first, second = run(), run()
     assert first == second
+
+
+def test_objective_gap_separates_inconsistency_from_alternate_optima(tmp_path) -> None:
+    """The objective-gap diagnostic: NDY's announced tail becomes infeasible/
+    suboptimal from the realized state, while the no-flow control's tail stays
+    optimal---so the divergence is genuine inconsistency, not alternate optima."""
+    from fresh_daugherty.instance.landbases import landbase_areas
+    from fresh_daugherty.instance.thesis import HARVEST_FLOW_POLICIES
+    from fresh_daugherty.lp import flow_kwargs_for_policy
+    from fresh_daugherty.model import (
+        bootstrap_model,
+        build_woodstock_sections,
+        prepare_optimization,
+    )
+    from fresh_daugherty.replan import consistency_gap_replan
+
+    pol = {p.code: p for p in HARVEST_FLOW_POLICIES}
+    results = {}
+    for code in ("NDY", "NHF"):
+        areas = landbase_areas(1)
+        build_woodstock_sections(tmp_path / code / "model", areas=areas)
+        model = prepare_optimization(
+            bootstrap_model(tmp_path / code / "model", horizon=8), horizon=8
+        )
+        kw = flow_kwargs_for_policy(pol[code])
+        df = consistency_gap_replan(
+            model,
+            workdir=tmp_path / code / "replan",
+            discount_rate=0.04,
+            flow_geometry=kw.get("flow_geometry", "none"),
+            flow_decrease=kw.get("flow_decrease"),
+            flow_increase=kw.get("flow_increase"),
+        )
+        results[code] = df
+    # NHF control: every period's announced decision remains optimal (consistent).
+    assert (results["NHF"]["tail_status"] == "optimal").all()
+    # NDY: the first period is consistent, then the announced tail is not followable.
+    assert results["NDY"]["tail_status"].iloc[0] == "optimal"
+    assert (results["NDY"]["tail_status"].iloc[1:] != "optimal").all()

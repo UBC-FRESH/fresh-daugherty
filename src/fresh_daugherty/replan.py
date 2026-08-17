@@ -91,9 +91,12 @@ def _solve_and_apply(
     flow_geometry: str,
     flow_decrease: float | None,
     flow_increase: float | None,
+    abs_period: int = 1,
 ) -> list[float]:
     """Solve the open-loop LP, apply its schedule (up to ``max_period``), and
-    return the realized per-period harvest volume."""
+    return the realized per-period harvest volume. ``abs_period`` is the
+    absolute calendar period of this subproblem's present (for the price
+    clock)."""
     problem = add_open_loop_problem(
         model,
         flow_coefficient=flow_tolerance,
@@ -102,6 +105,7 @@ def _solve_and_apply(
         flow_geometry=flow_geometry,
         flow_decrease=flow_decrease,
         flow_increase=flow_increase,
+        abs_period=abs_period,
         name="open",
     )
     problem.solve(verbose=False)
@@ -119,6 +123,140 @@ def _solve_and_apply(
     return [model.compile_product(p, "totvol", acode="harvest") for p in model.periods]
 
 
+def _solve_subproblem(
+    model,
+    *,
+    discount_rate: float,
+    flow_tolerance: float,
+    target_flow_mcf: float | None,
+    flow_geometry: str,
+    flow_decrease: float | None,
+    flow_increase: float | None,
+    abs_period: int,
+    fix_period1_harvest_mcf: float | None = None,
+    name: str,
+) -> tuple[object, float]:
+    """Build and solve the open-loop subproblem on ``model``; return (problem, objective)."""
+    problem = add_open_loop_problem(
+        model,
+        flow_coefficient=flow_tolerance,
+        discount_rate=discount_rate,
+        target_flow_mcf=target_flow_mcf,
+        flow_geometry=flow_geometry,
+        flow_decrease=flow_decrease,
+        flow_increase=flow_increase,
+        abs_period=abs_period,
+        fix_period1_harvest_mcf=fix_period1_harvest_mcf,
+        name=name,
+    )
+    problem.solve(verbose=False)
+    obj = problem.z() if problem.status() == "optimal" else float("nan")
+    return problem, obj
+
+
+def consistency_gap_replan(
+    model: ws3.forest.ForestModel,
+    *,
+    workdir: str | Path,
+    discount_rate: float = THESIS_DISCOUNT_RATE,
+    flow_tolerance: float = 0.05,
+    target_flow_mcf: float | None = None,
+    flow_geometry: str = "period1",
+    flow_decrease: float | None = None,
+    flow_increase: float | None = None,
+    rolling_horizon: bool = True,
+) -> pd.DataFrame:
+    """Sequential replanning with an objective-gap consistency diagnostic.
+
+    At each replan period the announced (period-0 open-loop) plan's harvest for
+    that period is evaluated against the re-solved subproblem: we solve the
+    subproblem freely (``obj_free``) and with the period-1 harvest fixed to the
+    announced value (``obj_fixed``). The ``objective_gap = obj_free -
+    obj_fixed`` measures how much the re-solver strictly improves on the
+    announced decision. A positive gap means the announced plan's tail is
+    *strictly suboptimal*---genuine dynamic inconsistency, distinguishable from
+    merely choosing an alternate LP optimum (which would give gap ~ 0).
+
+    Returns a per-period frame: period, announced, realized, obj_free,
+    obj_fixed, objective_gap.
+    """
+    workdir = Path(workdir)
+    horizon = model.horizon
+    announced = open_loop_projection(
+        model,
+        discount_rate=discount_rate,
+        flow_tolerance=flow_tolerance,
+        target_flow_mcf=target_flow_mcf,
+        flow_geometry=flow_geometry,
+        flow_decrease=flow_decrease,
+        flow_increase=flow_increase,
+    )
+    rows = []
+    current = model
+    realized: list[float] = []
+    for t in range(1, horizon + 1):
+        kw = dict(
+            discount_rate=discount_rate,
+            flow_tolerance=flow_tolerance,
+            target_flow_mcf=target_flow_mcf,
+            flow_geometry=flow_geometry,
+            flow_decrease=flow_decrease,
+            flow_increase=flow_increase,
+            abs_period=t,
+        )
+        # Free subproblem (the re-solver's choice).
+        prob_free, obj_free = _solve_subproblem(current, name="free", **kw)
+        # Tail-fixed subproblem (the announced plan's period-t decision).
+        _, obj_fixed = _solve_subproblem(
+            current, name="fixed", fix_period1_harvest_mcf=announced[t - 1], **kw
+        )
+        # Realized decision = the free subproblem's period-1 harvest; apply it.
+        schedule = current.compile_schedule(prob_free)
+        current.reset()
+        current.apply_schedule(
+            schedule,
+            max_period=1,
+            force_integral_area=False,
+            override_operability=False,
+            fuzzy_age=False,
+            recourse_enabled=False,
+            verbose=False,
+        )
+        r_t = current.compile_product(1, "totvol", acode="harvest")
+        realized.append(r_t)
+        # Tail status: is the announced plan's period-t decision still optimal
+        # from the realized state? "optimal" (free==fixed), "suboptimal"
+        # (feasible but strictly worse), or "infeasible" (cannot be implemented).
+        gap = (
+            float(obj_free - obj_fixed)
+            if obj_free == obj_free and obj_fixed == obj_fixed
+            else float("nan")
+        )
+        if obj_fixed != obj_fixed:  # NaN -> infeasible
+            status = "infeasible"
+        elif gap > 1e-6 * max(abs(obj_free), 1.0):
+            status = "suboptimal"
+        else:
+            status = "optimal"
+        rows.append(
+            {
+                "period": t,
+                "announced": float(announced[t - 1]),
+                "realized": float(r_t),
+                "obj_free": float(obj_free),
+                "obj_fixed": float(obj_fixed),
+                "objective_gap": gap,
+                "tail_status": status,
+            }
+        )
+        if t == horizon:
+            break
+        state = extract_areas(current, 2)
+        next_horizon = horizon if rolling_horizon else current.horizon - 1
+        current = build_model(state, next_horizon, workdir / f"replan_{t}")
+    return pd.DataFrame(rows)
+
+
 def open_loop_projection(
     model: ws3.forest.ForestModel,
     *,
@@ -128,6 +266,7 @@ def open_loop_projection(
     flow_geometry: str = "period1",
     flow_decrease: float | None = None,
     flow_increase: float | None = None,
+    abs_period: int = 1,
 ) -> list[float]:
     """The open-loop plan's projected per-period harvest volume (full horizon)."""
     return _solve_and_apply(
@@ -139,6 +278,7 @@ def open_loop_projection(
         flow_geometry=flow_geometry,
         flow_decrease=flow_decrease,
         flow_increase=flow_increase,
+        abs_period=abs_period,
     )
 
 
@@ -180,6 +320,7 @@ def sequential_replan(
             flow_geometry=flow_geometry,
             flow_decrease=flow_decrease,
             flow_increase=flow_increase,
+            abs_period=t,
         )
         realized.append(volumes[0])
         if t == horizon:
