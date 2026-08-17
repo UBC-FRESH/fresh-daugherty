@@ -187,7 +187,7 @@ def consistency_gap_replan(
     flow_geometry: str = "period1",
     flow_decrease: float | None = None,
     flow_increase: float | None = None,
-    carry_flow_history: bool = True,
+    carry_flow_history: bool = False,
     rolling_horizon: bool = True,
 ) -> pd.DataFrame:
     """Sequential replanning with an objective-gap consistency diagnostic.
@@ -316,7 +316,7 @@ def sequential_replan(
     flow_geometry: str = "period1",
     flow_decrease: float | None = None,
     flow_increase: float | None = None,
-    carry_flow_history: bool = True,
+    carry_flow_history: bool = False,
     rolling_horizon: bool = True,
 ) -> pd.DataFrame:
     """Run the sequential-replanning simulation.
