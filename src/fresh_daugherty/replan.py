@@ -98,6 +98,7 @@ def _solve_and_apply(
     return the realized per-period harvest volume. ``abs_period`` is the
     absolute calendar period of this subproblem's present (for the price
     clock)."""
+
     def _build_solve(prev_harvest):
         problem = add_open_loop_problem(
             model,
