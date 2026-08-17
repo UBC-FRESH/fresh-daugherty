@@ -90,6 +90,7 @@ def add_open_loop_problem(
     terminal_constraints: bool = False,  # EXPERIMENTAL: see note in docstring
     abs_period: int = 1,
     fix_period1_harvest_mcf: float | None = None,
+    prev_harvest_mcf: float | None = None,
     name: str = "open-loop",
 ) -> object:
     """Add the open-loop NPV-max LP to ``model`` and return it.
@@ -230,6 +231,19 @@ def add_open_loop_problem(
         eps = 0.01
         hv_bounds.setdefault("lb", {})[1] = fix_period1_harvest_mcf * (1.0 - eps)
         hv_bounds.setdefault("ub", {})[1] = fix_period1_harvest_mcf * (1.0 + eps)
+
+    if prev_harvest_mcf is not None and flow_geometry == "consecutive":
+        # Carry the harvest-flow history: the subproblem's first-period harvest
+        # is anchored to the realized previous period's harvest (the sequential
+        # -flow policy's payoff/feasibility-relevant state), so the replanned
+        # policy is the SAME policy, not a reset one. H_1 within the policy's
+        # (decrease, increase) tolerances of H_prev.
+        dec = flow_coefficient if flow_decrease is None else flow_decrease
+        cgen_data = cgen_data or {}
+        hv_bounds = cgen_data.setdefault("cflw_hv", {"lb": {}, "ub": {}})
+        hv_bounds.setdefault("lb", {})[1] = prev_harvest_mcf * (1.0 - dec)
+        if flow_increase is not None:
+            hv_bounds.setdefault("ub", {})[1] = prev_harvest_mcf * (1.0 + flow_increase)
 
     problem = model.add_problem(
         name=name,

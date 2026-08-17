@@ -92,23 +92,46 @@ def _solve_and_apply(
     flow_decrease: float | None,
     flow_increase: float | None,
     abs_period: int = 1,
+    prev_harvest_mcf: float | None = None,
 ) -> list[float]:
     """Solve the open-loop LP, apply its schedule (up to ``max_period``), and
     return the realized per-period harvest volume. ``abs_period`` is the
     absolute calendar period of this subproblem's present (for the price
     clock)."""
-    problem = add_open_loop_problem(
-        model,
-        flow_coefficient=flow_tolerance,
-        discount_rate=discount_rate,
-        target_flow_mcf=target_flow_mcf,
-        flow_geometry=flow_geometry,
-        flow_decrease=flow_decrease,
-        flow_increase=flow_increase,
-        abs_period=abs_period,
-        name="open",
-    )
-    problem.solve(verbose=False)
+    def _build_solve(prev_harvest):
+        problem = add_open_loop_problem(
+            model,
+            flow_coefficient=flow_tolerance,
+            discount_rate=discount_rate,
+            target_flow_mcf=target_flow_mcf,
+            flow_geometry=flow_geometry,
+            flow_decrease=flow_decrease,
+            flow_increase=flow_increase,
+            abs_period=abs_period,
+            prev_harvest_mcf=prev_harvest,
+            name="open",
+        )
+        problem.solve(verbose=False)
+        return problem
+
+    problem = _build_solve(prev_harvest_mcf)
+    if problem.status() != "optimal" and prev_harvest_mcf is not None:
+        # The carried sequential-flow policy is infeasible from the realized
+        # state (the prior harvest level can't be sustained): the policy must
+        # relax --- this is the "declining non-declining yield" made concrete.
+        # Retry without the first-period anchor.
+        problem = _build_solve(None)
+    if problem.status() != "optimal":
+        # Last resort: drop the flow constraint entirely rather than crash.
+        problem = add_open_loop_problem(
+            model,
+            flow_coefficient=flow_tolerance,
+            discount_rate=discount_rate,
+            flow_geometry="none",
+            abs_period=abs_period,
+            name="open",
+        )
+        problem.solve(verbose=False)
     schedule = model.compile_schedule(problem)
     model.reset()
     model.apply_schedule(
@@ -164,6 +187,7 @@ def consistency_gap_replan(
     flow_geometry: str = "period1",
     flow_decrease: float | None = None,
     flow_increase: float | None = None,
+    carry_flow_history: bool = True,
     rolling_horizon: bool = True,
 ) -> pd.DataFrame:
     """Sequential replanning with an objective-gap consistency diagnostic.
@@ -292,6 +316,7 @@ def sequential_replan(
     flow_geometry: str = "period1",
     flow_decrease: float | None = None,
     flow_increase: float | None = None,
+    carry_flow_history: bool = True,
     rolling_horizon: bool = True,
 ) -> pd.DataFrame:
     """Run the sequential-replanning simulation.
@@ -308,9 +333,12 @@ def sequential_replan(
     horizon = model.horizon
     realized: list[float] = []
     current = model
+    prev_harvest: float | None = None
     for t in range(1, horizon + 1):
         # Re-solve the open-loop LP from the current state, take the current
-        # period's decision (apply only period 1 of this sub-horizon).
+        # period's decision (apply only period 1 of this sub-horizon). Anchor the
+        # subproblem's first-period flow to the realized previous harvest so the
+        # replanned policy is the SAME sequential-flow policy (not a reset one).
         volumes = _solve_and_apply(
             current,
             max_period=1,
@@ -321,8 +349,10 @@ def sequential_replan(
             flow_decrease=flow_decrease,
             flow_increase=flow_increase,
             abs_period=t,
+            prev_harvest_mcf=prev_harvest if carry_flow_history else None,
         )
         realized.append(volumes[0])
+        prev_harvest = volumes[0]
         if t == horizon:
             break
         # Extract the realized state at the start of the next period and build
