@@ -195,15 +195,15 @@ def consistency_gap_replan(
     current = model
     realized: list[float] = []
     for t in range(1, horizon + 1):
-        kw = dict(
-            discount_rate=discount_rate,
-            flow_tolerance=flow_tolerance,
-            target_flow_mcf=target_flow_mcf,
-            flow_geometry=flow_geometry,
-            flow_decrease=flow_decrease,
-            flow_increase=flow_increase,
-            abs_period=t,
-        )
+        kw = {
+            "discount_rate": discount_rate,
+            "flow_tolerance": flow_tolerance,
+            "target_flow_mcf": target_flow_mcf,
+            "flow_geometry": flow_geometry,
+            "flow_decrease": flow_decrease,
+            "flow_increase": flow_increase,
+            "abs_period": t,
+        }
         # Free subproblem (the re-solver's choice).
         prob_free, obj_free = _solve_subproblem(current, name="free", **kw)
         # Tail-fixed subproblem (the announced plan's period-t decision).
