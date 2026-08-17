@@ -71,7 +71,7 @@ def test_policy_grid_occurrence_and_nhf_baseline(tmp_path: Path) -> None:
     from fresh_daugherty.instance.thesis import HARVEST_FLOW_POLICIES
 
     pol = {p.code: p for p in HARVEST_FLOW_POLICIES}
-    df = run_policy_grid(
+    df, trajectories = run_policy_grid(
         landbases=(1,),
         discount_rates=(0.04,),
         policies=(pol["NHF"], pol["NDY"]),
@@ -80,6 +80,10 @@ def test_policy_grid_occurrence_and_nhf_baseline(tmp_path: Path) -> None:
     )
     assert set(df["flow_policy"]) == {"NHF", "NDY"}
     assert "occurrence" in df.columns
+    # The trajectories frame carries the full per-cell projected/realized record.
+    assert {"landbase", "flow_policy", "period", "projected_mcf", "realized_mcf"} <= set(
+        trajectories.columns
+    )
     nhf = df[df["flow_policy"] == "NHF"].iloc[0]
     ndy = df[df["flow_policy"] == "NDY"].iloc[0]
     # No flow constraint -> the problem decomposes -> open-loop == sequential.

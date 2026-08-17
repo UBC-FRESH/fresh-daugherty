@@ -172,6 +172,8 @@ def _run_policy_cell(args: tuple) -> dict:
         "max_decrease": pol.max_decrease,
         "max_increase": pol.max_increase,
         "horizon": horizon,
+        "projected": result.projected,
+        "realized": result.realized,
         **result.metrics,
     }
 
@@ -192,7 +194,11 @@ def run_policy_grid(
     discount rates and landbases. Each cell is a full sequential-replanning
     simulation under the policy's consecutive sequential-flow constraint.
     Cells are independent and run in parallel across ``workers`` processes
-    (each cell gets a unique workdir). Returns one row per cell.
+    (each cell gets a unique workdir). Returns ``(summary, trajectories)``:
+    ``summary`` has one row per cell with the occurrence/magnitude metrics;
+    ``trajectories`` is a long-format frame (one row per cell x period) with the
+    open-loop projected and realized replanned harvest volumes, so the full
+    benchmark record can be published and re-analyzed.
     """
     workdir = Path(workdir)
     cells = [
@@ -211,7 +217,30 @@ def run_policy_grid(
             rows = list(ex.map(_run_policy_cell, cells))
     else:
         rows = [_run_policy_cell(c) for c in cells]
-    return pd.DataFrame(rows)
+
+    summary = pd.DataFrame(
+        [{k: v for k, v in r.items() if k not in ("projected", "realized")} for r in rows]
+    )
+    traj_rows = []
+    for r in rows:
+        for period, (p, rl) in enumerate(zip(r["projected"], r["realized"], strict=True), start=1):
+            traj_rows.append(
+                {
+                    "landbase": r["landbase"],
+                    "discount_rate": r["discount_rate"],
+                    "flow_policy": r["flow_policy"],
+                    "period": period,
+                    "projected_mcf": p,
+                    "realized_mcf": rl,
+                }
+            )
+    trajectories = pd.DataFrame(traj_rows)
+    return summary, trajectories
 
 
-__all__ = ["ExperimentResult", "run_experiment", "run_experiment_grid", "run_policy_grid"]
+__all__ = [
+    "ExperimentResult",
+    "run_experiment",
+    "run_experiment_grid",
+    "run_policy_grid",
+]

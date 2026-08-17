@@ -117,14 +117,16 @@ def grid(
     workers: int = typer.Option(
         1, "--workers", min=1, help="Parallel processes (grid is embarrassingly parallel)."
     ),
-    out: Path = typer.Option(Path("outputs") / "experiments" / "grid.csv", "--out"),
+    out: Path = typer.Option(Path("results") / "experiments" / "grid.csv", "--out"),
 ) -> None:
     """Run the thesis experiment grid (landbase x discount rate x harvest-flow policy).
 
     Reproduces Daugherty (1991)'s experiment design: the Table 5.6 harvest-flow
     policies (consecutive sequential flow) crossed with discount rates and
-    landbases. Writes one row per cell (occurrence + magnitude metrics) to
-    ``--out``. This is the tracked entry point that regenerates the results CSV.
+    landbases. Writes the per-cell summary (occurrence + magnitude metrics) to
+    ``--out`` and the full per-cell projected/realized harvest trajectories to
+    ``<out-stem>_trajectories.csv``, in the tracked ``results/`` tree, so the
+    complete benchmark record is public and reproducible.
     """
     from fresh_daugherty.experiments import run_policy_grid
     from fresh_daugherty.instance.reconstruct import calibrate
@@ -135,7 +137,7 @@ def grid(
     rates = tuple(float(x) for x in discount_rates.split(","))
     pol_by_code = {p.code: p for p in HARVEST_FLOW_POLICIES}
     pols = tuple(pol_by_code[c] for c in policies.split(","))
-    df = run_policy_grid(
+    summary, trajectories = run_policy_grid(
         landbases=lbs,
         discount_rates=rates,
         policies=pols,
@@ -144,9 +146,12 @@ def grid(
         workers=workers,
     )
     out.parent.mkdir(parents=True, exist_ok=True)
-    df.to_csv(out, index=False)
-    typer.echo(f"wrote {out} ({len(df)} cells)")
-    typer.echo(f"  occurrence rate: {df['occurrence'].mean():.0%} of cells")
+    summary.to_csv(out, index=False)
+    traj_out = out.with_name(out.stem + "_trajectories.csv")
+    trajectories.to_csv(traj_out, index=False)
+    typer.echo(f"wrote {traj_out} ({len(trajectories)} trajectory rows)")
+    typer.echo(f"wrote {out} ({len(summary)} cells)")
+    typer.echo(f"  occurrence rate: {summary['occurrence'].mean():.0%} of cells")
 
 
 @app.command("consistency-run")
