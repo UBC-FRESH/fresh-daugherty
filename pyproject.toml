@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "fresh-daugherty"
-version = "0.1.0a2"
+version = "0.1.0b1"
 description = "Open, reproducible ws3-based reproduction of Daugherty (1991): dynamic inconsistency in LP-based forest planning models"
 readme = "README.md"
 requires-python = ">=3.11"
