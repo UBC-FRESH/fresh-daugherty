@@ -2,6 +2,17 @@
 
 Append-only project narrative, reverse-chronological.
 
+## v0.2.0 (unreleased) — P9 in progress
+
+Phase 9 (E1: time-varying discount-rate shapes) on `feature/p9-discount-shapes`.
+
+- P9.1 (#53): `instance/discount.py` — typed, provenance-stamped
+  discount-rate path records (`constant` / `linear` / `inverse-j` families);
+  the fixed E1 parameter set (`linear-4pc-0pc`, `linear-6pc-0pc`,
+  `invj-4pc-k1`, `invj-4pc-k2`); per-period factor vectors with the constant
+  family bit-identical to the core scalar convention; validation and tests
+  (`tests/test_discount.py`).
+
 ## v0.2.0 planning — 2026-09-23
 
 Scope expansion agreed with co-author J. Fuchs (BOKU), who joins the paper;
