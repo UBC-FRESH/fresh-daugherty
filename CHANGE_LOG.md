@@ -12,6 +12,11 @@ Phase 9 (E1: time-varying discount-rate shapes) on `feature/p9-discount-shapes`.
   `invj-4pc-k1`, `invj-4pc-k2`); per-period factor vectors with the constant
   family bit-identical to the core scalar convention; validation and tests
   (`tests/test_discount.py`).
+- P9.2 (#54): `lp.py` — the open-loop LP consumes a per-period
+  discount-factor vector; the scalar `discount_rate` entry point is a wrapper
+  over a `constant` path (bit-identical objective and optimal plan, verified
+  by regression test); `discount_path` kwarg wires any E1 path into the
+  objective (`tests/test_lp.py`).
 
 ## v0.2.0 planning — 2026-09-23
 
