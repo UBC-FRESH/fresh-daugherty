@@ -2,6 +2,22 @@
 
 Append-only project narrative, reverse-chronological.
 
+## v0.2.0 planning — 2026-09-23
+
+Scope expansion agreed with co-author J. Fuchs (BOKU), who joins the paper;
+the manuscript migrated to the Overleaf-linked repo
+`ubc-fresh/fresh_daugherty_manuscript` (all manuscript work on `main` there).
+Four modelling extensions plus a dissemination extension planned in
+`planning/v0.2.0-plan.md`, each evaluated on whether it mitigates or
+eliminates dynamic inconsistency against the intact core grid: P9/E1
+time-varying discount-rate shapes (#48, children #53–#56); P10/E2
+max-harvest-cap even-flow search (#49, children #57–#60); P11/E3
+value-denominated flow constraints (#50, children #61–#63); P12/E4
+rolling-mean NDY (#51, children #64–#66); P13/E5 curated supplementary
+material + manuscript pointers (#52, children #67–#69). Phase branches per
+the strict workflow, starting with `feature/p9-discount-shapes`. Companion
+analysis note: `planning/null-discount-neg-valued-basis.md`.
+
 ## 0.1.0a0 — 2026-08-14
 
 Initial repository scaffold and master plan. No functional pipeline yet.

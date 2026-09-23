@@ -16,7 +16,25 @@ synchronized with GitHub issues, planning notes, pull requests, and
 | P3 Sequential-replanning simulator + inconsistency measurement | [#4](https://github.com/UBC-FRESH/fresh-daugherty/issues/4) | `feature/p3-replanning` | Complete — PR pending |
 | P4 Consistent-solution construct + experiments | [#6](https://github.com/UBC-FRESH/fresh-daugherty/issues/6) | `feature/p4-experiments` | Complete (PR [#7](https://github.com/UBC-FRESH/fresh-daugherty/pull/7) merged) |
 | P5 Validation vs thesis + docs + release | [#8](https://github.com/UBC-FRESH/fresh-daugherty/issues/8) | `feature/p5-release` | Complete (PR [#9](https://github.com/UBC-FRESH/fresh-daugherty/pull/9) merged; `v0.1.0a1` on PyPI) |
-| P6 Paper | [#10](https://github.com/UBC-FRESH/fresh-daugherty/issues/10) | — | Draft complete (`planning/paper-draft.md`); submission pending |
+| P6 Paper | [#10](https://github.com/UBC-FRESH/fresh-daugherty/issues/10) | — | Manuscript migrated to the Overleaf-linked repo `ubc-fresh/fresh_daugherty_manuscript` (2026-09); expansion planned as v0.2.0 |
+| P7 Good-paper transformation | [#42](https://github.com/UBC-FRESH/fresh-daugherty/issues/42) | — | Open (with open child tasks #43–#45) |
+| P8 Rigorous methodology + CJFR pivot | [#46](https://github.com/UBC-FRESH/fresh-daugherty/issues/46) | `feature/p8-rigorous-cjfr` | Complete — merged; `v0.1.0b1` released with Zenodo DOI |
+| P9 E1: time-varying discount-rate shapes | [#48](https://github.com/UBC-FRESH/fresh-daugherty/issues/48) | `feature/p9-discount-shapes` | Planned — children #53–#56 |
+| P10 E2: max-harvest-cap even-flow search | [#49](https://github.com/UBC-FRESH/fresh-daugherty/issues/49) | `feature/p10-cap-search` | Planned — children #57–#60 |
+| P11 E3: value-denominated flow constraints | [#50](https://github.com/UBC-FRESH/fresh-daugherty/issues/50) | `feature/p11-value-flow` | Planned — children #61–#63 |
+| P12 E4: rolling-mean NDY | [#51](https://github.com/UBC-FRESH/fresh-daugherty/issues/51) | `feature/p12-rolling-mean-ndy` | Planned — children #64–#66 |
+| P13 E5: curated supplementary material + manuscript pointers | [#52](https://github.com/UBC-FRESH/fresh-daugherty/issues/52) | `feature/p13-supplement` | Planned — children #67–#69 |
+
+## v0.2.0 Scope Expansion (2026-09)
+
+Scope expansion agreed with co-author J. Fuchs (BOKU): four modelling
+extensions (E1–E4, phases P9–P12) plus a curated-supplement extension (E5,
+P13), each evaluated on whether it mitigates or eliminates dynamic
+inconsistency against the intact core grid. Detailed plan:
+`planning/v0.2.0-plan.md`. The manuscript now lives in the Overleaf-linked
+`ubc-fresh/fresh_daugherty_manuscript` repo (all manuscript work on `main`
+there); this repo remains the sole source of modelling code, experiment
+records, and the supplement.
 
 ## Project One-Liner
 
@@ -45,7 +63,9 @@ thesis; plus a ws3 Model II formulation, docs, CI, and a release. See
 
 ## Out of Scope
 
-New science beyond Daugherty (1991) (the paper repeats the thesis's
-premise -> model -> results -> conclusion with an open stack); any change to
-`fresh-fuchs` itself; recourse/rolling-horizon "fixes" (they change the
-object of study).
+For the v0.1.x core: new science beyond Daugherty (1991) (the core paper
+repeats the thesis's premise -> model -> results -> conclusion with an open
+stack); any change to `fresh-fuchs` itself; recourse/rolling-horizon "fixes"
+(they change the object of study). The v0.2.0 expansion (P9–P13) deliberately
+extends beyond the thesis; each extension is still evaluated against the
+unmodified core grid as control.
