@@ -22,7 +22,7 @@ synchronized with GitHub issues, planning notes, pull requests, and
 | P9 E1: time-varying discount-rate shapes | [#48](https://github.com/UBC-FRESH/fresh-daugherty/issues/48) | `feature/p9-discount-shapes` | Complete (PR [#70](https://github.com/UBC-FRESH/fresh-daugherty/pull/70) merged) |
 | P10 E2: max-harvest-cap even-flow search | [#49](https://github.com/UBC-FRESH/fresh-daugherty/issues/49) | `feature/p10-cap-search` | Complete (PR [#71](https://github.com/UBC-FRESH/fresh-daugherty/pull/71) merged) |
 | P11 E3: value-denominated flow constraints | [#50](https://github.com/UBC-FRESH/fresh-daugherty/issues/50) | `feature/p11-value-flow` | Complete (PR [#72](https://github.com/UBC-FRESH/fresh-daugherty/pull/72) merged) |
-| P12 E4: rolling-mean NDY | [#51](https://github.com/UBC-FRESH/fresh-daugherty/issues/51) | `feature/p12-rolling-mean-ndy` | Planned — children #64–#66 |
+| P12 E4: rolling-mean NDY | [#51](https://github.com/UBC-FRESH/fresh-daugherty/issues/51) | `feature/p12-rolling-mean-ndy` | Complete (PR [#73](https://github.com/UBC-FRESH/fresh-daugherty/pull/73) merged) |
 | P13 E5: curated supplementary material + manuscript pointers | [#52](https://github.com/UBC-FRESH/fresh-daugherty/issues/52) | `feature/p13-supplement` | Planned — children #67–#69 |
 
 ## v0.2.0 Scope Expansion (2026-09)
