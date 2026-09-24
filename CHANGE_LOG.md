@@ -17,6 +17,14 @@ Phase 9 (E1: time-varying discount-rate shapes) on `feature/p9-discount-shapes`.
   over a `constant` path (bit-identical objective and optimal plan, verified
   by regression test); `discount_path` kwarg wires any E1 path into the
   objective (`tests/test_lp.py`).
+- P9.3 (#55): E1 experiment grid run and tracked. `replan.py`/`experiments.py`
+  plumb `discount_path` through the simulator and gap diagnostic; new
+  `run_discount_path_grid` + `fresh-daugherty grid-discount-paths` entry point;
+  tracked records `results/experiments/grid_discount_paths{,_trajectories,_gaps}.csv`
+  (432 cells: 4 paths x 18 landbases x 6 policies, each with the objective-gap
+  diagnostic; provenance columns fd/ws3 versions). Headline: declining-rate
+  paths do NOT mitigate — occurrence 98-100% across all four paths (vs 47-71%
+  at constant 2-6%), with mean divergence 0.17-0.24 (inverse-j highest).
 
 ## v0.2.0 planning — 2026-09-23
 
