@@ -103,3 +103,33 @@ def test_flow_tolerance_changes_projection(tmp_path: Path) -> None:
         landbase=1, discount_rate=0.04, flow_tolerance=0.30, horizon=6, workdir=tmp_path / "l"
     )
     assert list(tight.projected) != list(loose.projected)
+
+
+def test_discount_path_grid_smoke(tmp_path: Path) -> None:
+    """P9.3 (issue #55): the E1 discount-path grid runs end to end and every
+    cell carries metrics, trajectories, and gap-diagnostic records."""
+    from fresh_daugherty.experiments import run_discount_path_grid
+    from fresh_daugherty.instance.discount import discount_path
+    from fresh_daugherty.instance.thesis import HARVEST_FLOW_POLICIES
+
+    pol = {p.code: p for p in HARVEST_FLOW_POLICIES}
+    summary, trajectories, gaps = run_discount_path_grid(
+        landbases=(1,),
+        discount_paths=(discount_path("linear-4pc-0pc"),),
+        policies=(pol["NDY"],),
+        horizon=5,
+        workdir=tmp_path,
+    )
+    assert len(summary) == 1
+    row = summary.iloc[0]
+    assert row["discount_path"] == "linear-4pc-0pc"
+    assert row["path_family"] == "linear"
+    assert row["discount_rate"] == 0.04
+    # Provenance columns are populated.
+    assert row["fd_version"] and row["ws3_version"]
+    # Per-period records: horizon rows in each long-format frame.
+    assert len(trajectories) == len(gaps) == 5
+    assert {"period", "projected_mcf", "realized_mcf"} <= set(trajectories.columns)
+    assert {"period", "announced", "realized", "objective_gap", "tail_status"} <= set(gaps.columns)
+    # NDY on the all-mature landbase is strongly inconsistent under the path too.
+    assert row["mean_abs_rel_deviation"] > 0.05

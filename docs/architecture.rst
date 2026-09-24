@@ -22,6 +22,10 @@ Module map (see ``planning/v0.1.0a1-plan.md`` for the phase scope):
 - ``fresh_daugherty.experiments`` — the experiment runner sweeping landbases
   x discount rates x harvest-flow policies (occurrence/magnitude table).
 - ``fresh_daugherty.cli`` — thin CLI wrappers over the Python APIs.
+- ``fresh_daugherty.instance.discount`` — the E1 (P9) time-varying
+  discount-rate path records (constant / linear / inverse-j families) and
+  their per-period factor vectors; the constant family is bit-identical to
+  the core scalar convention.
 
 Design invariants:
 

@@ -2,6 +2,40 @@
 
 Append-only project narrative, reverse-chronological.
 
+## v0.2.0 (unreleased) — P9 in progress
+
+Phase 9 (E1: time-varying discount-rate shapes) on `feature/p9-discount-shapes`.
+
+- P9.1 (#53): `instance/discount.py` — typed, provenance-stamped
+  discount-rate path records (`constant` / `linear` / `inverse-j` families);
+  the fixed E1 parameter set (`linear-4pc-0pc`, `linear-6pc-0pc`,
+  `invj-4pc-k1`, `invj-4pc-k2`); per-period factor vectors with the constant
+  family bit-identical to the core scalar convention; validation and tests
+  (`tests/test_discount.py`).
+- P9.2 (#54): `lp.py` — the open-loop LP consumes a per-period
+  discount-factor vector; the scalar `discount_rate` entry point is a wrapper
+  over a `constant` path (bit-identical objective and optimal plan, verified
+  by regression test); `discount_path` kwarg wires any E1 path into the
+  objective (`tests/test_lp.py`).
+- P9.3 (#55): E1 experiment grid run and tracked. `replan.py`/`experiments.py`
+  plumb `discount_path` through the simulator and gap diagnostic; new
+  `run_discount_path_grid` + `fresh-daugherty grid-discount-paths` entry point;
+  tracked records `results/experiments/grid_discount_paths{,_trajectories,_gaps}.csv`
+  (432 cells: 4 paths x 18 landbases x 6 policies, each with the objective-gap
+  diagnostic; provenance columns fd/ws3 versions). Headline: declining-rate
+  paths do NOT mitigate — occurrence 98-100% across all four paths (vs 47-71%
+  at constant 2-6%), with mean divergence 0.17-0.24 (inverse-j highest).
+- P9.4 (#56): E1 analysis + write-up. `scripts/analyze_p9_discount_shapes.py`
+  regenerates tables T1-T4 + figures F1-F2 from the tracked records into
+  `results/analysis/p9_discount_shapes/`, plus `writeup.md` (draft for the
+  manuscript's Extensions section). Findings: declining rates make
+  inconsistency MORE pervasive (flow-constrained occurrence 98-100% vs 47-86%
+  at constant 2-6%; magnitude 0.16-0.20 vs 0.07-0.11); and the NHF control
+  cells separate a second, preference-level (Strotz) channel — under
+  declining paths the no-flow cells diverge at 100% occurrence with gap
+  diagnostic confirming genuine strict suboptimality/infeasibility (30-61% +
+  7-14% of tail periods), unlike the constant-0% tie-churn case.
+
 ## v0.2.0 planning — 2026-09-23
 
 Scope expansion agreed with co-author J. Fuchs (BOKU), who joins the paper;

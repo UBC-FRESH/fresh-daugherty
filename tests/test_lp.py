@@ -124,3 +124,38 @@ def test_objective_is_nonzero_and_rate_dependent(tmp_path) -> None:
     assert not (abs(v0 - v6) < 1e-6).all()
     # Objective value decreases as the discount rate rises (discounting bites).
     assert p6.z() < p0.z()
+
+
+def _solve_path(tmp_path, path, horizon=8):
+    areas = landbase_areas(1)
+    build_woodstock_sections(tmp_path / "model", areas=areas)
+    model = prepare_optimization(
+        bootstrap_model(tmp_path / "model", horizon=horizon), horizon=horizon
+    )
+    problem = add_open_loop_problem(
+        model, discount_path=path, flow_geometry="consecutive", flow_decrease=0.0
+    )
+    df = solve_open_loop(model, problem)
+    return problem, df["harvest_volume_mcf"].to_numpy()
+
+
+def test_constant_discount_path_is_bit_identical_to_scalar(tmp_path) -> None:
+    """P9.2 regression (issue #54): a constant path must reproduce the scalar
+    ``discount_rate`` entry point exactly (objective and optimal plan)."""
+    from fresh_daugherty.instance.discount import constant_path
+
+    p_scalar, v_scalar = _solve_rate(tmp_path / "s", 0.04)
+    p_path, v_path = _solve_path(tmp_path / "p", constant_path(0.04))
+    assert p_scalar.status() == p_path.status() == "optimal"
+    assert p_scalar.z() == p_path.z()
+    assert (abs(v_scalar - v_path) < 1e-9).all()
+
+
+def test_declining_discount_path_changes_plan(tmp_path) -> None:
+    """A declining rate weights the tail more heavily, so the optimal plan
+    shifts relative to the constant-rate control at the same initial rate."""
+    from fresh_daugherty.instance.discount import discount_path
+
+    _, v_const = _solve_rate(tmp_path / "c", 0.04)
+    _, v_invj = _solve_path(tmp_path / "j", discount_path("invj-4pc-k1"))
+    assert not (abs(v_const - v_invj) < 1e-6).all()

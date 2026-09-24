@@ -27,6 +27,7 @@ import numpy as np
 import pandas as pd
 import ws3
 
+from fresh_daugherty.instance.discount import DiscountPath, constant_path
 from fresh_daugherty.instance.reconstruct import calibrated_params
 from fresh_daugherty.instance.thesis import (
     PRICE_ESCALATION_RATE,
@@ -82,6 +83,7 @@ def add_open_loop_problem(
     *,
     flow_coefficient: float = 0.05,
     discount_rate: float = THESIS_DISCOUNT_RATE,
+    discount_path: DiscountPath | None = None,
     price_escalation: bool = True,
     target_flow_mcf: float | None = None,
     flow_geometry: str = "period1",
@@ -107,6 +109,14 @@ def add_open_loop_problem(
     harvest-flow floor/ceiling is used instead (an AAC ceiling; overrides
     ``flow_geometry``).
 
+    ``discount_path`` (E1, P9): a per-period discount-rate path. When given, it
+    overrides ``discount_rate``; the scalar entry point is kept as a wrapper
+    that builds the equivalent ``constant`` path, and a constant path produces
+    objective coefficients bit-identical to the pre-E1 scalar convention (see
+    ``instance/discount.py``). The path is indexed by the subproblem's
+    *relative* period (each replanning planner applies the path from her own
+    present; discounting stays relative while price escalation is absolute).
+
     ``terminal_constraints`` (EXPERIMENTAL, default off): adds the thesis's
     ending-period inventory floor (ending growing stock >= 80% of the regulated
     forest's average inventory; thesis p.77). Known issue: the per-path
@@ -117,6 +127,8 @@ def add_open_loop_problem(
     are off by default; see `planning/thesis-formulation.md` and issue #42.
     """
     period_length = model.period_length
+    path = discount_path if discount_path is not None else constant_path(discount_rate)
+    discount_factors = path.factors(horizon=len(list(model.periods)), period_length=period_length)
     econ = _ecoclass_economics()
 
     def _net_price(dtk, year: float) -> float:
@@ -135,7 +147,7 @@ def add_open_loop_problem(
                 # (abs_period - 1 + t) * period_length. (Discounting stays
                 # relative to the subproblem's present, per the Bellman tail.)
                 net = _net_price(d["dtk"], (abs_period - 1 + t) * period_length)
-                result += (1.0 + discount_rate) ** (-t * period_length) * (net * vol)
+                result += discount_factors[t - 1] * (net * vol)
         return result
 
     def coeff_c_hv(fm: ws3.forest.ForestModel, path) -> dict[int, float]:

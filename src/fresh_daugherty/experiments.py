@@ -13,16 +13,22 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import pandas as pd
+import ws3 as _ws3
 
+from fresh_daugherty import __version__ as _fd_version
+from fresh_daugherty.instance.discount import DiscountPath
 from fresh_daugherty.instance.landbases import landbase_areas
 from fresh_daugherty.instance.thesis import HarvestFlowPolicy
 from fresh_daugherty.lp import flow_kwargs_for_policy
 from fresh_daugherty.model import bootstrap_model, build_woodstock_sections, prepare_optimization
 from fresh_daugherty.replan import (
+    consistency_gap_replan,
     inconsistency_metrics,
     open_loop_projection,
     sequential_replan,
 )
+
+_ws3_version = _ws3.__version__
 
 
 @dataclass(frozen=True)
@@ -145,6 +151,99 @@ def run_experiment_grid(
     return pd.DataFrame(rows)
 
 
+def _run_path_cell(args: tuple) -> tuple[dict, list[dict], list[dict]]:
+    """Run one (landbase, discount path, policy) E1 grid cell with the
+    objective-gap diagnostic. Module-level so it is picklable for the pool.
+
+    Returns ``(summary_row, trajectory_rows, gap_rows)``.
+    """
+    lb, path, pol, horizon, cell_workdir = args
+    from fresh_daugherty.instance.reconstruct import calibrate
+
+    calibrate()
+    areas = landbase_areas(lb)
+    build_woodstock_sections(cell_workdir / "model", areas=areas)
+    model = prepare_optimization(
+        bootstrap_model(cell_workdir / "model", horizon=horizon), horizon=horizon
+    )
+    flow_kwargs = flow_kwargs_for_policy(pol)
+    gap = consistency_gap_replan(
+        model,
+        workdir=cell_workdir,
+        discount_path=path,
+        flow_geometry=flow_kwargs.get("flow_geometry", "period1"),
+        flow_decrease=flow_kwargs.get("flow_decrease"),
+        flow_increase=flow_kwargs.get("flow_increase"),
+    )
+    announced = [float(v) for v in gap["announced"]]
+    realized = [float(v) for v in gap["realized"]]
+    keys = {
+        "landbase": lb,
+        "discount_path": path.code,
+        "path_family": str(path.family),
+        "discount_rate": path.r0,
+        "flow_policy": pol.code,
+    }
+    summary = {
+        **keys,
+        "max_decrease": pol.max_decrease,
+        "max_increase": pol.max_increase,
+        "horizon": horizon,
+        "fd_version": _fd_version,
+        "ws3_version": _ws3_version,
+        **inconsistency_metrics(announced, realized),
+    }
+    trajectories = [
+        {**keys, "period": t, "projected_mcf": p, "realized_mcf": r}
+        for t, (p, r) in enumerate(zip(announced, realized, strict=True), start=1)
+    ]
+    gaps = [{**keys, **row} for row in gap.to_dict(orient="records")]
+    return summary, trajectories, gaps
+
+
+def run_discount_path_grid(
+    *,
+    landbases: tuple[int, ...],
+    discount_paths: tuple[DiscountPath, ...],
+    policies: tuple[HarvestFlowPolicy, ...],
+    horizon: int,
+    workdir: str | Path,
+    workers: int = 1,
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """Run the E1 discount-shape grid: landbase x discount path x policy.
+
+    Each cell is a full sequential-replanning simulation under a time-varying
+    discount-rate path (P9) with the objective-gap diagnostic, so every cell
+    carries both the occurrence/magnitude metrics and the per-period gap
+    evidence (genuine inconsistency vs alternate optima). Returns
+    ``(summary, trajectories, gaps)``; records carry the package and ws3
+    versions for provenance. Cells are independent and run in parallel across
+    ``workers`` processes (each cell gets a unique workdir).
+    """
+    workdir = Path(workdir)
+    cells = [
+        (lb, path, pol, horizon, workdir / f"lb{lb}_{path.code}_{_policy_slug(pol.code)}")
+        for lb in landbases
+        for path in discount_paths
+        for pol in policies
+    ]
+    if workers and workers > 1:
+        from concurrent.futures import ProcessPoolExecutor
+
+        from fresh_daugherty.instance.reconstruct import calibrate
+
+        calibrate()  # warm the parent so forked workers inherit the calibration
+        with ProcessPoolExecutor(max_workers=workers) as ex:
+            results = list(ex.map(_run_path_cell, cells))
+    else:
+        results = [_run_path_cell(c) for c in cells]
+
+    summary = pd.DataFrame([r[0] for r in results])
+    trajectories = pd.DataFrame([row for r in results for row in r[1]])
+    gaps = pd.DataFrame([row for r in results for row in r[2]])
+    return summary, trajectories, gaps
+
+
 def _policy_slug(code: str) -> str:
     """Filesystem-safe slug for a harvest-flow policy code (e.g. '+/-10%' -> 'pm10pct')."""
     return code.replace("+", "p").replace("/", "").replace("-", "m").replace("%", "pct")
@@ -240,6 +339,7 @@ def run_policy_grid(
 
 __all__ = [
     "ExperimentResult",
+    "run_discount_path_grid",
     "run_experiment",
     "run_experiment_grid",
     "run_policy_grid",
