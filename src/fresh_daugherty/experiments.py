@@ -356,6 +356,131 @@ def run_cap_search_grid(
     return summary, trajectories, gaps
 
 
+def _run_value_cell(args: tuple) -> tuple[dict, list[dict], list[dict]]:
+    """Run one (landbase, rate, policy, denominator) E3 cell with the
+    objective-gap diagnostic and dual-denominator (volume + revenue)
+    trajectory records. Module-level so it is picklable for the pool.
+
+    Returns ``(summary_row, trajectory_rows, gap_rows)``.
+    """
+    from fresh_daugherty.instance.reconstruct import calibrate
+
+    lb, rate, pol, denominator, horizon, cell_workdir = args
+    calibrate()
+    areas = landbase_areas(lb)
+    build_woodstock_sections(cell_workdir / "model", areas=areas)
+    model = prepare_optimization(
+        bootstrap_model(cell_workdir / "model", horizon=horizon), horizon=horizon
+    )
+    flow_kwargs = flow_kwargs_for_policy(pol)
+    gap = consistency_gap_replan(
+        model,
+        workdir=cell_workdir,
+        discount_rate=rate,
+        flow_denominator=denominator,
+        flow_geometry=flow_kwargs.get("flow_geometry", "period1"),
+        flow_decrease=flow_kwargs.get("flow_decrease"),
+        flow_increase=flow_kwargs.get("flow_increase"),
+        collect_revenue=True,
+    )
+    vol_p = [float(v) for v in gap["announced"]]
+    vol_r = [float(v) for v in gap["realized"]]
+    rev_p = [float(v) for v in gap["announced_revenue"]]
+    rev_r = [float(v) for v in gap["realized_revenue"]]
+    keys = {
+        "landbase": lb,
+        "discount_rate": rate,
+        "flow_policy": pol.code,
+        "flow_denominator": denominator,
+    }
+    # Volume metrics keep the standard (unprefixed) names for comparability
+    # with the core grid; revenue metrics are prefixed rev_.
+    _rev_keys = (
+        "mean_abs_rel_deviation",
+        "max_abs_rel_deviation",
+        "total_rel_change",
+        "occurrence",
+    )
+    rev_metrics = {
+        f"rev_{k}": v for k, v in inconsistency_metrics(rev_p, rev_r).items() if k in _rev_keys
+    }
+    summary = {
+        **keys,
+        "max_decrease": pol.max_decrease,
+        "max_increase": pol.max_increase,
+        "horizon": horizon,
+        "fd_version": _fd_version,
+        "ws3_version": _ws3_version,
+        **inconsistency_metrics(vol_p, vol_r),
+        **rev_metrics,
+    }
+    trajectories = [
+        {
+            **keys,
+            "period": t,
+            "projected_mcf": vp,
+            "realized_mcf": vr,
+            "projected_revenue": rp,
+            "realized_revenue": rr,
+        }
+        for t, (vp, vr, rp, rr) in enumerate(zip(vol_p, vol_r, rev_p, rev_r, strict=True), start=1)
+    ]
+    gap_rows = [{**keys, **row} for row in gap.to_dict(orient="records")]
+    return summary, trajectories, gap_rows
+
+
+def run_value_flow_grid(
+    *,
+    landbases: tuple[int, ...],
+    discount_rates: tuple[float, ...],
+    policies: tuple[HarvestFlowPolicy, ...],
+    denominators: tuple[str, ...] = ("volume", "revenue"),
+    horizon: int,
+    workdir: str | Path,
+    workers: int = 1,
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """Run the E3 value-denominated flow grid: landbase x rate x policy x denominator.
+
+    Each cell is a full sequential-replanning simulation under the policy's
+    bounded-deviation flow constraint denominated in volume (thesis form) or
+    undiscounted net revenue (E3), with the objective-gap diagnostic and dual
+    (volume + revenue) trajectory records, so cells are comparable across
+    denominators and with the core grid. Returns ``(summary, trajectories,
+    gaps)``. Cells are independent and run in parallel across ``workers``
+    processes.
+    """
+    workdir = Path(workdir)
+    cells = [
+        (
+            lb,
+            rate,
+            pol,
+            denom,
+            horizon,
+            workdir / f"lb{lb}_r{rate}_{_policy_slug(pol.code)}_{denom}",
+        )
+        for lb in landbases
+        for rate in discount_rates
+        for pol in policies
+        for denom in denominators
+    ]
+    if workers and workers > 1:
+        from concurrent.futures import ProcessPoolExecutor
+
+        from fresh_daugherty.instance.reconstruct import calibrate
+
+        calibrate()  # warm the parent so forked workers inherit the calibration
+        with ProcessPoolExecutor(max_workers=workers) as ex:
+            results = list(ex.map(_run_value_cell, cells))
+    else:
+        results = [_run_value_cell(c) for c in cells]
+
+    summary = pd.DataFrame([r[0] for r in results])
+    trajectories = pd.DataFrame([row for r in results for row in r[1]])
+    gaps = pd.DataFrame([row for r in results for row in r[2]])
+    return summary, trajectories, gaps
+
+
 def _policy_slug(code: str) -> str:
     """Filesystem-safe slug for a harvest-flow policy code (e.g. '+/-10%' -> 'pm10pct')."""
     return code.replace("+", "p").replace("/", "").replace("-", "m").replace("%", "pct")
@@ -456,4 +581,5 @@ __all__ = [
     "run_experiment",
     "run_experiment_grid",
     "run_policy_grid",
+    "run_value_flow_grid",
 ]

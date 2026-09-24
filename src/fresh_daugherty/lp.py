@@ -84,6 +84,7 @@ def add_open_loop_problem(
     flow_coefficient: float = 0.05,
     discount_rate: float = THESIS_DISCOUNT_RATE,
     discount_path: DiscountPath | None = None,
+    flow_denominator: str = "volume",
     price_escalation: bool = True,
     target_flow_mcf: float | None = None,
     flow_geometry: str = "period1",
@@ -111,6 +112,15 @@ def add_open_loop_problem(
     **max-harvest-cap** form used by the even-flow cap search
     (``evenflow.calibrate_even_flow_cap``): a per-period cap with a zero lower
     bound, so the cap-only problem is always feasible.
+
+    ``flow_denominator`` (E3, P11): ``"volume"`` (default; the thesis's form,
+    the flow rows carry harvest volume in MCF) or ``"revenue"`` (the flow rows
+    carry *undiscounted* net revenue in $, at absolute-calendar-year escalated
+    prices). The bounded-deviation policies (NDY, sequential flow) then link
+    consecutive periods' revenue instead of volume. Mechanically this is a
+    coefficient change in the flow rows only (revenue = volume x net price);
+    the objective and all volume-keyed general constraints (the E2 cap, the
+    gap diagnostic's period-1 fix) are unchanged.
 
     ``discount_path`` (E1, P9): a per-period discount-rate path. When given, it
     overrides ``discount_rate``; the scalar entry point is kept as a wrapper
@@ -163,6 +173,18 @@ def add_open_loop_problem(
                     out[t] = vol
         return out
 
+    def coeff_c_rv(fm: ws3.forest.ForestModel, path) -> dict[int, float]:
+        """Undiscounted net revenue per period along the path (E3 flow rows)."""
+        out: dict[int, float] = {}
+        for t, n in enumerate(path, start=1):
+            d = n.data()
+            if d["acode"] == "harvest":
+                vol = fm.compile_product(t, "totvol", d["acode"], [d["dtk"]], d["age"], coeff=False)
+                if vol:
+                    net = _net_price(d["dtk"], (abs_period - 1 + t) * period_length)
+                    out[t] = net * vol
+        return out
+
     def coeff_c_inventory(fm: ws3.forest.ForestModel, path) -> dict[int, float]:
         """Standing (growing-stock) volume per ac along the path, per period.
 
@@ -179,6 +201,14 @@ def add_open_loop_problem(
         raise ValueError(
             f"flow_geometry must be 'period1', 'consecutive', or 'none', got {flow_geometry!r}"
         )
+    if flow_denominator not in ("volume", "revenue"):
+        raise ValueError(
+            f"flow_denominator must be 'volume' or 'revenue', got {flow_denominator!r}"
+        )
+    # The flow rows are denominated in volume (cflw_hv, the thesis's form) or
+    # undiscounted net revenue (cflw_rv, E3). Volume-keyed general constraints
+    # (E2 cap, gap-diagnostic period-1 fix) always stay on volume.
+    flow_key = "cflw_hv" if flow_denominator == "volume" else "cflw_rv"
 
     # The thesis's ending-period (terminal) inventory constraint (p.77): ending
     # growing stock >= 80% of the regulated forest's average inventory. Used
@@ -186,7 +216,7 @@ def add_open_loop_problem(
     # (prevent horizon-end liquidation of the growing stock).
     use_terminal_inv = terminal_constraints and target_flow_mcf is None and flow_geometry != "none"
 
-    coeff_funcs = {"z": coeff_c_z, "cflw_hv": coeff_c_hv}
+    coeff_funcs = {"z": coeff_c_z, "cflw_hv": coeff_c_hv, "cflw_rv": coeff_c_rv}
     if use_terminal_inv:
         coeff_funcs["inventory"] = coeff_c_inventory
     cflw_e = None
@@ -205,10 +235,11 @@ def add_open_loop_problem(
         # No harvest-flow constraint (the thesis's NHF policy, Table 5.6).
         cflw_e = None
     elif flow_geometry == "period1":
-        cflw_e = {"cflw_hv": (dict.fromkeys(model.periods, flow_coefficient), 1)}
+        cflw_e = {flow_key: (dict.fromkeys(model.periods, flow_coefficient), 1)}
     else:  # consecutive (thesis "sequential flow", Table 5.6)
         # H_{n+1} >= (1 - flow_decrease) H_n  and, if flow_increase is set,
         # H_{n+1} <= (1 + flow_increase) H_n. flow_decrease=0.0 gives NDY.
+        # Under flow_denominator="revenue" these link net revenue R_n (E3).
         dec = flow_coefficient if flow_decrease is None else flow_decrease
         spec: dict[str, object] = {
             "decrease": dict.fromkeys(model.periods, dec),
@@ -216,7 +247,7 @@ def add_open_loop_problem(
         }
         if flow_increase is not None:
             spec["increase"] = dict.fromkeys(model.periods, flow_increase)
-        cflw_e = {"cflw_hv": spec}
+        cflw_e = {flow_key: spec}
 
     if use_terminal_inv:
         # Ending-inventory floor (thesis p.77): ending growing stock >= 80% of

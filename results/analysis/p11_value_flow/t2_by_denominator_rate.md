@@ -1,0 +1,10 @@
+| flow_denominator | discount_rate | occurrence | mean_abs_rel_deviation | rev_mean_abs_rel_deviation |
+| --- | --- | --- | --- | --- |
+| revenue | 0.0 | 1.0 | 0.275 | 0.278 |
+| revenue | 0.02 | 0.917 | 0.102 | 0.111 |
+| revenue | 0.04 | 0.815 | 0.108 | 0.125 |
+| revenue | 0.06 | 0.833 | 0.129 | 0.15 |
+| volume | 0.0 | 1.0 | 0.262 | 0.264 |
+| volume | 0.02 | 0.472 | 0.061 | 0.072 |
+| volume | 0.04 | 0.5 | 0.064 | 0.094 |
+| volume | 0.06 | 0.713 | 0.091 | 0.113 |

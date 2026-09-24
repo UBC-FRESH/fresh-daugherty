@@ -57,6 +57,25 @@ fresh-daugherty grid-cap-search \
   --out results/experiments/grid_cap_search.csv
 ```
 
+## E3 value-flow grid (v0.2.0, phase P11)
+
+`grid_value_flow.csv` is the per-cell summary for the E3 extension grid (864
+cells: 18 landbases x 4 rates x 6 policies x 2 flow-row denominators, each
+with the objective-gap diagnostic and dual volume+revenue trajectory
+records); `grid_value_flow_trajectories.csv` and `grid_value_flow_gaps.csv`
+are the per-period records. Denominator plumbing: see
+`src/fresh_daugherty/lp.py` (`flow_denominator`).
+
+```bash
+fresh-daugherty grid-value-flow \
+  --landbases "1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18" \
+  --discount-rates 0.0,0.02,0.04,0.06 \
+  --policies "NHF,NDY,-10%,-20%,+/-10%,+/-20%" \
+  --denominators "volume,revenue" \
+  --horizon 15 --workers 48 \
+  --out results/experiments/grid_value_flow.csv
+```
+
 ## Environment
 
 Key dependency versions used for the reported results (see `pyproject.toml` for

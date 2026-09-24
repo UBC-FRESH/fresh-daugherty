@@ -265,6 +265,71 @@ def grid_cap_search(
     typer.echo(f"  occurrence rate under calibrated caps: {summary['occurrence'].mean():.0%}")
 
 
+@app.command("grid-value-flow")
+def grid_value_flow(
+    landbases: str = typer.Option(
+        "1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18",
+        "--landbases",
+        help="Comma-separated landbase ids.",
+    ),
+    discount_rates: str = typer.Option(
+        "0.0,0.02,0.04,0.06", "--discount-rates", help="Comma-separated rates."
+    ),
+    policies: str = typer.Option(
+        "NHF,NDY,-10%,-20%,+/-10%,+/-20%",
+        "--policies",
+        help="Comma-separated Table 5.6 policy codes.",
+    ),
+    denominators: str = typer.Option(
+        "volume,revenue", "--denominators", help="Comma-separated flow-row denominators."
+    ),
+    horizon: int = typer.Option(15, "--horizon", min=1),
+    workers: int = typer.Option(
+        1, "--workers", min=1, help="Parallel processes (grid is embarrassingly parallel)."
+    ),
+    out: Path = typer.Option(Path("results") / "experiments" / "grid_value_flow.csv", "--out"),
+) -> None:
+    """Run the E3 value-flow grid (landbase x rate x policy x flow denominator).
+
+    Each cell is a full sequential-replanning simulation under the policy's
+    bounded-deviation flow constraint denominated in volume or undiscounted
+    net revenue, with the objective-gap diagnostic and dual (volume + revenue)
+    trajectory records. Writes the per-cell summary to ``--out``, trajectories
+    to ``<out-stem>_trajectories.csv``, gap records to ``<out-stem>_gaps.csv``.
+    """
+    from fresh_daugherty.experiments import run_value_flow_grid
+    from fresh_daugherty.instance.reconstruct import calibrate
+    from fresh_daugherty.instance.thesis import HARVEST_FLOW_POLICIES
+
+    calibrate()
+    lbs = tuple(int(x) for x in landbases.split(","))
+    rates = tuple(float(x) for x in discount_rates.split(","))
+    pol_by_code = {p.code: p for p in HARVEST_FLOW_POLICIES}
+    pols = tuple(pol_by_code[c] for c in policies.split(","))
+    denoms = tuple(d.strip() for d in denominators.split(","))
+    summary, trajectories, gaps = run_value_flow_grid(
+        landbases=lbs,
+        discount_rates=rates,
+        policies=pols,
+        denominators=denoms,
+        horizon=horizon,
+        workdir=out.parent / "grid_work",
+        workers=workers,
+    )
+    out.parent.mkdir(parents=True, exist_ok=True)
+    summary.to_csv(out, index=False)
+    traj_out = out.with_name(out.stem + "_trajectories.csv")
+    trajectories.to_csv(traj_out, index=False)
+    gaps_out = out.with_name(out.stem + "_gaps.csv")
+    gaps.to_csv(gaps_out, index=False)
+    typer.echo(f"wrote {gaps_out} ({len(gaps)} gap rows)")
+    typer.echo(f"wrote {traj_out} ({len(trajectories)} trajectory rows)")
+    typer.echo(f"wrote {out} ({len(summary)} cells)")
+    for d in denoms:
+        sub = summary[summary["flow_denominator"] == d]
+        typer.echo(f"  occurrence ({d}-denominated): {sub['occurrence'].mean():.0%} of cells")
+
+
 @app.command("consistency-run")
 def consistency_run() -> None:
     """Run the consistent-solution (subgame-perfect) analysis (post-v0.1.0a1)."""

@@ -2,6 +2,28 @@
 
 Append-only project narrative, reverse-chronological.
 
+## v0.2.0 (unreleased) — P9, P10 complete; P11 in progress
+
+Phase 11 (E3: value-denominated flow constraints) on `feature/p11-value-flow`.
+
+- P11.1 (#61): `lp.py` — `flow_denominator='volume'|'revenue'`; the
+  bounded-deviation flow rows carry undiscounted net revenue (volume x
+  escalated net price) under the revenue form. Volume form bit-identical
+  (regression); revenue NDY verified non-declining in revenue.
+- P11.2 (#62): `replan.py` — `_period_net_revenue` + `collect_revenue` on the
+  gap diagnostic; dual (volume + revenue) trajectory records; revenue
+  divergence scorable with the standard metric.
+- P11.3 (#63): E3 grid run and tracked: 864 cells (18 landbases x 4 rates x
+  6 policies x 2 denominators) via `fresh-daugherty grid-value-flow`;
+  records `results/experiments/grid_value_flow{,_trajectories,_gaps}.csv`;
+  analysis `scripts/analyze_p11_value_flow.py` -> `results/analysis/p11_value_flow/`
+  + writeup. Headlines: (1) revenue denominating makes inconsistency MORE
+  pervasive (flow-constrained occurrence 98-100% vs 58-86% volume; magnitude
+  ~2x) — the denomination unit is not the operative margin; (2) the CM-CE
+  filler channel confirmed as the tell, not the fuel — revenue NDY drives
+  CM-CE basis entries to exactly zero (volume NDY: 2.5-3.5% of projected
+  volume on landbase 1), yet inconsistency persists.
+
 ## v0.2.0 (unreleased) — P9 complete; P10 in progress
 
 Phase 10 (E2: max-harvest-cap even-flow search) on `feature/p10-cap-search`.
