@@ -82,3 +82,34 @@ def test_invalid_denominator_raises(tmp_path) -> None:
     model = prepare_optimization(bootstrap_model(tmp_path / "model", horizon=5), horizon=5)
     with pytest.raises(ValueError, match="flow_denominator"):
         add_open_loop_problem(model, flow_denominator="dubloons")
+
+
+def test_gap_replan_collects_revenue(tmp_path) -> None:
+    """P11.2 (issue #62): the gap diagnostic can collect the announced/realized
+    revenue trajectories, and revenue divergence is scorable with the standard
+    metric."""
+    import numpy as np
+
+    from fresh_daugherty.replan import consistency_gap_replan, inconsistency_metrics
+
+    areas = landbase_areas(1)
+    build_woodstock_sections(tmp_path / "model", areas=areas)
+    model = prepare_optimization(bootstrap_model(tmp_path / "model", horizon=5), horizon=5)
+    df = consistency_gap_replan(
+        model,
+        workdir=tmp_path / "gap",
+        discount_rate=0.04,
+        flow_geometry="consecutive",
+        flow_decrease=0.0,
+        collect_revenue=True,
+    )
+    assert {"announced", "realized", "announced_revenue", "realized_revenue"} <= set(df.columns)
+    assert np.isfinite(df["announced_revenue"]).all()
+    assert np.isfinite(df["realized_revenue"]).all()
+    # Period-1 announced revenue equals realized revenue (consistent by construction).
+    assert df["announced_revenue"].iloc[0] == pytest.approx(df["realized_revenue"].iloc[0])
+    # Revenue divergence is scorable with the standard metric.
+    m = inconsistency_metrics(list(df["announced_revenue"]), list(df["realized_revenue"]))
+    assert 0.0 <= m["mean_abs_rel_deviation"] <= 1.0
+    # And the volume record is unaffected by the revenue columns.
+    assert {"objective_gap", "tail_status"} <= set(df.columns)

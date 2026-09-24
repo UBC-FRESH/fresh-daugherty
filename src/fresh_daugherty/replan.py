@@ -75,6 +75,31 @@ def extract_areas(model: ws3.forest.ForestModel, period: int) -> pd.DataFrame:
     return pd.DataFrame(rows, columns=list(_AREA_COLS))
 
 
+def _period_net_revenue(model: ws3.forest.ForestModel, period: int, abs_period: int) -> float:
+    """Undiscounted net revenue ($) harvested in ``period`` (E3, P11.2).
+
+    Sum over ecoclasses of harvested volume x escalated net price, at the
+    same absolute-calendar-year price convention as the LP objective
+    (year = abs_period * period_length for the subproblem's relative period 1).
+    """
+    from fresh_daugherty.instance.thesis import PERIOD_LENGTH_YEARS
+    from fresh_daugherty.lp import _ecoclass_economics, _escalated
+
+    econ = _ecoclass_economics()
+    dtks_by_eco: dict[str, list] = {}
+    for dtk in model.dtypes:
+        dtks_by_eco.setdefault(str(dtk[1]).lower(), []).append(dtk)
+    year = abs_period * PERIOD_LENGTH_YEARS
+    total = 0.0
+    for code, (price, hcost) in econ.items():
+        vol = sum(
+            model.compile_product(period, "totvol", acode="harvest", dtype_keys=[dtk])
+            for dtk in dtks_by_eco.get(code, [])
+        )
+        total += vol * (_escalated(price, year) - hcost)
+    return total
+
+
 def build_model(areas: pd.DataFrame, horizon: int, workdir: str | Path) -> ws3.forest.ForestModel:
     """Build a fresh ws3 model from an area distribution over ``horizon``."""
     build_woodstock_sections(workdir, areas=areas)
@@ -88,6 +113,7 @@ def _solve_and_apply(
     max_period: int | None,
     discount_rate: float,
     discount_path: DiscountPath | None = None,
+    flow_denominator: str = "volume",
     flow_tolerance: float,
     target_flow_mcf: float | None,
     flow_geometry: str,
@@ -107,6 +133,7 @@ def _solve_and_apply(
             flow_coefficient=flow_tolerance,
             discount_rate=discount_rate,
             discount_path=discount_path,
+            flow_denominator=flow_denominator,
             target_flow_mcf=target_flow_mcf,
             flow_geometry=flow_geometry,
             flow_decrease=flow_decrease,
@@ -155,6 +182,7 @@ def _solve_subproblem(
     *,
     discount_rate: float,
     discount_path: DiscountPath | None = None,
+    flow_denominator: str = "volume",
     flow_tolerance: float,
     target_flow_mcf: float | None,
     flow_geometry: str,
@@ -170,6 +198,7 @@ def _solve_subproblem(
         flow_coefficient=flow_tolerance,
         discount_rate=discount_rate,
         discount_path=discount_path,
+        flow_denominator=flow_denominator,
         target_flow_mcf=target_flow_mcf,
         flow_geometry=flow_geometry,
         flow_decrease=flow_decrease,
@@ -189,6 +218,7 @@ def consistency_gap_replan(
     workdir: str | Path,
     discount_rate: float = THESIS_DISCOUNT_RATE,
     discount_path: DiscountPath | None = None,
+    flow_denominator: str = "volume",
     flow_tolerance: float = 0.05,
     target_flow_mcf: float | None = None,
     flow_geometry: str = "period1",
@@ -196,8 +226,14 @@ def consistency_gap_replan(
     flow_increase: float | None = None,
     carry_flow_history: bool = False,
     rolling_horizon: bool = True,
+    collect_revenue: bool = False,
 ) -> pd.DataFrame:
     """Sequential replanning with an objective-gap consistency diagnostic.
+
+    With ``collect_revenue=True`` (E3, P11.2) the per-period frame additionally
+    carries the announced and realized *undiscounted net revenue* trajectories
+    (``announced_revenue`` / ``realized_revenue``), so divergence can be scored
+    in both denominators.
 
     At each replan period the announced (period-0 open-loop) plan's harvest for
     that period is evaluated against the re-solved subproblem: we solve the
@@ -223,6 +259,11 @@ def consistency_gap_replan(
         flow_decrease=flow_decrease,
         flow_increase=flow_increase,
     )
+    # Announced revenue trajectory: the open-loop schedule is still applied
+    # on `model` from the projection above (absolute period == period here).
+    announced_rev = (
+        [_period_net_revenue(model, p, p) for p in model.periods] if collect_revenue else None
+    )
     rows = []
     current = model
     realized: list[float] = []
@@ -230,6 +271,7 @@ def consistency_gap_replan(
         kw = {
             "discount_rate": discount_rate,
             "discount_path": discount_path,
+            "flow_denominator": flow_denominator,
             "flow_tolerance": flow_tolerance,
             "target_flow_mcf": target_flow_mcf,
             "flow_geometry": flow_geometry,
@@ -257,6 +299,7 @@ def consistency_gap_replan(
         )
         r_t = current.compile_product(1, "totvol", acode="harvest")
         realized.append(r_t)
+        r_rev = _period_net_revenue(current, 1, t) if collect_revenue else None
         # Tail status: is the announced plan's period-t decision still optimal
         # from the realized state? "optimal" (free==fixed), "suboptimal"
         # (feasible but strictly worse), or "infeasible" (cannot be implemented).
@@ -282,6 +325,9 @@ def consistency_gap_replan(
                 "tail_status": status,
             }
         )
+        if collect_revenue:
+            rows[-1]["announced_revenue"] = float(announced_rev[t - 1])
+            rows[-1]["realized_revenue"] = float(r_rev)
         if t == horizon:
             break
         state = extract_areas(current, 2)
@@ -295,6 +341,7 @@ def open_loop_projection(
     *,
     discount_rate: float = THESIS_DISCOUNT_RATE,
     discount_path: DiscountPath | None = None,
+    flow_denominator: str = "volume",
     flow_tolerance: float = 0.05,
     target_flow_mcf: float | None = None,
     flow_geometry: str = "period1",
@@ -308,6 +355,7 @@ def open_loop_projection(
         max_period=None,
         discount_rate=discount_rate,
         discount_path=discount_path,
+        flow_denominator=flow_denominator,
         flow_tolerance=flow_tolerance,
         target_flow_mcf=target_flow_mcf,
         flow_geometry=flow_geometry,
@@ -323,6 +371,7 @@ def sequential_replan(
     workdir: str | Path,
     discount_rate: float = THESIS_DISCOUNT_RATE,
     discount_path: DiscountPath | None = None,
+    flow_denominator: str = "volume",
     flow_tolerance: float = 0.05,
     target_flow_mcf: float | None = None,
     flow_geometry: str = "period1",
@@ -356,6 +405,7 @@ def sequential_replan(
             max_period=1,
             discount_rate=discount_rate,
             discount_path=discount_path,
+            flow_denominator=flow_denominator,
             flow_tolerance=flow_tolerance,
             target_flow_mcf=target_flow_mcf,
             flow_geometry=flow_geometry,

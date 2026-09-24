@@ -1,0 +1,49 @@
+*ACTION harvest Y
+*OPERABLE harvest
+? CHCW rx2 regenerated baseline _AGE >= 60 and _AGE <= 150
+*OPERABLE harvest
+? CHCW rx3 regenerated baseline _AGE >= 100 and _AGE <= 180
+*OPERABLE harvest
+? CHCW rx4 regenerated baseline _AGE >= 70 and _AGE <= 150
+*OPERABLE harvest
+? CHCW rx5 regenerated baseline _AGE >= 60 and _AGE <= 150
+*OPERABLE harvest
+? CHCW rx6 regenerated baseline _AGE >= 70 and _AGE <= 150
+*OPERABLE harvest
+? CHCW rx7 regenerated baseline _AGE >= 60 and _AGE <= 150
+*OPERABLE harvest
+? CDCP rx2 regenerated baseline _AGE >= 70 and _AGE <= 150
+*OPERABLE harvest
+? CDCP rx3 regenerated baseline _AGE >= 120 and _AGE <= 180
+*OPERABLE harvest
+? CDCP rx4 regenerated baseline _AGE >= 80 and _AGE <= 150
+*OPERABLE harvest
+? CDCP rx5 regenerated baseline _AGE >= 70 and _AGE <= 150
+*OPERABLE harvest
+? CDCP rx6 regenerated baseline _AGE >= 80 and _AGE <= 150
+*OPERABLE harvest
+? CDCP rx7 regenerated baseline _AGE >= 80 and _AGE <= 150
+*OPERABLE harvest
+? CRCF rx1 regenerated baseline _AGE >= 80 and _AGE <= 150
+*OPERABLE harvest
+? CRCF rx2 regenerated baseline _AGE >= 80 and _AGE <= 150
+*OPERABLE harvest
+? CRCF rx4 regenerated baseline _AGE >= 80 and _AGE <= 150
+*OPERABLE harvest
+? CRCF rx6 regenerated baseline _AGE >= 80 and _AGE <= 150
+*OPERABLE harvest
+? CMCE rx2 regenerated baseline _AGE >= 110 and _AGE <= 190
+*OPERABLE harvest
+? CMCE rx4 regenerated baseline _AGE >= 110 and _AGE <= 190
+*OPERABLE harvest
+? CMCE rx6 regenerated baseline _AGE >= 120 and _AGE <= 200
+*OPERABLE harvest
+? CHCW mature existing baseline _AGE >= 0
+*OPERABLE harvest
+? CHCW mature existing baseline _AGE >= 0
+*OPERABLE harvest
+? CDCP mature existing baseline _AGE >= 0
+*OPERABLE harvest
+? CRCF mature existing baseline _AGE >= 0
+*OPERABLE harvest
+? CMCE mature existing baseline _AGE >= 0
