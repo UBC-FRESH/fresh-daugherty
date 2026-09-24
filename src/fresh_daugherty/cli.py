@@ -330,6 +330,59 @@ def grid_value_flow(
         typer.echo(f"  occurrence ({d}-denominated): {sub['occurrence'].mean():.0%} of cells")
 
 
+@app.command("grid-rolling-mean")
+def grid_rolling_mean(
+    landbases: str = typer.Option(
+        "1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18",
+        "--landbases",
+        help="Comma-separated landbase ids.",
+    ),
+    discount_rates: str = typer.Option(
+        "0.0,0.02,0.04,0.06", "--discount-rates", help="Comma-separated rates."
+    ),
+    windows: str = typer.Option("2,3", "--windows", help="Comma-separated window lengths."),
+    horizon: int = typer.Option(15, "--horizon", min=1),
+    workers: int = typer.Option(
+        1, "--workers", min=1, help="Parallel processes (grid is embarrassingly parallel)."
+    ),
+    out: Path = typer.Option(Path("results") / "experiments" / "grid_rolling_mean.csv", "--out"),
+) -> None:
+    """Run the E4 rolling-mean NDY grid (landbase x rate x window x anchoring).
+
+    Each cell is a full sequential-replanning simulation under the
+    rolling-mean NDY floor, under both anchoring readings (within-plan and
+    realized-history windows), with the objective-gap diagnostic. Writes the
+    per-cell summary to ``--out``, trajectories to
+    ``<out-stem>_trajectories.csv``, gap records to ``<out-stem>_gaps.csv``.
+    """
+    from fresh_daugherty.experiments import run_rolling_mean_grid
+    from fresh_daugherty.instance.reconstruct import calibrate
+
+    calibrate()
+    lbs = tuple(int(x) for x in landbases.split(","))
+    rates = tuple(float(x) for x in discount_rates.split(","))
+    ks = tuple(int(x) for x in windows.split(","))
+    summary, trajectories, gaps = run_rolling_mean_grid(
+        landbases=lbs,
+        discount_rates=rates,
+        windows=ks,
+        horizon=horizon,
+        workdir=out.parent / "grid_work",
+        workers=workers,
+    )
+    out.parent.mkdir(parents=True, exist_ok=True)
+    summary.to_csv(out, index=False)
+    traj_out = out.with_name(out.stem + "_trajectories.csv")
+    trajectories.to_csv(traj_out, index=False)
+    gaps_out = out.with_name(out.stem + "_gaps.csv")
+    gaps.to_csv(gaps_out, index=False)
+    typer.echo(f"wrote {gaps_out} ({len(gaps)} gap rows)")
+    typer.echo(f"wrote {traj_out} ({len(trajectories)} trajectory rows)")
+    typer.echo(f"wrote {out} ({len(summary)} cells)")
+    for anch, sub in summary.groupby("anchoring"):
+        typer.echo(f"  occurrence ({anch}): {sub['occurrence'].mean():.0%} of cells")
+
+
 @app.command("consistency-run")
 def consistency_run() -> None:
     """Run the consistent-solution (subgame-perfect) analysis (post-v0.1.0a1)."""

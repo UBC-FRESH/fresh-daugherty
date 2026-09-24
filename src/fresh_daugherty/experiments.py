@@ -481,6 +481,108 @@ def run_value_flow_grid(
     return summary, trajectories, gaps
 
 
+def _run_rolling_cell(args: tuple) -> tuple[dict, list[dict], list[dict]]:
+    """Run one (landbase, rate, window, anchoring) E4 cell with the
+    objective-gap diagnostic. Module-level so it is picklable for the pool.
+
+    Returns ``(summary_row, trajectory_rows, gap_rows)``.
+    """
+    from fresh_daugherty.instance.reconstruct import calibrate
+
+    lb, rate, window, realized_reading, horizon, cell_workdir = args
+    calibrate()
+    areas = landbase_areas(lb)
+    build_woodstock_sections(cell_workdir / "model", areas=areas)
+    model = prepare_optimization(
+        bootstrap_model(cell_workdir / "model", horizon=horizon), horizon=horizon
+    )
+    gap = consistency_gap_replan(
+        model,
+        workdir=cell_workdir,
+        discount_rate=rate,
+        flow_geometry="rolling_mean",
+        flow_window=window,
+        rolling_realized_history=realized_reading,
+    )
+    announced = [float(v) for v in gap["announced"]]
+    realized = [float(v) for v in gap["realized"]]
+    keys = {
+        "landbase": lb,
+        "discount_rate": rate,
+        "flow_window": window,
+        "anchoring": "realized-history" if realized_reading else "within-plan",
+    }
+    relax_share = (
+        float((gap["solver_note"] != "ok").mean()) if "solver_note" in gap.columns else 0.0
+    )
+    summary = {
+        **keys,
+        "horizon": horizon,
+        "relax_share": relax_share,
+        "fd_version": _fd_version,
+        "ws3_version": _ws3_version,
+        **inconsistency_metrics(announced, realized),
+    }
+    trajectories = [
+        {**keys, "period": t, "projected_mcf": p, "realized_mcf": r}
+        for t, (p, r) in enumerate(zip(announced, realized, strict=True), start=1)
+    ]
+    gap_rows = [{**keys, **row} for row in gap.to_dict(orient="records")]
+    return summary, trajectories, gap_rows
+
+
+def run_rolling_mean_grid(
+    *,
+    landbases: tuple[int, ...],
+    discount_rates: tuple[float, ...],
+    windows: tuple[int, ...] = (2, 3),
+    readings: tuple[bool, ...] = (False, True),
+    horizon: int,
+    workdir: str | Path,
+    workers: int = 1,
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """Run the E4 rolling-mean NDY grid: landbase x rate x window x anchoring.
+
+    Each cell is a full sequential-replanning simulation under the
+    rolling-mean NDY floor (window ``k`` periods), under both anchoring
+    readings (within-plan windows vs realized-history windows), with the
+    objective-gap diagnostic. Returns ``(summary, trajectories, gaps)``; the
+    summary carries ``relax_share`` (share of replan periods where the
+    realized-history floor could not be sustained and the policy relaxed).
+    Cells are independent and run in parallel across ``workers`` processes.
+    """
+    workdir = Path(workdir)
+    cells = [
+        (
+            lb,
+            rate,
+            k,
+            reading,
+            horizon,
+            workdir / f"lb{lb}_r{rate}_k{k}_{'rh' if reading else 'wp'}",
+        )
+        for lb in landbases
+        for rate in discount_rates
+        for k in windows
+        for reading in readings
+    ]
+    if workers and workers > 1:
+        from concurrent.futures import ProcessPoolExecutor
+
+        from fresh_daugherty.instance.reconstruct import calibrate
+
+        calibrate()  # warm the parent so forked workers inherit the calibration
+        with ProcessPoolExecutor(max_workers=workers) as ex:
+            results = list(ex.map(_run_rolling_cell, cells))
+    else:
+        results = [_run_rolling_cell(c) for c in cells]
+
+    summary = pd.DataFrame([r[0] for r in results])
+    trajectories = pd.DataFrame([row for r in results for row in r[1]])
+    gaps = pd.DataFrame([row for r in results for row in r[2]])
+    return summary, trajectories, gaps
+
+
 def _policy_slug(code: str) -> str:
     """Filesystem-safe slug for a harvest-flow policy code (e.g. '+/-10%' -> 'pm10pct')."""
     return code.replace("+", "p").replace("/", "").replace("-", "m").replace("%", "pct")
@@ -581,5 +683,6 @@ __all__ = [
     "run_experiment",
     "run_experiment_grid",
     "run_policy_grid",
+    "run_rolling_mean_grid",
     "run_value_flow_grid",
 ]

@@ -303,8 +303,17 @@ def consistency_gap_replan(
             "flow_increase": flow_increase,
             "abs_period": t,
         }
-        # Free subproblem (the re-solver's choice).
+        # Free subproblem (the re-solver's choice). If the realized-history
+        # rolling-mean floor cannot be sustained from the realized state, the
+        # policy must relax: retry without the floor and record it.
+        note = "ok"
         prob_free, obj_free = _solve_subproblem(current, name="free", **kw)
+        if prob_free.status() != "optimal" and kw.get("realized_history"):
+            prob_free, obj_free = _solve_subproblem(
+                current, name="free_relaxed", **{**kw, "realized_history": None}
+            )
+            note = "relaxed_floor"
+
         # Tail-fixed subproblem (the announced plan's period-t decision).
         _, obj_fixed = _solve_subproblem(
             current, name="fixed", fix_period1_harvest_mcf=announced[t - 1], **kw
@@ -352,6 +361,8 @@ def consistency_gap_replan(
         if collect_revenue:
             rows[-1]["announced_revenue"] = float(announced_rev[t - 1])
             rows[-1]["realized_revenue"] = float(r_rev)
+        if rolling_realized_history:
+            rows[-1]["solver_note"] = note
         if t == horizon:
             break
         state = extract_areas(current, 2)

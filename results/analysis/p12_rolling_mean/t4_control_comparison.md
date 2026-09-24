@@ -1,0 +1,5 @@
+| index | policy | occurrence | mean_magnitude |
+| --- | --- | --- | --- |
+| 0 | NDY (pointwise, within-plan) — core control | 0.861 | 0.097 |
+| 1 | rolling-mean NDY (within-plan) — E4 | 0.889 | 0.101 |
+| 2 | rolling-mean NDY (realized-history) — E4 | 0.688 | 0.072 |

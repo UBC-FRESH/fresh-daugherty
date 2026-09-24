@@ -76,6 +76,25 @@ fresh-daugherty grid-value-flow \
   --out results/experiments/grid_value_flow.csv
 ```
 
+## E4 rolling-mean NDY grid (v0.2.0, phase P12)
+
+`grid_rolling_mean.csv` is the per-cell summary for the E4 extension grid
+(288 cells: 18 landbases x 4 rates x windows {2, 3} x 2 anchoring readings,
+each with the objective-gap diagnostic);
+`grid_rolling_mean_trajectories.csv` and `grid_rolling_mean_gaps.csv` are
+the per-period records. The rolling-mean constraint form and anchoring
+readings: see `src/fresh_daugherty/lp.py` (`flow_geometry="rolling_mean"`)
+and `src/fresh_daugherty/replan.py` (`rolling_realized_history`).
+
+```bash
+fresh-daugherty grid-rolling-mean \
+  --landbases "1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18" \
+  --discount-rates 0.0,0.02,0.04,0.06 \
+  --windows "2,3" \
+  --horizon 15 --workers 48 \
+  --out results/experiments/grid_rolling_mean.csv
+```
+
 ## Environment
 
 Key dependency versions used for the reported results (see `pyproject.toml` for

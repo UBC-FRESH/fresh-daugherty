@@ -1,0 +1,4 @@
+| anchoring | infeasible | optimal | suboptimal |
+| --- | --- | --- | --- |
+| realized-history | 0.613 | 0.252 | 0.135 |
+| within-plan | 0.5 | 0.09 | 0.41 |

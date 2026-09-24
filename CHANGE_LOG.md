@@ -2,6 +2,28 @@
 
 Append-only project narrative, reverse-chronological.
 
+## v0.2.0 (unreleased) — P9–P11 complete; P12 in progress
+
+Phase 12 (E4: rolling-mean NDY) on `feature/p12-rolling-mean-ndy`.
+
+- P12.1 (#64): `lp.py` — `flow_geometry="rolling_mean"` + `flow_window`;
+  backwards-facing rolling-mean NDY rows added post-compile via ws3's cflw
+  coefficient worker; k=1 degenerates exactly to pointwise NDY (regression);
+  composes with the E3 revenue denominator.
+- P12.2 (#65): `replan.py` — anchoring readings (`rolling_realized_history`:
+  within-plan vs realized-history windows) + opt-in solver-note recording for
+  infeasible-floor fallbacks.
+- P12.3 (#66): E4 grid run and tracked: 288 cells (18 landbases x 4 rates x
+  windows {2,3} x 2 anchoring readings) via `fresh-daugherty
+  grid-rolling-mean`; records
+  `results/experiments/grid_rolling_mean{,_trajectories,_gaps}.csv`;
+  analysis `scripts/analyze_p12_rolling_mean.py` ->
+  `results/analysis/p12_rolling_mean/` + writeup. Headlines: constraint
+  SHAPE is not the margin (within-plan rolling mean ≈ pointwise NDY: 89% vs
+  86% occurrence); the ANCHORING institution is — realized-history anchoring
+  mitigates (occurrence 65-72%, magnitude 0.07) but the floor often cannot
+  be sustained (relax_share 19-32% of periods at positive rates).
+
 ## v0.2.0 (unreleased) — P9, P10 complete; P11 in progress
 
 Phase 11 (E3: value-denominated flow constraints) on `feature/p11-value-flow`.
