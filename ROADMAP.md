@@ -19,7 +19,7 @@ synchronized with GitHub issues, planning notes, pull requests, and
 | P6 Paper | [#10](https://github.com/UBC-FRESH/fresh-daugherty/issues/10) | — | Manuscript migrated to the Overleaf-linked repo `ubc-fresh/fresh_daugherty_manuscript` (2026-09); expansion planned as v0.2.0 |
 | P7 Good-paper transformation | [#42](https://github.com/UBC-FRESH/fresh-daugherty/issues/42) | — | Open (with open child tasks #43–#45) |
 | P8 Rigorous methodology + CJFR pivot | [#46](https://github.com/UBC-FRESH/fresh-daugherty/issues/46) | `feature/p8-rigorous-cjfr` | Complete — merged; `v0.1.0b1` released with Zenodo DOI |
-| P9 E1: time-varying discount-rate shapes | [#48](https://github.com/UBC-FRESH/fresh-daugherty/issues/48) | `feature/p9-discount-shapes` | Children #53–#56 complete — PR to `main` pending |
+| P9 E1: time-varying discount-rate shapes | [#48](https://github.com/UBC-FRESH/fresh-daugherty/issues/48) | `feature/p9-discount-shapes` | Complete (PR [#70](https://github.com/UBC-FRESH/fresh-daugherty/pull/70) merged) |
 | P10 E2: max-harvest-cap even-flow search | [#49](https://github.com/UBC-FRESH/fresh-daugherty/issues/49) | `feature/p10-cap-search` | Planned — children #57–#60 |
 | P11 E3: value-denominated flow constraints | [#50](https://github.com/UBC-FRESH/fresh-daugherty/issues/50) | `feature/p11-value-flow` | Planned — children #61–#63 |
 | P12 E4: rolling-mean NDY | [#51](https://github.com/UBC-FRESH/fresh-daugherty/issues/51) | `feature/p12-rolling-mean-ndy` | Planned — children #64–#66 |
