@@ -9,16 +9,22 @@ whose dynamic inconsistency the thesis (and this reproduction) studies.
 Built on the ws3 Model I machinery (``model.add_problem``), so the LP
 objective coefficient per prescription path is the discounted net cash flow.
 
-The harvest-flow (even-flow) constraint supports two geometries:
+The harvest-flow (even-flow) constraint supports these geometries:
 
 - ``period1``: each period's harvest volume is tied to within
   ``flow_coefficient`` of period 1 (ws3's ``cflw_e`` reference-period band).
 - ``consecutive``: each period's harvest volume is tied to within
   ``flow_coefficient`` of the *previous* period (the FORPLAN / thesis
-  bounded-deviation-between-adjacent-periods form). This is implemented in
-  fresh-daugherty (not via ws3 ``cflw_e``, which only anchors to a single
-  reference period) by adding consecutive-period constraints directly to the
-  compiled problem, so it works with the pinned PyPI ws3.
+  bounded-deviation-between-adjacent-periods form), via ws3 v1.1.0a5's
+  consecutive-reference ``cflw_e`` spec (contributed upstream from this
+  project; UBC-FRESH/ws3#152).
+- ``rolling_mean``: each period's flow is floored at the mean of the previous
+  ``flow_window`` periods (E4, P12), added post-compile by
+  ``_add_rolling_mean_flow``.
+
+All flow geometries can be denominated in volume (``cflw_hv``, the thesis's
+form) or undiscounted net revenue (``cflw_rv``, E3 / P11) via
+``flow_denominator``.
 """
 
 from __future__ import annotations
@@ -94,6 +100,8 @@ def add_open_loop_problem(
     abs_period: int = 1,
     fix_period1_harvest_mcf: float | None = None,
     prev_harvest_mcf: float | None = None,
+    flow_window: int = 2,
+    realized_history: tuple[float, ...] | None = None,
     name: str = "open-loop",
 ) -> object:
     """Add the open-loop NPV-max LP to ``model`` and return it.
@@ -197,10 +205,13 @@ def add_open_loop_problem(
             out[t] = _standing_volume_per_ac(fm, d["dtk"], float(d["age"]))
         return out
 
-    if flow_geometry not in ("period1", "consecutive", "none"):
+    if flow_geometry not in ("period1", "consecutive", "none", "rolling_mean"):
         raise ValueError(
-            f"flow_geometry must be 'period1', 'consecutive', or 'none', got {flow_geometry!r}"
+            "flow_geometry must be 'period1', 'consecutive', 'none', or 'rolling_mean', "
+            f"got {flow_geometry!r}"
         )
+    if flow_window < 1:
+        raise ValueError(f"flow_window must be >= 1, got {flow_window}")
     if flow_denominator not in ("volume", "revenue"):
         raise ValueError(
             f"flow_denominator must be 'volume' or 'revenue', got {flow_denominator!r}"
@@ -236,6 +247,11 @@ def add_open_loop_problem(
         cflw_e = None
     elif flow_geometry == "period1":
         cflw_e = {flow_key: (dict.fromkeys(model.periods, flow_coefficient), 1)}
+    elif flow_geometry == "rolling_mean":
+        # E4 (P12): backwards-facing rolling-mean NDY rows, added post-compile
+        # by _add_rolling_mean_flow below (ws3's cflw_e cannot express
+        # multi-period windows).
+        cflw_e = None
     else:  # consecutive (thesis "sequential flow", Table 5.6)
         # H_{n+1} >= (1 - flow_decrease) H_n  and, if flow_increase is set,
         # H_{n+1} <= (1 + flow_increase) H_n. flow_decrease=0.0 gives NDY.
@@ -302,6 +318,18 @@ def add_open_loop_problem(
         workers=1,
         verbose=False,
     )
+    if flow_geometry == "rolling_mean":
+        # Rolling-mean NDY: default decrease 0.0 (NDY), NOT the flow_coefficient
+        # default (which is the legacy period1 even-flow band tolerance).
+        dec = 0.0 if flow_decrease is None else flow_decrease
+        _add_rolling_mean_flow(
+            problem,
+            model,
+            window=flow_window,
+            flow_key=flow_key,
+            flow_decrease=dec,
+            realized_history=realized_history,
+        )
     return problem
 
 
@@ -364,6 +392,68 @@ def _standing_volume_per_ac(model: ws3.forest.ForestModel, dtk, age: float) -> f
         return 0.0
     age_c = min(max(age, ages[0]), ages[-1])
     return float(np.interp(age_c, ages, [curve[a] for a in ages]))
+
+
+def _add_rolling_mean_flow(
+    problem: object,
+    model: ws3.forest.ForestModel,
+    *,
+    window: int,
+    flow_key: str,
+    flow_decrease: float = 0.0,
+    realized_history: tuple[float, ...] | None = None,
+) -> None:
+    """Add backwards-facing rolling-mean NDY rows to a compiled problem (E4, P12).
+
+    For each period ``t >= 1``: ``H_t >= (1 - flow_decrease) * mean(H_window)``,
+    where the window covers the ``window`` periods before ``t``. Positions in
+    the window that fall before the subproblem's present (period < 1) take
+    *realized* past harvests from ``realized_history`` (most recent last) as
+    constants on the right-hand side (the realized-history anchoring reading);
+    with ``realized_history=None`` only within-plan periods enter (the
+    within-plan reading; partial windows at the horizon start average the
+    available periods). ``window=1`` degenerates exactly to pointwise
+    consecutive-period NDY.
+
+    Coefficients are recovered from the compiled problem via ws3's own cflw
+    worker (so they match the compiled matrix exactly) and rows are added with
+    ``problem.add_constraint``. This relies on pinned-ws3 internals
+    (``problem.trees``, ``problem._leaf_ids``); noted as a fidelity caveat.
+    """
+    from ws3 import opt
+    from ws3.forest import worker_cmp_cflw_batch
+
+    periods = list(model.periods)
+    results = worker_cmp_cflw_batch((list(problem.trees.items()), [flow_key], periods))
+    mu: dict[int, dict] = {t: {} for t in periods}
+    for t, _o, i, j, val in results:
+        mu[t][(i, j)] = val
+    xnames = {k: f"x_{v}" for k, v in problem._leaf_ids.items()}
+    hist = list(realized_history or [])
+    for t in periods:
+        if t == 1 and not hist:
+            continue  # no window before the first period of a fresh plan
+        terms = []
+        for p in range(t - window, t):
+            if p >= 1:
+                terms.append(("var", p))
+            elif -p < len(hist):
+                terms.append(("const", hist[p]))  # p<=0: hist[-1] most recent
+        if not terms:
+            continue
+        n = len(terms)
+        scale = (1.0 - flow_decrease) / n
+        coeffs: dict[str, float] = {}
+        rhs = 0.0
+        for ij, v in mu.get(t, {}).items():
+            coeffs[xnames[ij]] = coeffs.get(xnames[ij], 0.0) + v
+        for kind, ref in terms:
+            if kind == "var":
+                for ij, v in mu.get(ref, {}).items():
+                    coeffs[xnames[ij]] = coeffs.get(xnames[ij], 0.0) - scale * v
+            else:
+                rhs += scale * float(ref)
+        problem.add_constraint(f"flw-rm_{t:03d}_{flow_key}", coeffs, opt.SENSE_GEQ, rhs)
 
 
 def flow_kwargs_for_policy(policy: HarvestFlowPolicy) -> dict:
