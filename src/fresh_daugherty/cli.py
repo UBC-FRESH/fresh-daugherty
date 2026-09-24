@@ -215,6 +215,56 @@ def grid_discount_paths(
     typer.echo(f"  occurrence rate: {summary['occurrence'].mean():.0%} of cells")
 
 
+@app.command("grid-cap-search")
+def grid_cap_search(
+    landbases: str = typer.Option(
+        "1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18",
+        "--landbases",
+        help="Comma-separated landbase ids.",
+    ),
+    discount_rates: str = typer.Option(
+        "0.0,0.02,0.04,0.06", "--discount-rates", help="Comma-separated rates."
+    ),
+    horizon: int = typer.Option(15, "--horizon", min=1),
+    workers: int = typer.Option(
+        1, "--workers", min=1, help="Parallel processes (grid is embarrassingly parallel)."
+    ),
+    out: Path = typer.Option(Path("results") / "experiments" / "grid_cap_search.csv", "--out"),
+) -> None:
+    """Run the E2 cap-search grid (landbase x discount rate).
+
+    Each cell calibrates a max-harvest cap to realized even flow (bisection)
+    and scores the calibrated plan's consistency (metrics + objective-gap
+    diagnostic). Writes the per-cell summary to ``--out``, the calibrated
+    trajectories to ``<out-stem>_trajectories.csv``, and the gap records to
+    ``<out-stem>_gaps.csv``, in the tracked ``results/`` tree.
+    """
+    from fresh_daugherty.experiments import run_cap_search_grid
+    from fresh_daugherty.instance.reconstruct import calibrate
+
+    calibrate()
+    lbs = tuple(int(x) for x in landbases.split(","))
+    rates = tuple(float(x) for x in discount_rates.split(","))
+    summary, trajectories, gaps = run_cap_search_grid(
+        landbases=lbs,
+        discount_rates=rates,
+        horizon=horizon,
+        workdir=out.parent / "grid_work",
+        workers=workers,
+    )
+    out.parent.mkdir(parents=True, exist_ok=True)
+    summary.to_csv(out, index=False)
+    traj_out = out.with_name(out.stem + "_trajectories.csv")
+    trajectories.to_csv(traj_out, index=False)
+    gaps_out = out.with_name(out.stem + "_gaps.csv")
+    gaps.to_csv(gaps_out, index=False)
+    typer.echo(f"wrote {gaps_out} ({len(gaps)} gap rows)")
+    typer.echo(f"wrote {traj_out} ({len(trajectories)} trajectory rows)")
+    typer.echo(f"wrote {out} ({len(summary)} cells)")
+    typer.echo(f"  converged: {summary['converged'].mean():.0%} of cells")
+    typer.echo(f"  occurrence rate under calibrated caps: {summary['occurrence'].mean():.0%}")
+
+
 @app.command("consistency-run")
 def consistency_run() -> None:
     """Run the consistent-solution (subgame-perfect) analysis (post-v0.1.0a1)."""

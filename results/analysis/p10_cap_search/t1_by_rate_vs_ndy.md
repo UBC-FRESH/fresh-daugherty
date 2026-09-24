@@ -1,0 +1,6 @@
+| index | discount_rate | cap_occurrence | cap_mean_magnitude | cap_converged | cap_mean_calibrated_mcf | cap_mean_realized_cv | cap_gap_subopt_or_infeas_share | ndy_occurrence_control | ndy_mean_magnitude_control |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 0.0 | 0.0 | 0.0 | 0.0038 | 1.0 | 8899.4533 | 0.0078 | 0.0397 | 1.0 | 0.1192 |
+| 1.0 | 0.02 | 0.0 | 0.0096 | 1.0 | 9135.3402 | 0.0097 | 0.0556 | 0.7778 | 0.0828 |
+| 2.0 | 0.04 | 0.0 | 0.001 | 1.0 | 9024.0398 | 0.0076 | 0.0397 | 0.8333 | 0.0918 |
+| 3.0 | 0.06 | 0.0 | 0.0007 | 1.0 | 9030.2152 | 0.0061 | 0.0079 | 0.8333 | 0.0934 |
