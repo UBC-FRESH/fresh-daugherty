@@ -244,6 +244,118 @@ def run_discount_path_grid(
     return summary, trajectories, gaps
 
 
+def _run_cap_cell(args: tuple) -> tuple[dict, list[dict], list[dict]]:
+    """Run one (landbase, discount rate) E2 cap-search cell: calibrate the
+    max-harvest cap to realized even flow, then score the calibrated plan's
+    consistency with the objective-gap diagnostic. Module-level so it is
+    picklable for the process pool.
+
+    Returns ``(summary_row, trajectory_rows, gap_rows)``.
+    """
+    from fresh_daugherty.evenflow import DEFAULT_CRITERIA, calibrate_even_flow_cap
+    from fresh_daugherty.instance.reconstruct import calibrate
+
+    lb, rate, horizon, cell_workdir = args
+    calibrate()
+    areas = landbase_areas(lb)
+    build_woodstock_sections(cell_workdir / "model", areas=areas)
+    model = prepare_optimization(
+        bootstrap_model(cell_workdir / "model", horizon=horizon), horizon=horizon
+    )
+    rec = calibrate_even_flow_cap(
+        model,
+        landbase=lb,
+        workdir=cell_workdir / "search",
+        discount_rate=rate,
+        criteria=DEFAULT_CRITERIA,
+    )
+    cap = rec.calibrated_cap_mcf
+    metrics = (
+        inconsistency_metrics(list(rec.projected), list(rec.realized))
+        if cap is not None
+        else {"occurrence": None}
+    )
+    keys = {"landbase": lb, "discount_rate": rate}
+    summary = {
+        **keys,
+        "horizon": horizon,
+        "calibrated_cap_mcf": cap,
+        "converged": rec.converged,
+        "iterations": rec.iterations,
+        "crit_max_slope_rel": DEFAULT_CRITERIA.max_slope_rel,
+        "crit_max_fluctuation": DEFAULT_CRITERIA.max_fluctuation,
+        "crit_max_cv": DEFAULT_CRITERIA.max_cv,
+        "realized_cv": rec.realized_report.cv,
+        "realized_slope_rel": rec.realized_report.slope_rel,
+        "realized_max_fluctuation": rec.realized_report.max_fluctuation,
+        "projected_cv": rec.projected_report.cv,
+        "fd_version": _fd_version,
+        "ws3_version": _ws3_version,
+        **metrics,
+    }
+    trajectories = [
+        {**keys, "period": t, "projected_mcf": p, "realized_mcf": r}
+        for t, (p, r) in enumerate(zip(rec.projected, rec.realized, strict=True), start=1)
+    ]
+    gap_rows: list[dict] = []
+    if cap is not None:
+        # Fresh model for the gap diagnostic (the search leaves `model` in an
+        # arbitrary state); the diagnostic evaluates the announced plan under
+        # the calibrated cap.
+        build_woodstock_sections(cell_workdir / "gap_model", areas=areas)
+        gap_model = prepare_optimization(
+            bootstrap_model(cell_workdir / "gap_model", horizon=horizon), horizon=horizon
+        )
+        gap = consistency_gap_replan(
+            gap_model,
+            workdir=cell_workdir / "gap",
+            discount_rate=rate,
+            target_flow_mcf=cap,
+        )
+        gap_rows = [{**keys, **row} for row in gap.to_dict(orient="records")]
+    return summary, trajectories, gap_rows
+
+
+def run_cap_search_grid(
+    *,
+    landbases: tuple[int, ...],
+    discount_rates: tuple[float, ...],
+    horizon: int,
+    workdir: str | Path,
+    workers: int = 1,
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """Run the E2 cap-search grid: landbase x discount rate.
+
+    Each cell calibrates a max-harvest cap to realized even flow (the E2
+    policy; the thesis flow-policy dimension is replaced by the search) and
+    scores the calibrated plan's dynamic consistency with the standard metrics
+    plus the objective-gap diagnostic. Returns ``(summary, trajectories,
+    gaps)``; records carry the package and ws3 versions for provenance. Cells
+    are independent and run in parallel across ``workers`` processes.
+    """
+    workdir = Path(workdir)
+    cells = [
+        (lb, rate, horizon, workdir / f"lb{lb}_r{rate}")
+        for lb in landbases
+        for rate in discount_rates
+    ]
+    if workers and workers > 1:
+        from concurrent.futures import ProcessPoolExecutor
+
+        from fresh_daugherty.instance.reconstruct import calibrate
+
+        calibrate()  # warm the parent so forked workers inherit the calibration
+        with ProcessPoolExecutor(max_workers=workers) as ex:
+            results = list(ex.map(_run_cap_cell, cells))
+    else:
+        results = [_run_cap_cell(c) for c in cells]
+
+    summary = pd.DataFrame([r[0] for r in results])
+    trajectories = pd.DataFrame([row for r in results for row in r[1]])
+    gaps = pd.DataFrame([row for r in results for row in r[2]])
+    return summary, trajectories, gaps
+
+
 def _policy_slug(code: str) -> str:
     """Filesystem-safe slug for a harvest-flow policy code (e.g. '+/-10%' -> 'pm10pct')."""
     return code.replace("+", "p").replace("/", "").replace("-", "m").replace("%", "pct")
@@ -339,6 +451,7 @@ def run_policy_grid(
 
 __all__ = [
     "ExperimentResult",
+    "run_cap_search_grid",
     "run_discount_path_grid",
     "run_experiment",
     "run_experiment_grid",

@@ -107,7 +107,10 @@ def add_open_loop_problem(
     ``flow_increase``. Set ``flow_decrease=0.0, flow_increase=None`` for
     non-declining yield (NDY). If ``target_flow_mcf`` is given, a target
     harvest-flow floor/ceiling is used instead (an AAC ceiling; overrides
-    ``flow_geometry``).
+    ``flow_geometry``). The ``target_flow_mcf`` ceiling is also the E2 (P10)
+    **max-harvest-cap** form used by the even-flow cap search
+    (``evenflow.calibrate_even_flow_cap``): a per-period cap with a zero lower
+    bound, so the cap-only problem is always feasible.
 
     ``discount_path`` (E1, P9): a per-period discount-rate path. When given, it
     overrides ``discount_rate``; the scalar entry point is kept as a wrapper

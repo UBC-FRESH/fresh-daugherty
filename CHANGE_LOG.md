@@ -2,7 +2,26 @@
 
 Append-only project narrative, reverse-chronological.
 
-## v0.2.0 (unreleased) — P9 in progress
+## v0.2.0 (unreleased) — P9 complete; P10 in progress
+
+Phase 10 (E2: max-harvest-cap even-flow search) on `feature/p10-cap-search`.
+
+- P10.1 (#57): the cap form is the existing `target_flow_mcf` per-period
+  ceiling (zero lower bound; always feasible); documented as the E2 form;
+  tests (loose-cap bit-identity with NHF; tight-cap compliance).
+- P10.2 (#58) + P10.3 (#59): `evenflow.py` — typed `EvenFlowCriteria`
+  (defaults: |slope| <= 1% of mean/period; fluctuation <= 5%; CV <= 5%),
+  `assess_even_flow`, and `calibrate_even_flow_cap` (bisection to the loosest
+  cap whose REALIZED replanned trajectory is even; full iteration history).
+- P10.4 (#60): E2 grid run and tracked: 72 cells (18 landbases x 4 rates) via
+  `fresh-daugherty grid-cap-search`; records
+  `results/experiments/grid_cap_search{,_trajectories,_gaps}.csv`; analysis
+  `scripts/analyze_p10_cap_search.py` -> `results/analysis/p10_cap_search/`
+  + writeup. Headline: cap calibration ELIMINATES dynamic inconsistency —
+  0% occurrence at every rate (mean divergence 0.04-0.96%), 96.4% of tail
+  periods optimal under the gap diagnostic, vs 78-100% occurrence for the
+  NDY control; the calibrated even-flow level (~9,400 MCF/period on
+  landbase 1) sits ~8% below the NDY plan's announced level.
 
 Phase 9 (E1: time-varying discount-rate shapes) on `feature/p9-discount-shapes`.
 

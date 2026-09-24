@@ -39,6 +39,24 @@ fresh-daugherty grid-discount-paths \
   --out results/experiments/grid_discount_paths.csv
 ```
 
+## E2 cap-search grid (v0.2.0, phase P10)
+
+`grid_cap_search.csv` is the per-cell summary for the E2 extension grid (72
+cells: 18 landbases x 4 constant discount rates; each cell calibrates a
+max-harvest cap to realized even flow by bisection and scores the calibrated
+plan's consistency with the objective-gap diagnostic);
+`grid_cap_search_trajectories.csv` and `grid_cap_search_gaps.csv` are the
+per-period trajectory and gap records. Even-flow criteria and the search:
+see `src/fresh_daugherty/evenflow.py`.
+
+```bash
+fresh-daugherty grid-cap-search \
+  --landbases "1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18" \
+  --discount-rates 0.0,0.02,0.04,0.06 \
+  --horizon 15 --workers 48 \
+  --out results/experiments/grid_cap_search.csv
+```
+
 ## Environment
 
 Key dependency versions used for the reported results (see `pyproject.toml` for
