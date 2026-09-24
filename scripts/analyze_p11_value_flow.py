@@ -27,6 +27,10 @@ import pandas as pd
 RESULTS = Path("results/experiments")
 OUT = Path("results/analysis/p11_value_flow")
 
+# Regenerable model intermediates for the CM-CE solves live under the ignored
+# outputs/ tree, not the tracked analysis directory.
+WORK = Path("outputs") / "p11_cmce_work"
+
 
 def _md(df: pd.DataFrame, path: Path) -> None:
     """Write a table as CSV and GitHub-flavoured markdown (no tabulate dep)."""
@@ -112,7 +116,7 @@ def main() -> None:
     _md(t3, OUT / "t3_nhf_identity_check")
 
     # --- T4: CM-CE filler-channel test (focal open-loop solves) ---
-    workdir = OUT / "cmce_work"
+    workdir = WORK
     rows = []
     for lb in (1, 2):
         for rate in (0.0, 0.04):

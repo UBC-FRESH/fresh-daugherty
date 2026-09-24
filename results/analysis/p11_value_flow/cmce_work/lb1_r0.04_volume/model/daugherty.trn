@@ -1,6 +1,0 @@
-*CASE harvest
-*SOURCE ? ? mature existing baseline
-*TARGET ? ? rx2 regenerated baseline 100 _AGE 0
-*CASE harvest
-*SOURCE ? ? ? regenerated baseline
-*TARGET ? ? ? regenerated baseline 100 _AGE 0
