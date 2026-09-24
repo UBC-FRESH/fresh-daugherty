@@ -2,6 +2,21 @@
 
 Append-only project narrative, reverse-chronological.
 
+## v0.2.0 (unreleased) — P9–P13 complete (scope expansion done)
+
+Phase 13 (E5: curated supplementary material + manuscript pointers) on
+`feature/p13-supplement` (PR #74 merged) + `fresh_daugherty_manuscript@main`.
+
+- P13.1+P13.2 (#67, #68): `supplementary/` tree (README index + 9 pages + PNG
+  figures) and `scripts/build_supplement.py` — one tracked command regenerates
+  the whole supplement from the tracked records (re-runs the four extension
+  analysis scripts by default; link targets existence-checked; idempotent).
+  Figure PDFs are now bit-stable (null CreationDate metadata).
+- P13.3 (#69): manuscript pointers rewritten to specific supplement
+  sections/tables/records (Data Availability, Results intro + Fig. 1 + Table
+  1, Methods data paragraph, Software availability) in
+  `fresh_daugherty_manuscript` on `main` (Overleaf-synced).
+
 ## v0.2.0 (unreleased) — P9–P11 complete; P12 in progress
 
 Phase 12 (E4: rolling-mean NDY) on `feature/p12-rolling-mean-ndy`.
