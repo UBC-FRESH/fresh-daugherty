@@ -159,3 +159,36 @@ def test_declining_discount_path_changes_plan(tmp_path) -> None:
     _, v_const = _solve_rate(tmp_path / "c", 0.04)
     _, v_invj = _solve_path(tmp_path / "j", discount_path("invj-4pc-k1"))
     assert not (abs(v_const - v_invj) < 1e-6).all()
+
+
+def _solve_cap(tmp_path, cap, horizon=10):
+    areas = landbase_areas(1)
+    build_woodstock_sections(tmp_path / "model", areas=areas)
+    model = prepare_optimization(
+        bootstrap_model(tmp_path / "model", horizon=horizon), horizon=horizon
+    )
+    problem = add_open_loop_problem(model, target_flow_mcf=cap)
+    df = solve_open_loop(model, problem)
+    return problem, df["harvest_volume_mcf"].to_numpy()
+
+
+def test_loose_cap_matches_unconstrained(tmp_path) -> None:
+    """P10.1 (issue #57): a cap above the unconstrained maximum harvest leaves
+    the no-flow (NHF) solution unchanged."""
+    p_nhf, v_nhf = _solve_geometry(tmp_path / "n", "none")
+    p_cap, v_cap = _solve_cap(tmp_path / "c", cap=float(v_nhf.max()) * 2.0)
+    assert p_nhf.status() == p_cap.status() == "optimal"
+    assert p_nhf.z() == p_cap.z()
+    assert (abs(v_nhf - v_cap) < 1e-9).all()
+
+
+def test_tight_cap_binds_and_stays_feasible(tmp_path) -> None:
+    """A tight cap is respected in every period, and the cap-only problem stays
+    feasible (lb=0: harvesting nothing is always allowed)."""
+    _, v_nhf = _solve_geometry(tmp_path / "n", "none")
+    cap = float(v_nhf.max()) * 0.5
+    problem, v_cap = _solve_cap(tmp_path / "c", cap)
+    assert problem.status() == "optimal"
+    assert (v_cap <= cap + 1e-3).all()
+    # The cap binds: the capped plan harvests less than the unconstrained peak.
+    assert v_cap.max() < v_nhf.max()
