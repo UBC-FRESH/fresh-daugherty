@@ -114,6 +114,8 @@ def _solve_and_apply(
     discount_rate: float,
     discount_path: DiscountPath | None = None,
     flow_denominator: str = "volume",
+    flow_window: int = 2,
+    realized_history: tuple[float, ...] | None = None,
     flow_tolerance: float,
     target_flow_mcf: float | None,
     flow_geometry: str,
@@ -121,6 +123,7 @@ def _solve_and_apply(
     flow_increase: float | None,
     abs_period: int = 1,
     prev_harvest_mcf: float | None = None,
+    notes: list[str] | None = None,
 ) -> list[float]:
     """Solve the open-loop LP, apply its schedule (up to ``max_period``), and
     return the realized per-period harvest volume. ``abs_period`` is the
@@ -134,6 +137,8 @@ def _solve_and_apply(
             discount_rate=discount_rate,
             discount_path=discount_path,
             flow_denominator=flow_denominator,
+            flow_window=flow_window,
+            realized_history=realized_history,
             target_flow_mcf=target_flow_mcf,
             flow_geometry=flow_geometry,
             flow_decrease=flow_decrease,
@@ -146,14 +151,18 @@ def _solve_and_apply(
         return problem
 
     problem = _build_solve(prev_harvest_mcf)
+    note = "ok"
     if problem.status() != "optimal" and prev_harvest_mcf is not None:
         # The carried sequential-flow policy is infeasible from the realized
         # state (the prior harvest level can't be sustained): the policy must
         # relax --- this is the "declining non-declining yield" made concrete.
         # Retry without the first-period anchor.
         problem = _build_solve(None)
+        note = "relaxed_anchor"
     if problem.status() != "optimal":
         # Last resort: drop the flow constraint entirely rather than crash.
+        # (Reached e.g. when a realized-history rolling-mean floor cannot be
+        # sustained from the realized state; recorded via `notes`.)
         problem = add_open_loop_problem(
             model,
             flow_coefficient=flow_tolerance,
@@ -163,6 +172,9 @@ def _solve_and_apply(
             name="open",
         )
         problem.solve(verbose=False)
+        note = "dropped_flow"
+    if notes is not None:
+        notes.append(note)
     schedule = model.compile_schedule(problem)
     model.reset()
     model.apply_schedule(
@@ -183,6 +195,8 @@ def _solve_subproblem(
     discount_rate: float,
     discount_path: DiscountPath | None = None,
     flow_denominator: str = "volume",
+    flow_window: int = 2,
+    realized_history: tuple[float, ...] | None = None,
     flow_tolerance: float,
     target_flow_mcf: float | None,
     flow_geometry: str,
@@ -199,6 +213,8 @@ def _solve_subproblem(
         discount_rate=discount_rate,
         discount_path=discount_path,
         flow_denominator=flow_denominator,
+        flow_window=flow_window,
+        realized_history=realized_history,
         target_flow_mcf=target_flow_mcf,
         flow_geometry=flow_geometry,
         flow_decrease=flow_decrease,
@@ -219,6 +235,8 @@ def consistency_gap_replan(
     discount_rate: float = THESIS_DISCOUNT_RATE,
     discount_path: DiscountPath | None = None,
     flow_denominator: str = "volume",
+    flow_window: int = 2,
+    rolling_realized_history: bool = False,
     flow_tolerance: float = 0.05,
     target_flow_mcf: float | None = None,
     flow_geometry: str = "period1",
@@ -253,6 +271,8 @@ def consistency_gap_replan(
         model,
         discount_rate=discount_rate,
         discount_path=discount_path,
+        flow_denominator=flow_denominator,
+        flow_window=flow_window,
         flow_tolerance=flow_tolerance,
         target_flow_mcf=target_flow_mcf,
         flow_geometry=flow_geometry,
@@ -272,6 +292,10 @@ def consistency_gap_replan(
             "discount_rate": discount_rate,
             "discount_path": discount_path,
             "flow_denominator": flow_denominator,
+            "flow_window": flow_window,
+            "realized_history": (
+                tuple(realized[-flow_window:]) if rolling_realized_history else None
+            ),
             "flow_tolerance": flow_tolerance,
             "target_flow_mcf": target_flow_mcf,
             "flow_geometry": flow_geometry,
@@ -279,8 +303,17 @@ def consistency_gap_replan(
             "flow_increase": flow_increase,
             "abs_period": t,
         }
-        # Free subproblem (the re-solver's choice).
+        # Free subproblem (the re-solver's choice). If the realized-history
+        # rolling-mean floor cannot be sustained from the realized state, the
+        # policy must relax: retry without the floor and record it.
+        note = "ok"
         prob_free, obj_free = _solve_subproblem(current, name="free", **kw)
+        if prob_free.status() != "optimal" and kw.get("realized_history"):
+            prob_free, obj_free = _solve_subproblem(
+                current, name="free_relaxed", **{**kw, "realized_history": None}
+            )
+            note = "relaxed_floor"
+
         # Tail-fixed subproblem (the announced plan's period-t decision).
         _, obj_fixed = _solve_subproblem(
             current, name="fixed", fix_period1_harvest_mcf=announced[t - 1], **kw
@@ -328,6 +361,8 @@ def consistency_gap_replan(
         if collect_revenue:
             rows[-1]["announced_revenue"] = float(announced_rev[t - 1])
             rows[-1]["realized_revenue"] = float(r_rev)
+        if rolling_realized_history:
+            rows[-1]["solver_note"] = note
         if t == horizon:
             break
         state = extract_areas(current, 2)
@@ -342,6 +377,7 @@ def open_loop_projection(
     discount_rate: float = THESIS_DISCOUNT_RATE,
     discount_path: DiscountPath | None = None,
     flow_denominator: str = "volume",
+    flow_window: int = 2,
     flow_tolerance: float = 0.05,
     target_flow_mcf: float | None = None,
     flow_geometry: str = "period1",
@@ -356,6 +392,7 @@ def open_loop_projection(
         discount_rate=discount_rate,
         discount_path=discount_path,
         flow_denominator=flow_denominator,
+        flow_window=flow_window,
         flow_tolerance=flow_tolerance,
         target_flow_mcf=target_flow_mcf,
         flow_geometry=flow_geometry,
@@ -372,6 +409,8 @@ def sequential_replan(
     discount_rate: float = THESIS_DISCOUNT_RATE,
     discount_path: DiscountPath | None = None,
     flow_denominator: str = "volume",
+    flow_window: int = 2,
+    rolling_realized_history: bool = False,
     flow_tolerance: float = 0.05,
     target_flow_mcf: float | None = None,
     flow_geometry: str = "period1",
@@ -379,6 +418,7 @@ def sequential_replan(
     flow_increase: float | None = None,
     carry_flow_history: bool = False,
     rolling_horizon: bool = True,
+    record_solver_notes: bool = False,
 ) -> pd.DataFrame:
     """Run the sequential-replanning simulation.
 
@@ -389,10 +429,20 @@ def sequential_replan(
     present), avoiding the terminal-period artifact of a shrinking horizon;
     with ``rolling_horizon=False`` the replan is over the shrinking remaining
     horizon. Returns a frame of the realized per-period harvest volume.
+
+    E4 (P12): with ``flow_geometry="rolling_mean"`` the window length is
+    ``flow_window``; ``rolling_realized_history`` selects the anchoring
+    reading — False: within-plan windows (the fresh-constraint institution);
+    True: the window reaches back into the *realized* past harvests.
+
+    ``record_solver_notes`` (E4): add a per-period ``solver_note`` column
+    ("ok" / "relaxed_anchor" / "dropped_flow") recording fallback events —
+    relevant when a realized-history rolling-mean floor cannot be sustained.
     """
     workdir = Path(workdir)
     horizon = model.horizon
     realized: list[float] = []
+    notes: list[str] | None = [] if record_solver_notes else None
     current = model
     prev_harvest: float | None = None
     for t in range(1, horizon + 1):
@@ -406,6 +456,8 @@ def sequential_replan(
             discount_rate=discount_rate,
             discount_path=discount_path,
             flow_denominator=flow_denominator,
+            flow_window=flow_window,
+            realized_history=(tuple(realized[-flow_window:]) if rolling_realized_history else None),
             flow_tolerance=flow_tolerance,
             target_flow_mcf=target_flow_mcf,
             flow_geometry=flow_geometry,
@@ -413,6 +465,7 @@ def sequential_replan(
             flow_increase=flow_increase,
             abs_period=t,
             prev_harvest_mcf=prev_harvest if carry_flow_history else None,
+            notes=notes,
         )
         realized.append(volumes[0])
         prev_harvest = volumes[0]
@@ -426,7 +479,10 @@ def sequential_replan(
         state = extract_areas(current, 2)
         next_horizon = horizon if rolling_horizon else current.horizon - 1
         current = build_model(state, next_horizon, workdir / f"replan_{t}")
-    return pd.DataFrame({"period": list(range(1, horizon + 1)), "harvest_volume_mcf": realized})
+    out = pd.DataFrame({"period": list(range(1, horizon + 1)), "harvest_volume_mcf": realized})
+    if notes is not None:
+        out["solver_note"] = notes
+    return out
 
 
 def inconsistency_metrics(

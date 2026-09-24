@@ -1,0 +1,9 @@
+anchoring,discount_rate,occurrence,mean_abs_rel_deviation,relax_share
+realized-history,0.0,0.639,0.098,0.033
+realized-history,0.02,0.583,0.059,0.235
+realized-history,0.04,0.806,0.065,0.259
+realized-history,0.06,0.722,0.064,0.315
+within-plan,0.0,1.0,0.129,0.0
+within-plan,0.02,0.833,0.086,0.0
+within-plan,0.04,0.889,0.095,0.0
+within-plan,0.06,0.833,0.096,0.0
