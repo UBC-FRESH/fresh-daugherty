@@ -25,6 +25,16 @@ Phase 9 (E1: time-varying discount-rate shapes) on `feature/p9-discount-shapes`.
   diagnostic; provenance columns fd/ws3 versions). Headline: declining-rate
   paths do NOT mitigate — occurrence 98-100% across all four paths (vs 47-71%
   at constant 2-6%), with mean divergence 0.17-0.24 (inverse-j highest).
+- P9.4 (#56): E1 analysis + write-up. `scripts/analyze_p9_discount_shapes.py`
+  regenerates tables T1-T4 + figures F1-F2 from the tracked records into
+  `results/analysis/p9_discount_shapes/`, plus `writeup.md` (draft for the
+  manuscript's Extensions section). Findings: declining rates make
+  inconsistency MORE pervasive (flow-constrained occurrence 98-100% vs 47-86%
+  at constant 2-6%; magnitude 0.16-0.20 vs 0.07-0.11); and the NHF control
+  cells separate a second, preference-level (Strotz) channel — under
+  declining paths the no-flow cells diverge at 100% occurrence with gap
+  diagnostic confirming genuine strict suboptimality/infeasibility (30-61% +
+  7-14% of tail periods), unlike the constant-0% tie-churn case.
 
 ## v0.2.0 planning — 2026-09-23
 
