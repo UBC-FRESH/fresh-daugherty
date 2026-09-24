@@ -154,6 +154,67 @@ def grid(
     typer.echo(f"  occurrence rate: {summary['occurrence'].mean():.0%} of cells")
 
 
+@app.command("grid-discount-paths")
+def grid_discount_paths(
+    landbases: str = typer.Option(
+        "1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18",
+        "--landbases",
+        help="Comma-separated landbase ids.",
+    ),
+    paths: str = typer.Option(
+        "linear-4pc-0pc,linear-6pc-0pc,invj-4pc-k1,invj-4pc-k2",
+        "--paths",
+        help="Comma-separated E1 discount-path codes (see instance/discount.py).",
+    ),
+    policies: str = typer.Option(
+        "NHF,NDY,-10%,-20%,+/-10%,+/-20%",
+        "--policies",
+        help="Comma-separated Table 5.6 policy codes.",
+    ),
+    horizon: int = typer.Option(15, "--horizon", min=1),
+    workers: int = typer.Option(
+        1, "--workers", min=1, help="Parallel processes (grid is embarrassingly parallel)."
+    ),
+    out: Path = typer.Option(Path("results") / "experiments" / "grid_discount_paths.csv", "--out"),
+) -> None:
+    """Run the E1 discount-shape grid (landbase x discount path x harvest-flow policy).
+
+    Each cell is a full sequential-replanning simulation under a time-varying
+    discount-rate path, with the objective-gap diagnostic. Writes the per-cell
+    summary to ``--out``, the per-period trajectories to
+    ``<out-stem>_trajectories.csv``, and the per-period gap-diagnostic records
+    to ``<out-stem>_gaps.csv``, in the tracked ``results/`` tree.
+    """
+    from fresh_daugherty.experiments import run_discount_path_grid
+    from fresh_daugherty.instance.discount import discount_path
+    from fresh_daugherty.instance.reconstruct import calibrate
+    from fresh_daugherty.instance.thesis import HARVEST_FLOW_POLICIES
+
+    calibrate()
+    lbs = tuple(int(x) for x in landbases.split(","))
+    dpaths = tuple(discount_path(c) for c in paths.split(","))
+    pol_by_code = {p.code: p for p in HARVEST_FLOW_POLICIES}
+    pols = tuple(pol_by_code[c] for c in policies.split(","))
+    summary, trajectories, gaps = run_discount_path_grid(
+        landbases=lbs,
+        discount_paths=dpaths,
+        policies=pols,
+        horizon=horizon,
+        workdir=out.parent / "grid_work",
+        workers=workers,
+    )
+    out.parent.mkdir(parents=True, exist_ok=True)
+    summary.to_csv(out, index=False)
+    traj_out = out.with_name(out.stem + "_trajectories.csv")
+    trajectories.to_csv(traj_out, index=False)
+    gaps_out = out.with_name(out.stem + "_gaps.csv")
+    gaps.to_csv(gaps_out, index=False)
+    typer.echo(f"wrote {gaps_out} ({len(gaps)} gap rows)")
+    typer.echo(f"wrote {traj_out} ({len(trajectories)} trajectory rows)")
+    typer.echo(f"wrote {out} ({len(summary)} cells)")
+    typer.echo(f"  occurrence rate: {summary['occurrence'].mean():.0%} of cells")
+
+
 @app.command("consistency-run")
 def consistency_run() -> None:
     """Run the consistent-solution (subgame-perfect) analysis (post-v0.1.0a1)."""

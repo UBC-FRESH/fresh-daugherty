@@ -20,6 +20,25 @@ fresh-daugherty grid \
 
 (`--workers 1` for serial; the grid is embarrassingly parallel.)
 
+## E1 discount-shape grid (v0.2.0, phase P9)
+
+`grid_discount_paths.csv` is the per-cell summary for the E1 extension grid
+(432 cells: 18 landbases x 4 discount-rate paths x 6 harvest-flow policies,
+each a full sequential-replanning simulation under a time-varying discount
+rate with the objective-gap diagnostic); `grid_discount_paths_trajectories.csv`
+and `grid_discount_paths_gaps.csv` are the per-period trajectory and
+gap-diagnostic records. Path definitions and parameters: see
+`src/fresh_daugherty/instance/discount.py`.
+
+```bash
+fresh-daugherty grid-discount-paths \
+  --landbases "1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18" \
+  --paths "linear-4pc-0pc,linear-6pc-0pc,invj-4pc-k1,invj-4pc-k2" \
+  --policies "NHF,NDY,-10%,-20%,+/-10%,+/-20%" \
+  --horizon 15 --workers 48 \
+  --out results/experiments/grid_discount_paths.csv
+```
+
 ## Environment
 
 Key dependency versions used for the reported results (see `pyproject.toml` for

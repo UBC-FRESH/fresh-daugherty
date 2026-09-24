@@ -22,6 +22,7 @@ import numpy as np
 import pandas as pd
 import ws3.forest
 
+from fresh_daugherty.instance.discount import DiscountPath
 from fresh_daugherty.instance.thesis import THESIS_DISCOUNT_RATE
 from fresh_daugherty.lp import add_open_loop_problem
 from fresh_daugherty.model import (
@@ -86,6 +87,7 @@ def _solve_and_apply(
     *,
     max_period: int | None,
     discount_rate: float,
+    discount_path: DiscountPath | None = None,
     flow_tolerance: float,
     target_flow_mcf: float | None,
     flow_geometry: str,
@@ -104,6 +106,7 @@ def _solve_and_apply(
             model,
             flow_coefficient=flow_tolerance,
             discount_rate=discount_rate,
+            discount_path=discount_path,
             target_flow_mcf=target_flow_mcf,
             flow_geometry=flow_geometry,
             flow_decrease=flow_decrease,
@@ -151,6 +154,7 @@ def _solve_subproblem(
     model,
     *,
     discount_rate: float,
+    discount_path: DiscountPath | None = None,
     flow_tolerance: float,
     target_flow_mcf: float | None,
     flow_geometry: str,
@@ -165,6 +169,7 @@ def _solve_subproblem(
         model,
         flow_coefficient=flow_tolerance,
         discount_rate=discount_rate,
+        discount_path=discount_path,
         target_flow_mcf=target_flow_mcf,
         flow_geometry=flow_geometry,
         flow_decrease=flow_decrease,
@@ -183,6 +188,7 @@ def consistency_gap_replan(
     *,
     workdir: str | Path,
     discount_rate: float = THESIS_DISCOUNT_RATE,
+    discount_path: DiscountPath | None = None,
     flow_tolerance: float = 0.05,
     target_flow_mcf: float | None = None,
     flow_geometry: str = "period1",
@@ -210,6 +216,7 @@ def consistency_gap_replan(
     announced = open_loop_projection(
         model,
         discount_rate=discount_rate,
+        discount_path=discount_path,
         flow_tolerance=flow_tolerance,
         target_flow_mcf=target_flow_mcf,
         flow_geometry=flow_geometry,
@@ -222,6 +229,7 @@ def consistency_gap_replan(
     for t in range(1, horizon + 1):
         kw = {
             "discount_rate": discount_rate,
+            "discount_path": discount_path,
             "flow_tolerance": flow_tolerance,
             "target_flow_mcf": target_flow_mcf,
             "flow_geometry": flow_geometry,
@@ -286,6 +294,7 @@ def open_loop_projection(
     model: ws3.forest.ForestModel,
     *,
     discount_rate: float = THESIS_DISCOUNT_RATE,
+    discount_path: DiscountPath | None = None,
     flow_tolerance: float = 0.05,
     target_flow_mcf: float | None = None,
     flow_geometry: str = "period1",
@@ -298,6 +307,7 @@ def open_loop_projection(
         model,
         max_period=None,
         discount_rate=discount_rate,
+        discount_path=discount_path,
         flow_tolerance=flow_tolerance,
         target_flow_mcf=target_flow_mcf,
         flow_geometry=flow_geometry,
@@ -312,6 +322,7 @@ def sequential_replan(
     *,
     workdir: str | Path,
     discount_rate: float = THESIS_DISCOUNT_RATE,
+    discount_path: DiscountPath | None = None,
     flow_tolerance: float = 0.05,
     target_flow_mcf: float | None = None,
     flow_geometry: str = "period1",
@@ -344,6 +355,7 @@ def sequential_replan(
             current,
             max_period=1,
             discount_rate=discount_rate,
+            discount_path=discount_path,
             flow_tolerance=flow_tolerance,
             target_flow_mcf=target_flow_mcf,
             flow_geometry=flow_geometry,
