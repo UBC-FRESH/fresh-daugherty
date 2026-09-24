@@ -130,7 +130,7 @@ def main() -> None:
     ax.set_title("Landbase 1 at 4%: pointwise NDY vs rolling-mean NDY readings")
     ax.legend(fontsize=8)
     fig.tight_layout()
-    fig.savefig(OUT / "f1_landbase1_rolling_vs_pointwise.pdf")
+    fig.savefig(OUT / "f1_landbase1_rolling_vs_pointwise.pdf", metadata={"CreationDate": None})
     plt.close(fig)
 
     print(f"wrote tables T1-T4 and figure F1 to {OUT}/")

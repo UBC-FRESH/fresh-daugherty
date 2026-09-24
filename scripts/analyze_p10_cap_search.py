@@ -122,7 +122,7 @@ def main() -> None:
     ax.set_title("Landbase 1 at 4%: NDY flow link vs calibrated max-harvest cap")
     ax.legend(fontsize=8)
     fig.tight_layout()
-    fig.savefig(OUT / "f1_landbase1_ndy_vs_cap.pdf")
+    fig.savefig(OUT / "f1_landbase1_ndy_vs_cap.pdf", metadata={"CreationDate": None})
     plt.close(fig)
 
     print(f"wrote tables T1-T3 and figure F1 to {OUT}/")

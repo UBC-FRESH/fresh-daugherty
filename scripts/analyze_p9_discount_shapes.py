@@ -152,7 +152,7 @@ def main() -> None:
         ax.set_xticklabels(t1["scheme"], rotation=45, ha="right", fontsize=8)
     fig.suptitle("Dynamic inconsistency, flow-constrained cells (control grey; E1 paths dark)")
     fig.tight_layout(rect=(0, 0, 1, 0.94))
-    fig.savefig(OUT / "f1_occurrence_magnitude_by_scheme.pdf")
+    fig.savefig(OUT / "f1_occurrence_magnitude_by_scheme.pdf", metadata={"CreationDate": None})
     plt.close(fig)
 
     # --- F2: focal trajectories (landbase 1, NDY): control 4% vs E1 paths ---
@@ -183,7 +183,7 @@ def main() -> None:
     ax.set_title("Landbase 1, NDY: realized trajectories under declining discount paths")
     ax.legend(fontsize=8)
     fig.tight_layout()
-    fig.savefig(OUT / "f2_landbase1_ndy_trajectories.pdf")
+    fig.savefig(OUT / "f2_landbase1_ndy_trajectories.pdf", metadata={"CreationDate": None})
     plt.close(fig)
 
     print(f"wrote tables T1-T4 and figures F1-F2 to {OUT}/")
