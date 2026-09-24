@@ -142,7 +142,7 @@ def main() -> None:
         ax.legend(fontsize=8)
     fig.suptitle("Landbase 1 at 4%: NDY by flow-row denominator")
     fig.tight_layout(rect=(0, 0, 1, 0.94))
-    fig.savefig(OUT / "f1_landbase1_ndy_by_denominator.pdf")
+    fig.savefig(OUT / "f1_landbase1_ndy_by_denominator.pdf", metadata={"CreationDate": None})
     plt.close(fig)
 
     print(f"wrote tables T1-T4 and figure F1 to {OUT}/")

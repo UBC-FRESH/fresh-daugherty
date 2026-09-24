@@ -113,7 +113,7 @@ def _core_figures(core_traj: pd.DataFrame) -> dict[str, str]:
     ax.legend()
     ax.grid(alpha=0.3)
     fig.tight_layout()
-    fig.savefig(FIGS / "core_declining_ndy.png", dpi=150)
+    fig.savefig(FIGS / "core_declining_ndy.png", dpi=150, metadata={"CreationDate": None})
     plt.close(fig)
     out["declining_ndy"] = "figures/core_declining_ndy.png"
     return out
