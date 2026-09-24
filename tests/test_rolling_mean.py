@@ -87,3 +87,51 @@ def test_invalid_window_raises(tmp_path) -> None:
     model = prepare_optimization(bootstrap_model(tmp_path / "model", horizon=5), horizon=5)
     with pytest.raises(ValueError, match="flow_window"):
         add_open_loop_problem(model, flow_geometry="rolling_mean", flow_window=0)
+
+
+def _replan(tmp_path, *, horizon=6, **kw):
+    from fresh_daugherty.replan import sequential_replan
+
+    areas = landbase_areas(1)
+    build_woodstock_sections(tmp_path / "model", areas=areas)
+    model = prepare_optimization(
+        bootstrap_model(tmp_path / "model", horizon=horizon), horizon=horizon
+    )
+    return sequential_replan(model, workdir=tmp_path / "replan", discount_rate=0.04, **kw)
+
+
+def test_both_anchoring_readings_run(tmp_path) -> None:
+    """P12.2 (issue #65): within-plan and realized-history readings both run
+    and produce horizon-length trajectories."""
+    for reading in (False, True):
+        df = _replan(
+            tmp_path / str(reading),
+            flow_geometry="rolling_mean",
+            flow_window=2,
+            rolling_realized_history=reading,
+        )
+        assert len(df) == 6
+        assert (df["harvest_volume_mcf"] >= 0).all()
+
+
+def test_realized_history_reading_floors_against_realized(tmp_path) -> None:
+    """Under the realized-history reading, each replan's period-1 harvest is
+    floored at the mean of the previous k REALIZED harvests (unless the solver
+    had to relax, which the solver_note column records)."""
+    k = 2
+    df = _replan(
+        tmp_path,
+        flow_geometry="rolling_mean",
+        flow_window=k,
+        rolling_realized_history=True,
+        record_solver_notes=True,
+    )
+    assert "solver_note" in df.columns
+    v = list(df["harvest_volume_mcf"])
+    notes = list(df["solver_note"])
+    assert set(notes) <= {"ok", "relaxed_anchor", "dropped_flow"}
+    for t in range(1, len(v)):
+        if notes[t] != "ok":
+            continue
+        window = v[max(0, t - k) : t]
+        assert v[t] >= (sum(window) / len(window)) * (1 - 1e-3)
