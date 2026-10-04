@@ -113,3 +113,45 @@ def test_gap_replan_collects_revenue(tmp_path) -> None:
     assert 0.0 <= m["mean_abs_rel_deviation"] <= 1.0
     # And the volume record is unaffected by the revenue columns.
     assert {"objective_gap", "tail_status"} <= set(df.columns)
+
+
+def test_gap_replan_announces_the_revenue_plan(tmp_path) -> None:
+    """P14.1 (issue #76) regression: under ``flow_denominator="revenue"`` the
+    announced (period-0 open-loop) trajectory must be the *revenue*-denominated
+    plan. At 8cf2aa8, which produced the original E3 records,
+    ``consistency_gap_replan`` called ``open_loop_projection`` without
+    ``flow_denominator``, so every revenue cell announced the volume plan and
+    period-1 announced != realized. (Fixed incidentally in e72ab2b, P12.2.)"""
+    from fresh_daugherty.replan import consistency_gap_replan, open_loop_projection
+
+    horizon = 5
+    flow = {"flow_geometry": "consecutive", "flow_decrease": 0.0}
+
+    def fresh(name):
+        build_woodstock_sections(tmp_path / name, areas=landbase_areas(1))
+        model = bootstrap_model(tmp_path / name, horizon=horizon)
+        return prepare_optimization(model, horizon=horizon)
+
+    df = consistency_gap_replan(
+        fresh("gap"),
+        workdir=tmp_path / "gapwork",
+        discount_rate=0.04,
+        flow_denominator="revenue",
+        collect_revenue=True,
+        **flow,
+    )
+    revenue_plan = open_loop_projection(
+        fresh("rev"), discount_rate=0.04, flow_denominator="revenue", **flow
+    )
+    volume_plan = open_loop_projection(
+        fresh("vol"), discount_rate=0.04, flow_denominator="volume", **flow
+    )
+    announced = list(df["announced"])
+    # Sensitivity: on landbase 1 the two denominators give different plans,
+    # so the checks below can tell them apart.
+    assert announced != pytest.approx(volume_plan, rel=1e-6)
+    # The announced trajectory is the revenue-denominated open-loop plan ...
+    assert announced == pytest.approx(revenue_plan, rel=1e-9)
+    # ... and the simulator invariant holds: the realized period-1 harvest is
+    # the open-loop period-1 decision.
+    assert df["announced"].iloc[0] == pytest.approx(df["realized"].iloc[0], rel=1e-9)
