@@ -172,10 +172,13 @@ def add_open_loop_problem(
     ending-period inventory floor (ending growing stock >= 80% of the regulated
     forest's average inventory; thesis p.77). Known issue: the per-path
     ending-inventory coefficient does not yet match ws3's growing-stock
-    accounting (regenerated-DT handling), so the floor can be infeasible. With
-    the corrected (Table 5.4-faithful) case-study data the model does not
-    exhibit the horizon-end liquidation these constraints guard against, so they
-    are off by default; see `planning/thesis-formulation.md` and issue #42.
+    accounting (regenerated-DT handling), so the floor can be infeasible; the
+    constraints are off by default (see `planning/thesis-formulation.md` and
+    issue #42). Horizon-end effects are present without them: in the P15 core
+    grid, 79 of 360 flow-constrained open-loop plans harvest more than twice the
+    mean of periods 1-14 in period 15 (56 of them at a 0% rate), which is why
+    results are also reported on the thesis's periods 2-11 window (P16.3, #94;
+    an earlier version of this note said the model showed no liquidation).
     """
     period_length = model.period_length
     path = discount_path if discount_path is not None else constant_path(discount_rate)

@@ -237,3 +237,57 @@ def test_gap_diagnostic_under_carried_bounded_deviation(tmp_path) -> None:
     free = tail.loc[tail["objective_gap"].notna(), "obj_free"].abs().to_numpy()
     assert (g >= -1e-6 * np.maximum(free, 1.0)).all()
     assert set(tail["tail_status"]) <= {"optimal", "suboptimal", "infeasible"}
+
+
+def test_dropped_flow_fallback_keeps_cell_settings(monkeypatch) -> None:
+    """P16.3 (#94, S15): when every flow variant is infeasible, the last-resort
+    solve drops the flow rows but must keep the cell's other settings (it used
+    to drop ``discount_path`` and ``flow_denominator`` silently, the defect
+    class of #76/#78/#83)."""
+    import types
+
+    from fresh_daugherty import replan
+    from fresh_daugherty.instance.discount import DISCOUNT_PATHS
+
+    calls: list[dict] = []
+
+    def fake_problem(model, **kw):
+        calls.append(kw)
+        ok = kw.get("flow_geometry") == "none"
+        return types.SimpleNamespace(
+            solve=lambda verbose=False: None, status=lambda: "optimal" if ok else "infeasible"
+        )
+
+    model = types.SimpleNamespace(
+        periods=(1, 2),
+        compile_schedule=lambda problem: [],
+        reset=lambda: None,
+        apply_schedule=lambda *a, **k: None,
+        compile_product=lambda p, expr, acode=None: 0.0,
+    )
+    monkeypatch.setattr(replan, "add_open_loop_problem", fake_problem)
+    path = DISCOUNT_PATHS[0]
+    notes: list[str] = []
+    replan._solve_and_apply(
+        model,
+        max_period=1,
+        discount_rate=0.04,
+        discount_path=path,
+        flow_denominator="revenue",
+        realized_history=(100.0, 100.0),
+        flow_tolerance=0.05,
+        target_flow_mcf=None,
+        flow_geometry="rolling_mean",
+        flow_decrease=0.0,
+        flow_increase=None,
+        abs_period=3,
+        notes=notes,
+    )
+    assert notes == ["dropped_flow"]
+    last = calls[-1]
+    assert last["flow_geometry"] == "none"
+    assert last["discount_path"] is path
+    assert last["flow_denominator"] == "revenue"
+    assert last["abs_period"] == 3
+    # The ladder was tried before dropping the history bound and then the flow.
+    assert [c.get("history_rtol") for c in calls[1:6]] == list(replan.HISTORY_LADDER)
