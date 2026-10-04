@@ -447,6 +447,52 @@ def grid_institutions(
         typer.echo(f"  {h}/{f}: flow-constrained occurrence {fc['occurrence'].mean():.0%}")
 
 
+@app.command("grid-seeds")
+def grid_seeds(
+    landbases: str = typer.Option(
+        "11,12,13,14,15,16,17,18", "--landbases", help="Random landbase ids (11-18)."
+    ),
+    seeds: str = typer.Option(
+        "42,1042,2042,3042,4042", "--seeds", help="Base seeds (42 = tracked draw)."
+    ),
+    discount_rates: str = typer.Option(
+        "0.0,0.02,0.04,0.06", "--discount-rates", help="Comma-separated rates."
+    ),
+    policies: str = typer.Option(
+        "NHF,NDY,-10%,-20%,+/-10%,+/-20%",
+        "--policies",
+        help="Comma-separated Table 5.6 policy codes.",
+    ),
+    horizon: int = typer.Option(15, "--horizon", min=1),
+    workers: int = typer.Option(1, "--workers", min=1, help="Parallel processes."),
+    out: Path = typer.Option(Path("results") / "experiments" / "grid_seeds.csv", "--out"),
+) -> None:
+    """Seed-sensitivity grid for the random landbases (P15.6): landbase x seed x
+    rate x policy under the core institution. Writes the summary to ``--out``
+    and trajectories to ``<out-stem>_trajectories.csv``."""
+    from fresh_daugherty.experiments import run_seed_grid
+    from fresh_daugherty.instance.reconstruct import calibrate
+    from fresh_daugherty.instance.thesis import HARVEST_FLOW_POLICIES
+
+    calibrate()
+    pol_by_code = {p.code: p for p in HARVEST_FLOW_POLICIES}
+    summary, trajectories = run_seed_grid(
+        landbases=tuple(int(x) for x in landbases.split(",")),
+        seeds=tuple(int(x) for x in seeds.split(",")),
+        discount_rates=tuple(float(x) for x in discount_rates.split(",")),
+        policies=tuple(pol_by_code[c] for c in policies.split(",")),
+        horizon=horizon,
+        workdir=out.parent / "grid_work",
+        workers=workers,
+    )
+    out.parent.mkdir(parents=True, exist_ok=True)
+    summary.to_csv(out, index=False)
+    traj_out = out.with_name(out.stem + "_trajectories.csv")
+    trajectories.to_csv(traj_out, index=False)
+    typer.echo(f"wrote {traj_out} ({len(trajectories)} trajectory rows)")
+    typer.echo(f"wrote {out} ({len(summary)} cells)")
+
+
 @app.command("consistency-run")
 def consistency_run() -> None:
     """Run the consistent-solution (subgame-perfect) analysis (post-v0.1.0a1)."""

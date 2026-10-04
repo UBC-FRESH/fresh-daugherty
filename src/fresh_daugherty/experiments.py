@@ -87,6 +87,7 @@ def run_experiment(
     flow_decrease: float | None = None,
     flow_increase: float | None = None,
     flow_policy: HarvestFlowPolicy | None = None,
+    landbase_seed: int = 42,
 ) -> ExperimentResult:
     """Run one experiment cell (open-loop projection + sequential replan).
 
@@ -100,7 +101,9 @@ def run_experiment(
         flow_decrease = flow_kwargs.get("flow_decrease")
         flow_increase = flow_kwargs.get("flow_increase")
     workdir = Path(workdir)
-    areas = landbase_areas(landbase)
+    # ``landbase_seed`` only affects the randomly generated landbases 11-18
+    # (P15.6, #88); the default reproduces the tracked landbases.
+    areas = landbase_areas(landbase, seed=landbase_seed)
     build_woodstock_sections(workdir / "model", areas=areas)
     model = prepare_optimization(
         bootstrap_model(workdir / "model", horizon=horizon), horizon=horizon
@@ -736,6 +739,75 @@ def run_institution_grid(
     trajectories = pd.DataFrame([row for r in results for row in r[1]])
     gaps = pd.DataFrame([row for r in results for row in r[2]])
     return summary, trajectories, gaps
+
+
+def _run_seed_cell(args: tuple) -> tuple[dict, list[dict]]:
+    """Run one (landbase, seed, rate, policy) cell of the seed-sensitivity grid
+    with the core institution (P15.6, #88). Module-level for the pool."""
+    lb, seed, rate, pol, horizon, cell_workdir = args
+    from fresh_daugherty.instance.reconstruct import calibrate
+
+    calibrate()
+    result = run_experiment(
+        landbase=lb,
+        discount_rate=rate,
+        flow_tolerance=0.0,  # unused when flow_policy is given
+        horizon=horizon,
+        workdir=cell_workdir,
+        flow_policy=pol,
+        landbase_seed=seed,
+    )
+    keys = {"landbase": lb, "landbase_seed": seed, "discount_rate": rate, "flow_policy": pol.code}
+    summary = {
+        **keys,
+        "horizon": horizon,
+        "fd_version": _fd_version,
+        "fd_commit": _fd_commit,
+        "ws3_version": _ws3_version,
+        **result.metrics,
+    }
+    trajectories = [
+        {**keys, "period": t, "projected_mcf": p, "realized_mcf": r}
+        for t, (p, r) in enumerate(zip(result.projected, result.realized, strict=True), start=1)
+    ]
+    return summary, trajectories
+
+
+def run_seed_grid(
+    *,
+    landbases: tuple[int, ...],
+    seeds: tuple[int, ...],
+    discount_rates: tuple[float, ...],
+    policies: tuple[HarvestFlowPolicy, ...],
+    horizon: int,
+    workdir: str | Path,
+    workers: int = 1,
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Seed-sensitivity grid for the randomly generated landbases (P15.6, #88):
+    landbase x seed x rate x policy under the core institution. Seed 42 is the
+    tracked draw and reproduces the core grid. Returns ``(summary, trajectories)``.
+    """
+    workdir = Path(workdir)
+    cells = [
+        (lb, seed, rate, pol, horizon, workdir / f"lb{lb}_s{seed}_r{rate}_{_policy_slug(pol.code)}")
+        for lb in landbases
+        for seed in seeds
+        for rate in discount_rates
+        for pol in policies
+    ]
+    if workers and workers > 1:
+        from concurrent.futures import ProcessPoolExecutor
+
+        from fresh_daugherty.instance.reconstruct import calibrate
+
+        calibrate()
+        with ProcessPoolExecutor(max_workers=workers) as ex:
+            results = list(ex.map(_run_seed_cell, cells))
+    else:
+        results = [_run_seed_cell(c) for c in cells]
+    summary = pd.DataFrame([r[0] for r in results])
+    trajectories = pd.DataFrame([row for r in results for row in r[1]])
+    return summary, trajectories
 
 
 def _policy_slug(code: str) -> str:
