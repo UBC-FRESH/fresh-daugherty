@@ -349,6 +349,9 @@ effect rather than tie-breaking. (Corrected in P15, issue #86.)
     by_lb_fc = (
         fc.groupby("landbase")[["occurrence", "mean_abs_rel_deviation"]].mean().round(3)
     ).reset_index()
+    from fresh_daugherty.instance.landbases import LANDBASE_ASSUMPTIONS
+
+    assumptions = "\n".join(f"- {line}" for line in LANDBASE_ASSUMPTIONS)
     _write(
         "04-landbases.md",
         f"""# 04 — Per-landbase detail
@@ -364,9 +367,12 @@ landbase definitions: `src/fresh_daugherty/instance/landbases.py`).
 
 {_md_table(by_lb_fc)}
 
-The inconsistency occurs across all eighteen initial forest conditions and
-is most pronounced on the disequilibrium structures: the all-mature
-landbases (1, 2) and the area-control-derived landbases (3-8).
+## Construction assumptions
+
+The thesis describes the landbases in words (pp. 78-80, Table 5.5); every
+choice it leaves open is recorded in `LANDBASE_ASSUMPTIONS`:
+
+{assumptions}
 """,
     )
 
