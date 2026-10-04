@@ -24,7 +24,7 @@ synchronized with GitHub issues, planning notes, pull requests, and
 | P11 E3: value-denominated flow constraints | [#50](https://github.com/UBC-FRESH/fresh-daugherty/issues/50) | `feature/p11-value-flow` | Complete (PR [#72](https://github.com/UBC-FRESH/fresh-daugherty/pull/72) merged) |
 | P12 E4: rolling-mean NDY | [#51](https://github.com/UBC-FRESH/fresh-daugherty/issues/51) | `feature/p12-rolling-mean-ndy` | Complete (PR [#73](https://github.com/UBC-FRESH/fresh-daugherty/pull/73) merged) |
 | P13 E5: curated supplementary material + manuscript pointers | [#52](https://github.com/UBC-FRESH/fresh-daugherty/issues/52) | `feature/p13-supplement` | Complete (PR [#74](https://github.com/UBC-FRESH/fresh-daugherty/pull/74) merged; manuscript pointers in `fresh_daugherty_manuscript@main`) |
-| P14 E3 corrective: open-loop projection under revenue-denominated flow rows | [#75](https://github.com/UBC-FRESH/fresh-daugherty/issues/75) (children #76–#80) | `feature/p14-e3-fix` | Complete — PR pending (E3 + E2 records regenerated; #76–#79 closed) |
+| P14 E3 corrective: open-loop projection under revenue-denominated flow rows | [#75](https://github.com/UBC-FRESH/fresh-daugherty/issues/75) (children #76–#80) | `feature/p14-e3-fix` | Complete — PR [#81](https://github.com/UBC-FRESH/fresh-daugherty/pull/81) open (E3 + E2 records regenerated; manuscript `fresh_daugherty_manuscript@a24dbce`) |
 
 ## v0.2.0 Scope Expansion (2026-09)
 
