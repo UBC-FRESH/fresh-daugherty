@@ -25,7 +25,7 @@ synchronized with GitHub issues, planning notes, pull requests, and
 | P12 E4: rolling-mean NDY | [#51](https://github.com/UBC-FRESH/fresh-daugherty/issues/51) | `feature/p12-rolling-mean-ndy` | Complete (PR [#73](https://github.com/UBC-FRESH/fresh-daugherty/pull/73) merged) |
 | P13 E5: curated supplementary material + manuscript pointers | [#52](https://github.com/UBC-FRESH/fresh-daugherty/issues/52) | `feature/p13-supplement` | Complete (PR [#74](https://github.com/UBC-FRESH/fresh-daugherty/pull/74) merged; manuscript pointers in `fresh_daugherty_manuscript@main`) |
 | P14 E3 corrective: open-loop projection under revenue-denominated flow rows | [#75](https://github.com/UBC-FRESH/fresh-daugherty/issues/75) (children #76–#80) | `feature/p14-e3-fix` | Complete — PR [#81](https://github.com/UBC-FRESH/fresh-daugherty/pull/81) open (E3 + E2 records regenerated; manuscript `fresh_daugherty_manuscript@a24dbce`) |
-| P15 Review analyses (pre-submission referee audit) | [#82](https://github.com/UBC-FRESH/fresh-daugherty/issues/82) (children #83–#89) | `feature/p15-review-analyses` | Complete — PR pending (stacked on P14 / PR #81) |
+| P15 Review analyses (pre-submission referee audit) | [#82](https://github.com/UBC-FRESH/fresh-daugherty/issues/82) (children #83–#89) | `feature/p15-review-analyses` | Complete — PR [#90](https://github.com/UBC-FRESH/fresh-daugherty/pull/90) open (stacked on PR #81) |
 
 ## v0.2.0 Scope Expansion (2026-09)
 
