@@ -1,0 +1,10 @@
+| group | discount_rate | infeasible | optimal | suboptimal |
+| --- | --- | --- | --- | --- |
+| NHF | 0.0 | 0.099 | 0.425 | 0.476 |
+| NHF | 0.02 | 0.0 | 0.667 | 0.333 |
+| NHF | 0.04 | 0.0 | 1.0 | 0.0 |
+| NHF | 0.06 | 0.0 | 1.0 | 0.0 |
+| flow-constrained | 0.0 | 0.102 | 0.225 | 0.673 |
+| flow-constrained | 0.02 | 0.176 | 0.364 | 0.46 |
+| flow-constrained | 0.04 | 0.203 | 0.249 | 0.548 |
+| flow-constrained | 0.06 | 0.211 | 0.244 | 0.544 |
