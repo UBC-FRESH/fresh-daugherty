@@ -195,3 +195,32 @@ def test_null_replanning_reproduces_the_plan(tmp_path) -> None:
     # below the 5% occurrence tolerance, and no anchor may be relaxed.
     assert np.allclose(seq["harvest_volume_mcf"].to_numpy(), plan, rtol=1e-4)
     assert (seq["solver_note"] == "ok").all()
+
+
+def test_gap_diagnostic_under_carried_bounded_deviation(tmp_path) -> None:
+    """P16.1 (#92, S01) end to end: under carried history with a symmetric
+    bound, the tail-fixed problem is a genuine restriction of the free one, so
+    no objective gap is negative and the diagnostic is not trivially
+    'optimal' (before the fix the period-1 band was overwritten by the anchor
+    and fixed == free in every replan)."""
+    import numpy as np
+
+    from fresh_daugherty.replan import consistency_gap_replan
+
+    build_woodstock_sections(tmp_path / "m", areas=landbase_areas(1))
+    model = prepare_optimization(bootstrap_model(tmp_path / "m", horizon=6), horizon=6)
+    gap = consistency_gap_replan(
+        model,
+        workdir=tmp_path / "w",
+        discount_rate=0.04,
+        flow_geometry="consecutive",
+        flow_decrease=0.1,
+        flow_increase=0.1,
+        rolling_horizon=True,
+        carry_flow_history=True,
+    )
+    tail = gap[gap["period"] > 1]
+    g = tail["objective_gap"].dropna().to_numpy()
+    free = tail.loc[tail["objective_gap"].notna(), "obj_free"].abs().to_numpy()
+    assert (g >= -1e-6 * np.maximum(free, 1.0)).all()
+    assert set(tail["tail_status"]) <= {"optimal", "suboptimal", "infeasible"}

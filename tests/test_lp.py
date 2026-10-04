@@ -192,3 +192,64 @@ def test_tight_cap_binds_and_stays_feasible(tmp_path) -> None:
     assert (v_cap <= cap + 1e-3).all()
     # The cap binds: the capped plan harvests less than the unconstrained peak.
     assert v_cap.max() < v_nhf.max()
+
+
+class _CaptureModel:
+    """Minimal stand-in recording what ``add_open_loop_problem`` passes to ws3."""
+
+    period_length = 10
+    periods = (1, 2, 3)
+
+    def __init__(self) -> None:
+        self.dtypes: dict = {}
+        self.kw: dict = {}
+
+    def nthemes(self) -> int:
+        return 5
+
+    def add_problem(self, **kw):
+        self.kw = kw
+        return object()
+
+
+def _period1_bounds(**kw) -> tuple[float | None, float | None]:
+    m = _CaptureModel()
+    add_open_loop_problem(m, **kw)
+    hv = (m.kw["cgen_data"] or {}).get("cflw_hv", {})
+    return hv.get("lb", {}).get(1), hv.get("ub", {}).get(1)
+
+
+def test_tail_fixed_band_intersects_carried_anchor() -> None:
+    """P16.1 (#92, S01): the gap diagnostic's period-1 band must be intersected
+    with the carried flow anchor, not overwrite it (or be overwritten)."""
+    from fresh_daugherty.lp import HISTORY_RTOL
+
+    flow = {"flow_geometry": "consecutive", "flow_decrease": 0.1, "flow_increase": 0.1}
+    free = _period1_bounds(prev_harvest_mcf=10000.0, **flow)
+    fixed = _period1_bounds(prev_harvest_mcf=10000.0, fix_period1_harvest_mcf=9500.0, **flow)
+    assert free == pytest.approx((9000.0 * (1 - HISTORY_RTOL), 11000.0 * (1 + HISTORY_RTOL)))
+    assert fixed == pytest.approx((9500.0 * 0.99, 9500.0 * 1.01))
+    assert fixed != free
+    # Announced value outside the carried range: the intersection is empty
+    # (lb > ub), so the tail-fixed problem is infeasible, as it should be.
+    lb, ub = _period1_bounds(prev_harvest_mcf=10000.0, fix_period1_harvest_mcf=8000.0, **flow)
+    assert lb > ub
+
+
+def test_tail_fixed_band_respects_cap() -> None:
+    """P16.1 (#92, S02): in E2 the band must not lift the cap."""
+    lb, ub = _period1_bounds(target_flow_mcf=9400.0, fix_period1_harvest_mcf=9400.0)
+    assert ub == pytest.approx(9400.0)
+    assert lb == pytest.approx(9400.0 * 0.99)
+
+
+def test_carried_history_requires_volume_denominator() -> None:
+    """P16.1 (#92): the carried anchor bounds volume; a revenue-denominated
+    policy must not silently get a volume anchor."""
+    with pytest.raises(ValueError, match="volume-denominated"):
+        _period1_bounds(
+            flow_geometry="consecutive",
+            flow_decrease=0.0,
+            flow_denominator="revenue",
+            prev_harvest_mcf=10000.0,
+        )

@@ -352,6 +352,15 @@ def consistency_gap_replan(
             if obj_free == obj_free and obj_fixed == obj_fixed
             else float("nan")
         )
+        if gap == gap and gap < -1e-5 * max(abs(obj_free), 1.0):
+            # The tail-fixed problem is the free problem plus a period-1 band
+            # (P16.1, #92), so it cannot do materially better than the free
+            # one; a negative gap means the two problems differ by more than
+            # the band (the S02 defect read such rows as "optimal").
+            raise RuntimeError(
+                f"objective gap {gap:.6g} < 0 at period {t}: the tail-fixed "
+                "problem is not a restriction of the free problem"
+            )
         if obj_fixed != obj_fixed:  # NaN -> infeasible
             status = "infeasible"
         elif gap > 1e-6 * max(abs(obj_free), 1.0):

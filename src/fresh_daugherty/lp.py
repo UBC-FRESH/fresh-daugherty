@@ -92,6 +92,27 @@ def _escalated(base: float, year: float) -> float:
     return base * (1.0 + PRICE_ESCALATION_RATE) ** min(year, PRICE_ESCALATION_YEARS)
 
 
+def _tighten_period1_harvest(
+    cgen_data: dict | None, *, lb: float | None = None, ub: float | None = None
+) -> dict:
+    """Intersect period-1 harvest-volume bounds with any already present.
+
+    Every caller that bounds the period-1 harvest (cap, carried anchor,
+    tail-fixed band) goes through here, so the result is the intersection of
+    all requested bounds regardless of order. An empty intersection (lb > ub)
+    is kept and makes the problem infeasible, which is the correct reading.
+    """
+    cgen_data = cgen_data or {}
+    hv = cgen_data.setdefault("cflw_hv", {})
+    lbs = hv.setdefault("lb", {})
+    ubs = hv.setdefault("ub", {})
+    if lb is not None:
+        lbs[1] = max(lbs.get(1, lb), lb)
+    if ub is not None:
+        ubs[1] = min(ubs.get(1, ub), ub)
+    return cgen_data
+
+
 def add_open_loop_problem(
     model: ws3.forest.ForestModel,
     *,
@@ -290,32 +311,43 @@ def add_open_loop_problem(
             cgen_data = cgen_data or {}
             cgen_data["inventory"] = {"lb": {final_period: inv_target}}
 
-    if fix_period1_harvest_mcf is not None:
-        # Fix the period-1 harvest volume to a tight band around the announced
-        # value (used by the objective-gap consistency diagnostic to evaluate
-        # the announced plan's decision in a subproblem). A tight relative band
-        # (not exact equality) so discreteness in achievable harvest doesn't
-        # make a genuinely-implementable decision read as infeasible.
-        cgen_data = cgen_data or {}
-        hv_bounds = cgen_data.setdefault("cflw_hv", {"lb": {}, "ub": {}})
-        eps = 0.01
-        hv_bounds.setdefault("lb", {})[1] = fix_period1_harvest_mcf * (1.0 - eps)
-        hv_bounds.setdefault("ub", {})[1] = fix_period1_harvest_mcf * (1.0 + eps)
-
     if prev_harvest_mcf is not None and flow_geometry == "consecutive":
+        if flow_denominator != "volume":
+            # The carried anchor bounds period-1 *volume*; a revenue-denominated
+            # policy would need a revenue anchor. Refuse rather than silently
+            # anchor the wrong quantity (P16.1, #92).
+            raise ValueError("carried flow history is implemented for volume-denominated flow only")
         # Carry the harvest-flow history: the subproblem's first-period harvest
         # is anchored to the realized previous period's harvest (the sequential
         # -flow policy's payoff/feasibility-relevant state), so the replanned
         # policy is the SAME policy, not a reset one. H_1 within the policy's
         # (decrease, increase) tolerances of H_prev.
         dec = flow_coefficient if flow_decrease is None else flow_decrease
-        cgen_data = cgen_data or {}
-        hv_bounds = cgen_data.setdefault("cflw_hv", {"lb": {}, "ub": {}})
-        hv_bounds.setdefault("lb", {})[1] = prev_harvest_mcf * (1.0 - dec) * (1.0 - HISTORY_RTOL)
-        if flow_increase is not None:
-            hv_bounds.setdefault("ub", {})[1] = (
-                prev_harvest_mcf * (1.0 + flow_increase) * (1.0 + HISTORY_RTOL)
-            )
+        cgen_data = _tighten_period1_harvest(
+            cgen_data,
+            lb=prev_harvest_mcf * (1.0 - dec) * (1.0 - HISTORY_RTOL),
+            ub=(
+                None
+                if flow_increase is None
+                else prev_harvest_mcf * (1.0 + flow_increase) * (1.0 + HISTORY_RTOL)
+            ),
+        )
+
+    if fix_period1_harvest_mcf is not None:
+        # Fix the period-1 harvest volume to a tight band around the announced
+        # value (used by the objective-gap consistency diagnostic to evaluate
+        # the announced plan's decision in a subproblem). A tight relative band
+        # (not exact equality) so discreteness in achievable harvest doesn't
+        # make a genuinely-implementable decision read as infeasible. The band
+        # is intersected with any other period-1 bound (carried anchor, cap):
+        # the tail-fixed problem is the free problem plus the band (P16.1,
+        # #92; previously these writes overwrote each other).
+        eps = 0.01
+        cgen_data = _tighten_period1_harvest(
+            cgen_data,
+            lb=fix_period1_harvest_mcf * (1.0 - eps),
+            ub=fix_period1_harvest_mcf * (1.0 + eps),
+        )
 
     problem = model.add_problem(
         name=name,
