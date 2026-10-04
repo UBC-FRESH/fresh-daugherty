@@ -34,7 +34,8 @@ core grid). Shares of replan periods (period > 1) by tail status:
 
 Reading: under flow-constrained policies the announced tail is predominantly
 **suboptimal** (strictly improvable) or **infeasible** (cannot even be
-implemented) from the realized state — genuine inconsistency; under NHF the
-tail remains largely optimal except at the lowest rates (flat-objective
-tie-churn), which is why the NHF divergence metric is not read as genuine
-inconsistency there.
+implemented) from the realized state — genuine inconsistency. Under NHF the
+tail is optimal at 4-6% but not at 0-2%, where the NHF deviations are
+material (see page 10: 27/72 NHF cells with a gap of at least 1% of NPV) and
+disappear under a fixed horizon (4/72 cells), i.e. they are a rolling-horizon
+effect rather than tie-breaking. (Corrected in P15, issue #86.)

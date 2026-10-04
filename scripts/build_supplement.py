@@ -37,6 +37,11 @@ ANALYSIS_SCRIPTS = [
     "scripts/analyze_p10_cap_search.py",
     "scripts/analyze_p11_value_flow.py",
     "scripts/analyze_p12_rolling_mean.py",
+    "scripts/analyze_p15_institutions.py",
+    "scripts/analyze_p15_metrics.py",
+    "scripts/analyze_p15_gaps.py",
+    "scripts/analyze_p15_descriptives.py",
+    "scripts/analyze_p15_seeds.py",
 ]
 
 #: (page filename, title) — the supplement's table of contents.
@@ -50,6 +55,10 @@ PAGES = [
     ("07-extension-e3-value-flow.md", "E3: Value-denominated flow constraints"),
     ("08-extension-e4-rolling-mean.md", "E4: Rolling-mean NDY"),
     ("09-reproducibility.md", "Reproducibility"),
+    (
+        "10-review-analyses.md",
+        "Review analyses: replanning institution, robustness, gap diagnostic",
+    ),
 ]
 
 
@@ -325,10 +334,11 @@ core grid). Shares of replan periods (period > 1) by tail status:
 
 Reading: under flow-constrained policies the announced tail is predominantly
 **suboptimal** (strictly improvable) or **infeasible** (cannot even be
-implemented) from the realized state — genuine inconsistency; under NHF the
-tail remains largely optimal except at the lowest rates (flat-objective
-tie-churn), which is why the NHF divergence metric is not read as genuine
-inconsistency there.
+implemented) from the realized state — genuine inconsistency. Under NHF the
+tail is optimal at 4-6% but not at 0-2%, where the NHF deviations are
+material (see page 10: 27/72 NHF cells with a gap of at least 1% of NPV) and
+disappear under a fixed horizon (4/72 cells), i.e. they are a rolling-horizon
+effect rather than tie-breaking. (Corrected in P15, issue #86.)
 """,
     )
 
@@ -460,6 +470,9 @@ structural one in the writeup.
         .round(4)
         .reset_index()
     )
+    e2r = pd.read_csv(ANALYSIS / "p15_descriptives" / "t4_e2_vs_realized_ndy_median.csv").set_index(
+        "discount_rate"
+    )
     _write(
         "06-extension-e2-cap-search.md",
         f"""# 06 — E2: Max-harvest-cap even-flow search
@@ -475,14 +488,16 @@ Analysis writeup: {_link(ANALYSIS / "p10_cap_search" / "writeup.md", "p10 writeu
 
 ## Headline
 
-Cap calibration ELIMINATES dynamic inconsistency: occurrence
-{e2.occurrence.mean():.0%} across the grid (mean divergence
-{e2.mean_abs_rel_deviation.mean():.3f}, max
+Under the calibrated caps, occurrence is {e2.occurrence.mean():.0%} across the
+grid (mean divergence {e2.mean_abs_rel_deviation.mean():.3f}, max
 {e2.mean_abs_rel_deviation.max():.3f} — all below the 5% tolerance), with
-100% convergence. Removing the inter-period link removes the inconsistency.
-The calibrated level on landbase 1 (~9,400 MCF/period) is ~8% below the NDY
-plan's announced level — an automated allowable-cut calibration pricing the
-credibility of the flow promise.
+100% convergence; single periods can still deviate by more than 5% in
+{int((e2.max_abs_rel_deviation > 0.05).sum())}/{len(e2)} cells. The calibrated
+level on landbase 1 (~9,400 MCF/period) is ~8% below the NDY plan's
+*announced* level; against the volume that replanned NDY actually delivers,
+the cap's total volume is about equal (median
+{e2r.loc["all (median)", "volume_cap_vs_realized_ndy"]:+.1%}) and its NPV is
+{e2r.loc["all (median)", "npv_cap_vs_realized_ndy"]:+.1%} (median; page 10).
 
 ![Landbase 1 at 4%: NDY flow link vs calibrated cap]({f1})
 
@@ -591,6 +606,88 @@ infeasibility.
 ## By anchoring reading and window
 
 {_md_table(by_anchor)}
+""",
+    )
+
+    # --- P15 review analyses -------------------------------------------------
+    def _tab(sub: str, name: str) -> str:
+        return (ANALYSIS / sub / f"{name}.md").read_text().strip()
+
+    inst = pd.read_csv(ANALYSIS / "p15_institutions" / "t1_flow_constrained_by_institution.csv")
+    inst = inst.set_index(["horizon_institution", "flow_history"])
+
+    def _io(h: str, f: str) -> str:
+        r = inst.loc[(h, f)]
+        return f"{int(r.inconsistent)}/{int(r.cells)} ({r.occurrence:.0%})"
+
+    _write(
+        "10-review-analyses.md",
+        f"""# 10 — Review analyses (P15)
+
+Analyses added in response to a pre-submission review (fresh-daugherty P15,
+issue #82). Every table regenerates from the tracked records via the
+`scripts/analyze_p15_*.py` scripts (re-run by this builder). Records:
+{_link(RESULTS / "grid_institutions.csv", "institution grid")} /
+{_link(RESULTS / "grid_seeds.csv", "seed grid")}; core, E2-E4 records as in
+pages 02 and 06-08.
+
+## Replanning institution
+
+Flow-constrained occurrence: rolling horizon + reset flow history (the core
+grid) {_io("rolling", "reset")}; fixed horizon + reset {_io("fixed", "reset")};
+rolling + carried {_io("rolling", "carried")}; fixed horizon + carried history
+(each replan solves the exact tail of the original problem)
+{_io("fixed", "carried")}. A null test (CI) confirms that fixed + carried
+replanning from the plan's own state reproduces the plan.
+
+{_tab("p15_institutions", "t1_flow_constrained_by_institution")}
+
+NHF control by institution:
+
+{_tab("p15_institutions", "t2_nhf_by_institution")}
+
+Gap-diagnostic tail status by institution (flow-constrained, periods > 1):
+
+{_tab("p15_institutions", "t5_tail_status_by_institution")}
+
+## Occurrence threshold and evaluation window
+
+{_tab("p15_metrics", "t1_occurrence_vs_tolerance")}
+
+The thesis's volume-inconsistency measure (eq. 5-1, periods 2-11) against its
+reported distribution:
+
+{_tab("p15_metrics", "t2_thesis_volume_inconsistency")}
+
+{_tab("p15_metrics", "t3_window")}
+
+## Objective-gap diagnostic (core institution)
+
+{_tab("p15_gaps", "t1_tail_status_by_group_rate")}
+
+First non-optimal period per cell (gap as % of the subproblem NPV):
+
+{_tab("p15_gaps", "t2_first_deviation")}
+
+{_tab("p15_gaps", "t3_gap_based_occurrence")}
+
+## Descriptives
+
+Paired landbases with/without the negatively valued CM-CE ecoclass:
+
+{_tab("p15_descriptives", "t1_paired_cmce_landbases")}
+
+By discount rate (flow-constrained):
+
+{_tab("p15_descriptives", "t2_by_rate")}
+
+E2 calibrated cap vs the *realized* NDY path (median relative difference):
+
+{_tab("p15_descriptives", "t4_e2_vs_realized_ndy_median")}
+
+## Random landbases: seed sensitivity
+
+{_tab("p15_seeds", "t1_flow_constrained_by_seed")}
 """,
     )
 

@@ -18,6 +18,7 @@ the tracked experiment records by `scripts/build_supplement.py` (see
 - [E3: Value-denominated flow constraints](07-extension-e3-value-flow.md)
 - [E4: Rolling-mean NDY](08-extension-e4-rolling-mean.md)
 - [Reproducibility](09-reproducibility.md)
+- [Review analyses: replanning institution, robustness, gap diagnostic](10-review-analyses.md)
 
 ## Pointers
 
