@@ -19,7 +19,7 @@ from fresh_daugherty.instance.thesis import (
     Ecoclass,
     Prescription,
 )
-from fresh_daugherty.model import MATURE_RX, ecoclass_code
+from fresh_daugherty.model import ecoclass_code, mature_rx
 
 #: Documented construction assumptions for the landbases.
 LANDBASE_ASSUMPTIONS: tuple[str, ...] = (
@@ -53,7 +53,7 @@ def landbase_1() -> pd.DataFrame:
             {
                 "forest": "umpqua",
                 "ecoclass": ecoclass_code(mt.ecoclass),
-                "rx": MATURE_RX,
+                "rx": mature_rx(mt),
                 "origin": "existing",
                 "state": "baseline",
                 "age": mt.age_yr,
@@ -73,7 +73,7 @@ def landbase_2() -> pd.DataFrame:
             {
                 "forest": "umpqua",
                 "ecoclass": ecoclass_code(mt.ecoclass),
-                "rx": MATURE_RX,
+                "rx": mature_rx(mt),
                 "origin": "existing",
                 "state": "baseline",
                 "age": mt.age_yr,

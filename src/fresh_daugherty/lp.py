@@ -41,7 +41,7 @@ from fresh_daugherty.instance.thesis import (
     THESIS_DISCOUNT_RATE,
     HarvestFlowPolicy,
 )
-from fresh_daugherty.model import MATURE_RX, ecoclass_code
+from fresh_daugherty.model import MATURE_RX_BY_TYPE, ecoclass_code
 
 #: Relative slack on bounds built from *realized* harvests (the carried flow
 #: anchor and the realized-history rolling-mean floor). Realized volumes carry
@@ -422,7 +422,7 @@ def _standing_volume_per_ac(model: ws3.forest.ForestModel, dtk, age: float) -> f
     yield curve. Flat past culmination, so safe for over-mature ages.
     """
     rx, origin = str(dtk[2]), str(dtk[3])
-    if rx == MATURE_RX or origin == "existing":
+    if rx in MATURE_RX_BY_TYPE.values() or origin == "existing":
         dt = model.dtypes.get(dtk)
         if dt is None:
             return 0.0

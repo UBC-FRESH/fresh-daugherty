@@ -253,3 +253,23 @@ def test_carried_history_requires_volume_denominator() -> None:
             flow_denominator="revenue",
             prev_harvest_mcf=10000.0,
         )
+
+
+def test_each_mature_type_has_its_own_yield_in_the_built_model(tmp_path) -> None:
+    """P16.8 (#99): the two CH-CW mature types (sawtimber, two-storied) shared a
+    development-type key, so the built model gave two-storied stands the
+    sawtimber volume (10.27 vs 4.66 MCF/ac). Check the *built* model, not the
+    back-computed volumes: one DT per Table 5.4 type, each with its own yield."""
+    from fresh_daugherty.instance.feis import real_ecoclass_net_revenue
+    from fresh_daugherty.instance.thesis import MATURE_TYPE_PNV
+    from fresh_daugherty.model import ecoclass_code, mature_rx, mature_volume_mcf
+
+    build_woodstock_sections(tmp_path / "m", areas=landbase_areas(1))
+    model = bootstrap_model(tmp_path / "m", horizon=3)
+    existing = {k: dt for k, dt in model.dtypes.items() if k[3] == "existing"}
+    assert len(existing) == len(MATURE_TYPE_PNV)
+    for mt in MATURE_TYPE_PNV:
+        key = ("umpqua", ecoclass_code(mt.ecoclass).lower(), mature_rx(mt), "existing", "baseline")
+        expected = mature_volume_mcf(mt, real_ecoclass_net_revenue(mt.ecoclass))
+        got = existing[key].ycomp("totvol")[mt.age_yr]
+        assert got == pytest.approx(expected, rel=1e-6), (mt.vegetation_type, got, expected)

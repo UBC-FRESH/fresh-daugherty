@@ -114,9 +114,13 @@ def test_objective_gap_separates_inconsistency_from_alternate_optima(tmp_path) -
         results[code] = df
     # NHF control: every period's announced decision remains optimal (consistent).
     assert (results["NHF"]["tail_status"] == "optimal").all()
-    # NDY: the first period is consistent, then the announced tail is not followable.
-    assert results["NDY"]["tail_status"].iloc[0] == "optimal"
-    assert (results["NDY"]["tail_status"].iloc[1:] != "optimal").all()
+    # NDY: the first period is consistent, and the announced tail becomes
+    # non-followable. (Until P16.8, #99, two-storied CH-CW stands carried the
+    # sawtimber volume and every NDY replan from period 2 was non-optimal; with
+    # the corrected volume the plan is followed for two replans first.)
+    ndy = results["NDY"]["tail_status"]
+    assert ndy.iloc[0] == "optimal"
+    assert (ndy.iloc[1:] != "optimal").any()
 
 
 def test_gap_replan_honours_carried_flow_history(tmp_path) -> None:
