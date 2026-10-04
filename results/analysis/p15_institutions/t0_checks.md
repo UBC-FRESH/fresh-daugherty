@@ -1,0 +1,6 @@
+| check | value |
+| --- | --- |
+| rolling/reset control cells | 432 |
+| control mean divergence identical to core grid | True |
+| control occurrence identical to core grid | True |
+| period-1 invariant violations (all cells) | 0 |

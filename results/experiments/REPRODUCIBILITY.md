@@ -95,6 +95,25 @@ fresh-daugherty grid-rolling-mean \
   --out results/experiments/grid_rolling_mean.csv
 ```
 
+## Replanning-institution grid (P15, #84)
+
+`grid_institutions.csv` (+ `_trajectories`, `_gaps`): the 432 core cells under
+each of four replanning institutions — rolling or fixed (shrinking) horizon x
+reset or carried flow history — with the objective-gap diagnostic (1,728
+cells). The rolling/reset cells are the core grid's institution and reproduce
+`grid.csv` exactly; fixed/carried is the null reference (exact tail problem).
+Analysis: `PYTHONPATH=src python scripts/analyze_p15_institutions.py`.
+
+```bash
+fresh-daugherty grid-institutions \
+  --landbases "1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18" \
+  --discount-rates 0.0,0.02,0.04,0.06 \
+  --policies "NHF,NDY,-10%,-20%,+/-10%,+/-20%" \
+  --institutions "rolling/reset,rolling/carried,fixed/reset,fixed/carried" \
+  --horizon 15 --workers 48 \
+  --out results/experiments/grid_institutions.csv
+```
+
 ## Environment
 
 Key dependency versions used for the reported results (see `pyproject.toml` for

@@ -1,0 +1,6 @@
+| horizon_institution | flow_history | infeasible | optimal | suboptimal |
+| --- | --- | --- | --- | --- |
+| fixed | carried | 0.003 | 0.989 | 0.008 |
+| fixed | reset | 0.033 | 0.437 | 0.531 |
+| rolling | carried | 0.099 | 0.868 | 0.033 |
+| rolling | reset | 0.173 | 0.271 | 0.556 |
