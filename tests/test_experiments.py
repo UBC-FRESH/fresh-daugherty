@@ -191,3 +191,21 @@ def test_institution_grid_smoke(tmp_path: Path) -> None:
     null = summary[(summary.horizon_institution == "fixed") & (summary.flow_history == "carried")]
     assert null["mean_abs_rel_deviation"].iloc[0] < 1e-4
     assert null["relax_share"].iloc[0] == 0.0
+
+
+def test_cap_search_grid_smoke(tmp_path: Path) -> None:
+    """P15.5 (#87): the E2 cap-search grid runs end to end at a non-default
+    rate, keeps the period-1 invariant, records commit provenance, and its gap
+    records carry revenue (for the NPV comparison with realized NDY)."""
+    import numpy as np
+
+    from fresh_daugherty.experiments import run_cap_search_grid
+
+    summary, trajectories, gaps = run_cap_search_grid(
+        landbases=(1,), discount_rates=(0.02,), horizon=5, workdir=tmp_path
+    )
+    assert len(summary) == 1 and bool(summary["converged"].iloc[0])
+    assert summary["fd_commit"].astype(bool).all()
+    _assert_period1_invariant(trajectories)
+    assert {"announced_revenue", "realized_revenue"} <= set(gaps.columns)
+    assert np.isfinite(gaps["realized_revenue"]).all()

@@ -344,6 +344,9 @@ def _run_cap_cell(args: tuple) -> tuple[dict, list[dict], list[dict]]:
             workdir=cell_workdir / "gap",
             discount_rate=rate,
             target_flow_mcf=cap,
+            # P15.5 (#87): revenue records, so E2 can be compared with the
+            # realized NDY path on NPV as well as volume.
+            collect_revenue=True,
         )
         gap_rows = [{**keys, **row} for row in gap.to_dict(orient="records")]
     return summary, trajectories, gap_rows
