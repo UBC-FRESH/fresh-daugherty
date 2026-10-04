@@ -293,5 +293,30 @@ def test_dropped_flow_fallback_keeps_cell_settings(monkeypatch) -> None:
     assert last["discount_path"] is path
     assert last["flow_denominator"] == "revenue"
     assert last["abs_period"] == 3
-    # The ladder was tried before dropping the history bound and then the flow.
-    assert [c.get("history_rtol") for c in calls[1:6]] == list(replan.HISTORY_LADDER)
+    # The numerical steps and the full loosening were tried before the history
+    # bound and then the flow rows were dropped.
+    tried = [c.get("history_rtol") for c in calls]
+    assert tried[1:4] == [*replan.NUMERIC_STEPS, 1.0]
+
+
+def test_minimal_history_relaxation_finds_the_smallest_loosening() -> None:
+    """P16.2 (#93): beyond the numerical steps, the loosening is bisected to
+    ``HISTORY_RTOL_PRECISION`` (a first version jumped to fixed 1%/10% steps)."""
+    import types
+
+    from fresh_daugherty import replan
+
+    needed = 0.0234  # feasible iff the bound is loosened by >= 2.34%
+
+    def solve(rtol):
+        return types.SimpleNamespace(status=lambda: "optimal" if rtol >= needed else "infeasible")
+
+    problem, rtol = replan.minimal_history_relaxation(solve)
+    assert problem is not None
+    assert needed <= rtol <= needed + replan.HISTORY_RTOL_PRECISION
+    assert replan.is_material_relaxation(replan.history_note(rtol))
+    assert not replan.is_material_relaxation(replan.history_note(1e-5))
+    none, r = replan.minimal_history_relaxation(
+        lambda _r: types.SimpleNamespace(status=lambda: "infeasible")
+    )
+    assert none is None and r is None
