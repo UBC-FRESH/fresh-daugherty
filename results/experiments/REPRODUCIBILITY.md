@@ -114,6 +114,20 @@ fresh-daugherty grid-institutions \
   --out results/experiments/grid_institutions.csv
 ```
 
+## Seed-sensitivity grid (P15, #88)
+
+`grid_seeds.csv` (+ `_trajectories`): the random landbases 11-18 under five
+generator seeds (42 = the tracked draw, reproducing `grid.csv`; 1042-4042 fresh
+draws) x 4 rates x 6 policies, core institution (960 cells).
+Analysis: `PYTHONPATH=src python scripts/analyze_p15_seeds.py`.
+
+```bash
+fresh-daugherty grid-seeds \
+  --landbases "11,12,13,14,15,16,17,18" --seeds "42,1042,2042,3042,4042" \
+  --discount-rates 0.0,0.02,0.04,0.06 --policies "NHF,NDY,-10%,-20%,+/-10%,+/-20%" \
+  --horizon 15 --workers 48 --out results/experiments/grid_seeds.csv
+```
+
 ## Environment
 
 Key dependency versions used for the reported results (see `pyproject.toml` for
