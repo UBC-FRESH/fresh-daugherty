@@ -117,6 +117,9 @@ record.
 E3 (`grid_value_flow*`) and E2 (`grid_cap_search*`) were regenerated in P14
 (#75) at `83c7b16` after two defects were fixed (E3 revenue cells announced the
 volume plan; E2 projected at the 4% default rate); see `CHANGE_LOG.md`.
+E4 (`grid_rolling_mean*`) was regenerated in P15 (#83) at `268fa6a` after bounds
+built from realized harvests received a 1e-6 relative slack (`lp.HISTORY_RTOL`);
+within-plan cells are bit-identical, realized-history cells changed.
 
 All seed-dependent runs are fixed-seeded. The experiment is deterministic (LP
 solves), so the grid CSVs regenerate bit-for-bit given the environment.

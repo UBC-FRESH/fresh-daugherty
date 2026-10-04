@@ -20,6 +20,14 @@ because the window is backwards-facing, it forces the question of *which*
 history the floor references — the within-plan projection or the realized
 past — which turns out to be the operative margin.
 
+> **Correction (P15, issue #83).** The realized-history floor was built
+> exactly at the realized harvest level; float noise in realized volumes could
+> make it infeasible by ~1e-6, triggering the relaxation fallback. Fixed with
+> a 1e-6 relative slack (`lp.HISTORY_RTOL`); E4 re-run at `268fa6a`.
+> Within-plan cells are bit-identical; realized-history occurrence 99/144 →
+> 95/144, relaxed periods 21.1% → 18.8% overall (6%: 31.5% → 27.0%), mean
+> magnitude 0.0716 → 0.0701. The figures below are the corrected ones.
+
 ## Headline results
 
 1. **Constraint shape alone changes nothing.** Under the within-plan
@@ -30,10 +38,10 @@ past — which turns out to be the operative margin.
    operative margin.
 2. **The anchoring institution is.** Under the realized-history reading
    (each replan's early periods floored by what actually happened),
-   occurrence drops to 65–72% and magnitude to ~0.07 (Tables T1–T2) — real
+   occurrence drops to 64–68% and magnitude to ~0.07 (Tables T1–T2) — real
    mitigation, not elimination. The cost: the floor frequently cannot be
    sustained from the depleted realized state, so the policy must *relax* —
-   19–32% of replan periods at positive rates (relax_share; the
+   22–27% of replan periods at positive rates (relax_share; the
    declining-non-declining-yield mechanism surfacing as recorded
    infeasibility rather than silent abandonment).
 3. The gap diagnostic (Table T3) confirms the residual within-plan
