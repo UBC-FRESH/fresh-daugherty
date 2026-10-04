@@ -150,6 +150,7 @@ def main() -> None:
 
     fc = core[core.flow_policy != "NHF"]
     nhf = core[core.flow_policy == "NHF"]
+    facts = _institution_facts(core)
 
     # ----- README (index) ---------------------------------------------------
     toc = "\n".join(f"- [{title}]({name})" for name, title in PAGES)
@@ -276,9 +277,10 @@ Per-cell records: {_link(RESULTS / "grid.csv", "grid.csv")} and
 
 - Flow-constrained cells: **{fc.occurrence.mean():.0%}** exhibit dynamic
   inconsistency (mean relative divergence > 5%).
-- No-harvest-flow (NHF) control: **{nhf.occurrence.mean():.0%}** — and that
-  divergence is concentrated at 0-2% where the flat objective admits
-  alternate optima (see [03](03-gap-diagnostic.md)).
+- Flow-unconstrained (NHF) control: **{nhf.occurrence.mean():.0%}**; by
+  discount rate {facts["nhf_by_rate"]}. Under a fixed horizon the control's
+  divergence falls to {facts["nhf_fixed"]} (a rolling-horizon effect; see
+  [03](03-gap-diagnostic.md) and [10](10-review-analyses.md)).
 
 ## The declining non-declining yield
 
@@ -335,10 +337,11 @@ core grid). Shares of replan periods (period > 1) by tail status:
 Reading: under flow-constrained policies the announced tail is predominantly
 **suboptimal** (strictly improvable) or **infeasible** (cannot even be
 implemented) from the realized state — genuine inconsistency. Under NHF the
-tail is optimal at 4-6% but not at 0-2%, where the NHF deviations are
-material (see page 10: 27/72 NHF cells with a gap of at least 1% of NPV) and
-disappear under a fixed horizon (4/72 cells), i.e. they are a rolling-horizon
-effect rather than tie-breaking. (Corrected in P15, issue #86.)
+announced tail stays optimal where the control is consistent; where the control
+diverges ({facts["nhf_by_rate"]}), the deviations are material
+({facts["nhf_material"]} NHF scenarios with a gap of at least 1% of the
+optimum, or infeasible) and mostly disappear under a fixed horizon
+({facts["nhf_fixed"]}): a rolling-horizon effect rather than tie-breaking.
 """,
     )
 
@@ -409,6 +412,32 @@ The complete benchmark record is archived with a DOI:
     print(f"supplement built: {len(PAGES) + 1} pages + figures in {SUPP}/")
 
 
+def _institution_facts(core: pd.DataFrame) -> dict[str, str]:
+    """NHF-control facts for the page 02/03 narrative, from the records."""
+    nhf = core[core.flow_policy == "NHF"].copy()
+    nhf["occ"] = nhf.occurrence.astype(str) == "True"
+    by_rate = ", ".join(
+        f"{r:.0%}: {int(g.occ.sum())}/{len(g)}" for r, g in nhf.groupby("discount_rate")
+    )
+    inst = pd.read_csv(RESULTS / "grid_institutions.csv")
+    fx = inst[(inst.flow_policy == "NHF") & (inst.horizon_institution == "fixed")]
+    fx = fx[fx.flow_history == "reset"]
+    gaps = pd.read_csv(RESULTS / "grid_institutions_gaps.csv")
+    g = gaps[
+        (gaps.flow_policy == "NHF")
+        & (gaps.horizon_institution == "rolling")
+        & (gaps.flow_history == "reset")
+        & (gaps.period > 1)
+    ]
+    material = g[(g.tail_status == "infeasible") | (g.objective_gap >= 0.01 * g.obj_free.abs())]
+    n_mat = material[["landbase", "discount_rate"]].drop_duplicates().shape[0]
+    return {
+        "nhf_by_rate": by_rate,
+        "nhf_fixed": f"{int((fx.occurrence.astype(str) == 'True').sum())}/{len(fx)}",
+        "nhf_material": f"{n_mat}/{len(nhf)}",
+    }
+
+
 def _extension_pages(e1, e2, e3, e4) -> None:
     """Pages 05-08: headline numbers computed from the tracked extension grids,
     links to the analysis outputs and writeups, inline PNG figures."""
@@ -422,6 +451,14 @@ def _extension_pages(e1, e2, e3, e4) -> None:
         .reset_index()
     )
     nhf_e1 = e1[e1.flow_policy == "NHF"]
+    core = pd.read_csv(RESULTS / "grid.csv")
+    core_fc = core[core.flow_policy != "NHF"]
+    const_mag = ", ".join(
+        f"{r:.0%}: {m:.2f}"
+        for r, m in core_fc.groupby("discount_rate").mean_abs_rel_deviation.mean().items()
+    )
+    core_nhf0 = core[(core.flow_policy == "NHF") & (core.discount_rate == 0.0)]
+    const0_nhf = float((core_nhf0.occurrence.astype(str) == "True").mean())
     f1 = _pdf_to_png(
         ANALYSIS / "p9_discount_shapes" / "f1_occurrence_magnitude_by_scheme.pdf",
         "e1_occurrence_magnitude.png",
@@ -447,11 +484,12 @@ Analysis writeup: {_link(ANALYSIS / "p9_discount_shapes" / "writeup.md", "p9 wri
 
 Declining rates make inconsistency MORE pervasive, not less: flow-constrained
 occurrence is {e1_fc.occurrence.mean():.0%} across the E1 paths, with mean
-magnitude {e1_fc.mean_abs_rel_deviation.mean():.2f} (vs 0.07-0.11 at constant
-2-6%). The no-flow control cells under declining paths diverge at
-{nhf_e1.occurrence.mean():.0%} occurrence with genuinely suboptimal/infeasible
-tails — a preference-level (Strotz) inconsistency channel, separated from the
-structural one in the writeup.
+magnitude {e1_fc.mean_abs_rel_deviation.mean():.2f} (constant rates, by
+rate: {const_mag}). The flow-unconstrained control under declining paths
+diverges at {nhf_e1.occurrence.mean():.0%} occurrence, consistent with the
+preference-level (Strotz) channel of re-applying a declining schedule from each
+planner's present, but not separated here from the low-rate rolling-horizon
+effect (the control at a constant 0% rate: {const0_nhf:.0%}).
 
 ![Occurrence and magnitude by discount scheme]({f1})
 
@@ -476,6 +514,20 @@ structural one in the writeup.
         .round(4)
         .reset_index()
     )
+    lb1_cap = float(
+        e2.loc[(e2.landbase == 1) & (e2.discount_rate == 0.04), "calibrated_cap_mcf"].iloc[0]
+    )
+    _t = pd.read_csv(RESULTS / "grid_trajectories.csv")
+    lb1_ndy = float(
+        _t.loc[
+            (_t.landbase == 1)
+            & (_t.discount_rate == 0.04)
+            & (_t.flow_policy == "NDY")
+            & (_t.period == 1),
+            "projected_mcf",
+        ].iloc[0]
+    )
+    lb1_gap = 1 - lb1_cap / lb1_ndy
     e2r = pd.read_csv(ANALYSIS / "p15_descriptives" / "t4_e2_vs_realized_ndy_median.csv").set_index(
         "discount_rate"
     )
@@ -498,12 +550,13 @@ Under the calibrated caps, occurrence is {e2.occurrence.mean():.0%} across the
 grid (mean divergence {e2.mean_abs_rel_deviation.mean():.3f}, max
 {e2.mean_abs_rel_deviation.max():.3f} — all below the 5% tolerance), with
 100% convergence; single periods can still deviate by more than 5% in
-{int((e2.max_abs_rel_deviation > 0.05).sum())}/{len(e2)} cells. The calibrated
-level on landbase 1 (~9,400 MCF/period) is ~8% below the NDY plan's
-*announced* level; against the volume that replanned NDY actually delivers,
-the cap's total volume is about equal (median
-{e2r.loc["all (median)", "volume_cap_vs_realized_ndy"]:+.1%}) and its NPV is
-{e2r.loc["all (median)", "npv_cap_vs_realized_ndy"]:+.1%} (median; page 10).
+{int((e2.max_abs_rel_deviation > 0.05).sum())}/{len(e2)} scenarios. The calibrated
+level on landbase 1 at 4% ({lb1_cap:,.0f} MCF/period) is {lb1_gap:.0%} below the
+NDY plan's *announced* level ({lb1_ndy:,.0f}). Against what replanned NDY
+actually delivers, the cap's total volume differs by
+{e2r.loc["all (median)", "volume_cap_vs_realized_ndy"]:+.1%} and its NPV by
+{e2r.loc["all (median)", "npv_cap_vs_realized_ndy"]:+.1%} (medians over
+scenarios; per-scenario spread on page 10).
 
 ![Landbase 1 at 4%: NDY flow link vs calibrated cap]({f1})
 
@@ -518,6 +571,9 @@ the cap's total volume is about equal (median
     rev = e3[e3.flow_denominator == "revenue"]
     vol_fc = vol[vol.flow_policy != "NHF"]
     rev_fc = rev[rev.flow_policy != "NHF"]
+    t4 = pd.read_csv(ANALYSIS / "p11_value_flow" / "t4_cmce_filler_channel.csv")
+    t4v = t4[(t4.landbase == 1) & (t4.flow_denominator == "volume")].projected_cmce_share
+    cmce_lo, cmce_hi = float(t4v.min()), float(t4v.max())
     by_denom = (
         e3[e3.flow_policy != "NHF"]
         .groupby(["flow_denominator", "flow_policy"])[["occurrence", "mean_abs_rel_deviation"]]
@@ -556,7 +612,7 @@ volume); mean magnitude {rev_fc.mean_abs_rel_deviation.mean():.3f} vs
 {vol_fc.mean_abs_rel_deviation.mean():.3f}. The effect differs by policy form
 (table below): NDY and bounded decline fall sharply, symmetric bounded
 deviation rises slightly. Revenue NDY drives projected CM-CE harvest to
-exactly zero (vs 2.5-3.5% of projected volume under volume NDY on
+exactly zero (vs {cmce_lo:.1%}-{cmce_hi:.1%} of projected volume under volume NDY on
 landbase 1), and on the paired landbases (with vs without CM-CE) the extra
 inconsistency associated with negatively valued strata disappears under
 revenue denominating; inconsistency persists through the remaining strata.
@@ -585,6 +641,10 @@ See the writeup's Table T4 and paired-landbase table.
     )
     wp = e4[e4.anchoring == "within-plan"]
     rh = e4[e4.anchoring == "realized-history"]
+    _core = pd.read_csv(RESULTS / "grid.csv")
+    ndy_occ = float(
+        (_core.loc[_core.flow_policy == "NDY", "occurrence"].astype(str) == "True").mean()
+    )
     _write(
         "08-extension-e4-rolling-mean.md",
         f"""# 08 — E4: Rolling-mean NDY
@@ -600,7 +660,7 @@ Analysis writeup: {_link(ANALYSIS / "p12_rolling_mean" / "writeup.md", "p12 writ
 ## Headline
 
 Constraint SHAPE is not the operative margin: within-plan rolling-mean
-occurrence {wp.occurrence.mean():.0%} ≈ pointwise NDY (86%). The ANCHORING
+occurrence {wp.occurrence.mean():.0%} vs pointwise NDY ({ndy_occ:.0%}). The ANCHORING
 INSTITUTION is: realized-history anchoring mitigates (occurrence
 {rh.occurrence.mean():.0%}, magnitude {rh.mean_abs_rel_deviation.mean():.3f})
 but the floor cannot be sustained in {rh.relax_share.mean():.0%} of replan

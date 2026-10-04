@@ -107,21 +107,51 @@ def build_model(areas: pd.DataFrame, horizon: int, workdir: str | Path) -> ws3.f
     return prepare_optimization(model, horizon=horizon)
 
 
-#: Minimal-relaxation ladder for history-derived bounds (carried anchor,
+#: Minimal relaxation of history-derived bounds (carried anchor,
 #: realized-history floor; P16.2, #93). When the bound at ``lp.HISTORY_RTOL``
-#: is infeasible from the realized state, it is loosened step by step and only
-#: dropped if even 10% does not suffice. Float-level drift between the plan and
-#: its replanned realization (~1e-6) can otherwise make a bound the plan itself
-#: satisfies infeasible at a capacity-binding period, and dropping it switched
-#: the replanning institution for that period (S03).
-HISTORY_LADDER: tuple[float, ...] = (1e-5, 1e-4, 1e-3, 1e-2, 1e-1)
+#: is infeasible from the realized state, it is first loosened by the numerical
+#: steps below (float-level drift between a plan and its replanned realization,
+#: ~1e-6, can make a bound the plan itself satisfies infeasible at a
+#: capacity-binding period; S03), then by the smallest loosening found by
+#: bisection to ``HISTORY_RTOL_PRECISION``, and dropped only if even a full
+#: loosening is infeasible. (A first version used fixed steps up to 10%, which
+#: over-relaxed genuine shortfalls of 1-10% to 10%.)
+NUMERIC_STEPS: tuple[float, ...] = (1e-5, 1e-4)
 #: Loosenings up to this level are numerical, not a relaxation of the policy.
 NUMERIC_RTOL_MAX = 1e-4
+#: Precision of the bisected loosening (absolute, as a fraction of the bound).
+HISTORY_RTOL_PRECISION = 1e-3
 
 
 def history_note(rtol: float) -> str:
     """Solver note for a solve that needed the history bound loosened to ``rtol``."""
-    return f"history_rtol={rtol:g}"
+    return f"history_rtol={rtol:.4g}"
+
+
+def minimal_history_relaxation(solve) -> tuple[object | None, float | None]:
+    """Smallest loosening of the history bound that makes the subproblem feasible.
+
+    ``solve(rtol)`` builds and solves the subproblem with the history bound
+    loosened by ``rtol`` and returns the problem. Returns ``(problem, rtol)``,
+    or ``(None, None)`` if even ``rtol = 1`` (no history floor) is infeasible.
+    """
+    for rtol in NUMERIC_STEPS:
+        problem = solve(rtol)
+        if problem.status() == "optimal":
+            return problem, rtol
+    hi = 1.0
+    best = solve(hi)
+    if best.status() != "optimal":
+        return None, None
+    lo = NUMERIC_RTOL_MAX
+    while hi - lo > HISTORY_RTOL_PRECISION:
+        mid = 0.5 * (lo + hi)
+        problem = solve(mid)
+        if problem.status() == "optimal":
+            hi, best = mid, problem
+        else:
+            lo = mid
+    return best, hi
 
 
 def is_material_relaxation(note: str) -> bool:
@@ -184,13 +214,13 @@ def _solve_and_apply(
     if problem.status() != "optimal" and has_history:
         # The history-derived bound (carried anchor / realized-history floor)
         # is infeasible from the realized state: loosen it minimally (P16.2,
-        # #93); drop it only if 10% does not suffice --- the "declining
-        # non-declining yield" made concrete. The within-plan flow rules stay.
-        for rtol in HISTORY_LADDER:
-            problem = _build_solve(prev_harvest_mcf, realized_history, rtol)
-            if problem.status() == "optimal":
-                note = history_note(rtol)
-                break
+        # #93) --- the "declining non-declining yield" made concrete; drop it
+        # only if nothing helps. The within-plan flow rules stay.
+        relaxed, rtol = minimal_history_relaxation(
+            lambda r: _build_solve(prev_harvest_mcf, realized_history, r)
+        )
+        if relaxed is not None:
+            problem, note = relaxed, history_note(rtol)
         else:
             problem = _build_solve(None, None)
             note = "relaxed_anchor" if prev_harvest_mcf is not None else "relaxed_floor"
@@ -357,16 +387,19 @@ def consistency_gap_replan(
             # Same minimal-relaxation rule as `sequential_replan` (P16.2, #93).
             # ``kw`` is updated so the tail-fixed solve below uses the same
             # (loosened or dropped) constraint set as the free one (P16.3, #94).
-            for rtol in HISTORY_LADDER:
+            relaxed, rtol = minimal_history_relaxation(
+                lambda r, m=current, k=kw: _solve_subproblem(
+                    m, name="free_relaxed", **{**k, "history_rtol": r}
+                )[0]
+            )
+            if relaxed is not None:
                 kw = {**kw, "history_rtol": rtol}
-                prob_free, obj_free = _solve_subproblem(current, name="free_relaxed", **kw)
-                if prob_free.status() == "optimal":
-                    note = history_note(rtol)
-                    break
+                prob_free = relaxed
+                obj_free = prob_free.z()
+                note = history_note(rtol)
             else:
                 note = "relaxed_anchor" if kw["prev_harvest_mcf"] is not None else "relaxed_floor"
                 kw = {**kw, "prev_harvest_mcf": None, "realized_history": None}
-                kw.pop("history_rtol")
                 prob_free, obj_free = _solve_subproblem(current, name="free_relaxed", **kw)
 
         # Tail-fixed subproblem (the announced plan's period-t decision).
