@@ -204,6 +204,7 @@ def _solve_subproblem(
     flow_increase: float | None,
     abs_period: int,
     fix_period1_harvest_mcf: float | None = None,
+    prev_harvest_mcf: float | None = None,
     name: str,
 ) -> tuple[object, float]:
     """Build and solve the open-loop subproblem on ``model``; return (problem, objective)."""
@@ -221,6 +222,7 @@ def _solve_subproblem(
         flow_increase=flow_increase,
         abs_period=abs_period,
         fix_period1_harvest_mcf=fix_period1_harvest_mcf,
+        prev_harvest_mcf=prev_harvest_mcf,
         name=name,
     )
     problem.solve(verbose=False)
@@ -302,6 +304,9 @@ def consistency_gap_replan(
             "flow_decrease": flow_decrease,
             "flow_increase": flow_increase,
             "abs_period": t,
+            # Carried flow history (P15.1, #83): anchor the subproblem's first
+            # period to the realized previous harvest, as `sequential_replan` does.
+            "prev_harvest_mcf": realized[-1] if carry_flow_history and realized else None,
         }
         # Free subproblem (the re-solver's choice). If the realized-history
         # rolling-mean floor cannot be sustained from the realized state, the
@@ -313,6 +318,12 @@ def consistency_gap_replan(
                 current, name="free_relaxed", **{**kw, "realized_history": None}
             )
             note = "relaxed_floor"
+        if prob_free.status() != "optimal" and kw.get("prev_harvest_mcf") is not None:
+            # The carried policy cannot be sustained from the realized state:
+            # relax the anchor (same rule as `sequential_replan`) and record it.
+            kw = {**kw, "prev_harvest_mcf": None}
+            prob_free, obj_free = _solve_subproblem(current, name="free_relaxed", **kw)
+            note = "relaxed_anchor"
 
         # Tail-fixed subproblem (the announced plan's period-t decision).
         _, obj_fixed = _solve_subproblem(
@@ -361,7 +372,7 @@ def consistency_gap_replan(
         if collect_revenue:
             rows[-1]["announced_revenue"] = float(announced_rev[t - 1])
             rows[-1]["realized_revenue"] = float(r_rev)
-        if rolling_realized_history:
+        if rolling_realized_history or carry_flow_history:
             rows[-1]["solver_note"] = note
         if t == horizon:
             break

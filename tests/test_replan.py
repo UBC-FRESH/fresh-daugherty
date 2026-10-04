@@ -117,3 +117,81 @@ def test_objective_gap_separates_inconsistency_from_alternate_optima(tmp_path) -
     # NDY: the first period is consistent, then the announced tail is not followable.
     assert results["NDY"]["tail_status"].iloc[0] == "optimal"
     assert (results["NDY"]["tail_status"].iloc[1:] != "optimal").all()
+
+
+def test_gap_replan_honours_carried_flow_history(tmp_path) -> None:
+    """P15.1 (issue #83) regression: ``consistency_gap_replan`` must apply
+    ``carry_flow_history`` (it was accepted but ignored, silently running the
+    reset institution). Under carried NDY the realized path is non-declining
+    except where the anchor had to be relaxed, and the gap runner realizes the
+    same path as ``sequential_replan`` under the same institution."""
+    import numpy as np
+
+    from fresh_daugherty.instance.landbases import landbase_areas
+    from fresh_daugherty.model import (
+        bootstrap_model,
+        build_woodstock_sections,
+        prepare_optimization,
+    )
+    from fresh_daugherty.replan import consistency_gap_replan, sequential_replan
+
+    horizon = 6
+    flow = {"flow_geometry": "consecutive", "flow_decrease": 0.0}
+
+    def fresh(name):
+        build_woodstock_sections(tmp_path / name, areas=landbase_areas(1))
+        model = bootstrap_model(tmp_path / name, horizon=horizon)
+        return prepare_optimization(model, horizon=horizon)
+
+    kw = {"discount_rate": 0.04, "rolling_horizon": False, "carry_flow_history": True, **flow}
+    gap = consistency_gap_replan(fresh("g"), workdir=tmp_path / "gw", **kw)
+    seq = sequential_replan(fresh("s"), workdir=tmp_path / "sw", record_solver_notes=True, **kw)
+    realized = gap["realized"].to_numpy()
+    relaxed = (gap["solver_note"] == "relaxed_anchor").to_numpy()
+    for t in range(1, len(realized)):
+        if not relaxed[t]:
+            assert realized[t] >= realized[t - 1] * (1 - 1e-6), (t, realized[t - 1], realized[t])
+    assert np.allclose(realized, seq["harvest_volume_mcf"].to_numpy(), rtol=1e-9)
+
+
+def test_null_replanning_reproduces_the_plan(tmp_path) -> None:
+    """P15.1 (issue #83) null test: with a fixed terminal date (shrinking
+    horizon) and the flow history carried, each replan solves the tail of the
+    original problem from the plan's own state, so the realized path must
+    reproduce the open-loop plan. Before the fix, float noise in realized
+    harvests (~1e-6 above the plan level) made the exact carried NDY anchor
+    infeasible, the anchor was dropped, and the path diverged (landbase 1,
+    NDY, 4%: from period 7, up to 15%)."""
+    import numpy as np
+
+    from fresh_daugherty.instance.landbases import landbase_areas
+    from fresh_daugherty.model import (
+        bootstrap_model,
+        build_woodstock_sections,
+        prepare_optimization,
+    )
+    from fresh_daugherty.replan import open_loop_projection, sequential_replan
+
+    horizon = 15
+    flow = {"flow_geometry": "consecutive", "flow_decrease": 0.0}
+
+    def fresh(name):
+        build_woodstock_sections(tmp_path / name, areas=landbase_areas(1))
+        model = bootstrap_model(tmp_path / name, horizon=horizon)
+        return prepare_optimization(model, horizon=horizon)
+
+    plan = np.array(open_loop_projection(fresh("p"), discount_rate=0.04, **flow))
+    seq = sequential_replan(
+        fresh("s"),
+        workdir=tmp_path / "sw",
+        discount_rate=0.04,
+        rolling_horizon=False,
+        carry_flow_history=True,
+        record_solver_notes=True,
+        **flow,
+    )
+    # Tolerance: lp.HISTORY_RTOL (1e-6) lets each period sit up to 1e-6 below
+    # the previous harvest; over 15 periods this compounds to ~2e-5. Still far
+    # below the 5% occurrence tolerance, and no anchor may be relaxed.
+    assert np.allclose(seq["harvest_volume_mcf"].to_numpy(), plan, rtol=1e-4)
+    assert (seq["solver_note"] == "ok").all()
