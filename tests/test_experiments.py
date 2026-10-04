@@ -166,3 +166,28 @@ def test_rolling_mean_grid_smoke(tmp_path: Path) -> None:
     assert summary["fd_commit"].astype(bool).all()
     assert len(trajectories) == len(gaps) == 10
     _assert_period1_invariant(trajectories)
+
+
+def test_institution_grid_smoke(tmp_path: Path) -> None:
+    """P15.2 (#84): the institution grid runs all four (horizon, flow history)
+    institutions with gap records and provenance; the fixed/carried cell
+    reproduces the open-loop plan (null test) and the rolling/reset cell is the
+    core institution."""
+    from fresh_daugherty.experiments import INSTITUTIONS, run_institution_grid
+    from fresh_daugherty.instance.thesis import HARVEST_FLOW_POLICIES
+
+    pol = {p.code: p for p in HARVEST_FLOW_POLICIES}
+    summary, trajectories, gaps = run_institution_grid(
+        landbases=(1,),
+        discount_rates=(0.04,),
+        policies=(pol["NDY"],),
+        institutions=INSTITUTIONS,
+        horizon=6,
+        workdir=tmp_path,
+    )
+    assert len(summary) == 4 and len(trajectories) == len(gaps) == 24
+    assert summary["fd_commit"].astype(bool).all()
+    _assert_period1_invariant(trajectories)
+    null = summary[(summary.horizon_institution == "fixed") & (summary.flow_history == "carried")]
+    assert null["mean_abs_rel_deviation"].iloc[0] < 1e-4
+    assert null["relax_share"].iloc[0] == 0.0

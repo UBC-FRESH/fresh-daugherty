@@ -618,6 +618,123 @@ def run_rolling_mean_grid(
     return summary, trajectories, gaps
 
 
+#: Replanning institutions (P15.2, issue #84): (horizon, flow history). The
+#: core grid is ("rolling", "reset"): each replan re-solves a full-length
+#: horizon with a fresh flow constraint. "fixed" keeps the original terminal
+#: date (shrinking horizon); "carried" anchors each replan's first period to
+#: the realized previous harvest.
+INSTITUTIONS: tuple[tuple[str, str], ...] = (
+    ("rolling", "reset"),
+    ("rolling", "carried"),
+    ("fixed", "reset"),
+    ("fixed", "carried"),
+)
+
+
+def _run_institution_cell(args: tuple) -> tuple[dict, list[dict], list[dict]]:
+    """Run one (landbase, rate, policy, institution) cell with the
+    objective-gap diagnostic. Module-level so it is picklable for the pool.
+
+    Returns ``(summary_row, trajectory_rows, gap_rows)``.
+    """
+    from fresh_daugherty.instance.reconstruct import calibrate
+
+    lb, rate, pol, (horizon_kind, history), horizon, cell_workdir = args
+    calibrate()
+    areas = landbase_areas(lb)
+    build_woodstock_sections(cell_workdir / "model", areas=areas)
+    model = prepare_optimization(
+        bootstrap_model(cell_workdir / "model", horizon=horizon), horizon=horizon
+    )
+    flow_kwargs = flow_kwargs_for_policy(pol)
+    gap = consistency_gap_replan(
+        model,
+        workdir=cell_workdir,
+        discount_rate=rate,
+        flow_geometry=flow_kwargs.get("flow_geometry", "period1"),
+        flow_decrease=flow_kwargs.get("flow_decrease"),
+        flow_increase=flow_kwargs.get("flow_increase"),
+        rolling_horizon=(horizon_kind == "rolling"),
+        carry_flow_history=(history == "carried"),
+    )
+    announced = [float(v) for v in gap["announced"]]
+    realized = [float(v) for v in gap["realized"]]
+    keys = {
+        "landbase": lb,
+        "discount_rate": rate,
+        "flow_policy": pol.code,
+        "horizon_institution": horizon_kind,
+        "flow_history": history,
+    }
+    notes = gap["solver_note"] if "solver_note" in gap.columns else None
+    relax_share = float((notes[1:] != "ok").mean()) if notes is not None and len(notes) > 1 else 0.0
+    summary = {
+        **keys,
+        "max_decrease": pol.max_decrease,
+        "max_increase": pol.max_increase,
+        "horizon": horizon,
+        "relax_share": relax_share,
+        "fd_version": _fd_version,
+        "fd_commit": _fd_commit,
+        "ws3_version": _ws3_version,
+        **inconsistency_metrics(announced, realized),
+    }
+    trajectories = [
+        {**keys, "period": t, "projected_mcf": p, "realized_mcf": r}
+        for t, (p, r) in enumerate(zip(announced, realized, strict=True), start=1)
+    ]
+    gap_rows = [{**keys, **row} for row in gap.to_dict(orient="records")]
+    return summary, trajectories, gap_rows
+
+
+def run_institution_grid(
+    *,
+    landbases: tuple[int, ...],
+    discount_rates: tuple[float, ...],
+    policies: tuple[HarvestFlowPolicy, ...],
+    institutions: tuple[tuple[str, str], ...] = INSTITUTIONS,
+    horizon: int,
+    workdir: str | Path,
+    workers: int = 1,
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """Run the replanning-institution grid: landbase x rate x policy x institution.
+
+    Each cell is a full sequential-replanning simulation with the
+    objective-gap diagnostic under one (horizon, flow-history) institution
+    (see ``INSTITUTIONS``). The ("rolling", "reset") cells are the core grid's
+    institution and reproduce it. Returns ``(summary, trajectories, gaps)``.
+    """
+    workdir = Path(workdir)
+    cells = [
+        (
+            lb,
+            rate,
+            pol,
+            inst,
+            horizon,
+            workdir / f"lb{lb}_r{rate}_{_policy_slug(pol.code)}_{inst[0]}_{inst[1]}",
+        )
+        for lb in landbases
+        for rate in discount_rates
+        for pol in policies
+        for inst in institutions
+    ]
+    if workers and workers > 1:
+        from concurrent.futures import ProcessPoolExecutor
+
+        from fresh_daugherty.instance.reconstruct import calibrate
+
+        calibrate()
+        with ProcessPoolExecutor(max_workers=workers) as ex:
+            results = list(ex.map(_run_institution_cell, cells))
+    else:
+        results = [_run_institution_cell(c) for c in cells]
+    summary = pd.DataFrame([r[0] for r in results])
+    trajectories = pd.DataFrame([row for r in results for row in r[1]])
+    gaps = pd.DataFrame([row for r in results for row in r[2]])
+    return summary, trajectories, gaps
+
+
 def _policy_slug(code: str) -> str:
     """Filesystem-safe slug for a harvest-flow policy code (e.g. '+/-10%' -> 'pm10pct')."""
     return code.replace("+", "p").replace("/", "").replace("-", "m").replace("%", "pct")
