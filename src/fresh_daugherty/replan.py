@@ -24,7 +24,7 @@ import ws3.forest
 
 from fresh_daugherty.instance.discount import DiscountPath
 from fresh_daugherty.instance.thesis import THESIS_DISCOUNT_RATE
-from fresh_daugherty.lp import add_open_loop_problem
+from fresh_daugherty.lp import HISTORY_RTOL, add_open_loop_problem
 from fresh_daugherty.model import (
     bootstrap_model,
     build_woodstock_sections,
@@ -107,6 +107,33 @@ def build_model(areas: pd.DataFrame, horizon: int, workdir: str | Path) -> ws3.f
     return prepare_optimization(model, horizon=horizon)
 
 
+#: Minimal-relaxation ladder for history-derived bounds (carried anchor,
+#: realized-history floor; P16.2, #93). When the bound at ``lp.HISTORY_RTOL``
+#: is infeasible from the realized state, it is loosened step by step and only
+#: dropped if even 10% does not suffice. Float-level drift between the plan and
+#: its replanned realization (~1e-6) can otherwise make a bound the plan itself
+#: satisfies infeasible at a capacity-binding period, and dropping it switched
+#: the replanning institution for that period (S03).
+HISTORY_LADDER: tuple[float, ...] = (1e-5, 1e-4, 1e-3, 1e-2, 1e-1)
+#: Loosenings up to this level are numerical, not a relaxation of the policy.
+NUMERIC_RTOL_MAX = 1e-4
+
+
+def history_note(rtol: float) -> str:
+    """Solver note for a solve that needed the history bound loosened to ``rtol``."""
+    return f"history_rtol={rtol:g}"
+
+
+def is_material_relaxation(note: str) -> bool:
+    """True if a solver note records a relaxation of the flow policy itself
+    (history bound loosened beyond ``NUMERIC_RTOL_MAX`` or dropped)."""
+    if note in ("ok", ""):
+        return False
+    if note.startswith("history_rtol="):
+        return float(note.split("=", 1)[1]) > NUMERIC_RTOL_MAX
+    return True
+
+
 def _solve_and_apply(
     model,
     *,
@@ -130,7 +157,7 @@ def _solve_and_apply(
     absolute calendar period of this subproblem's present (for the price
     clock)."""
 
-    def _build_solve(prev_harvest):
+    def _build_solve(prev_harvest, history, rtol=HISTORY_RTOL):
         problem = add_open_loop_problem(
             model,
             flow_coefficient=flow_tolerance,
@@ -138,7 +165,8 @@ def _solve_and_apply(
             discount_path=discount_path,
             flow_denominator=flow_denominator,
             flow_window=flow_window,
-            realized_history=realized_history,
+            realized_history=history,
+            history_rtol=rtol,
             target_flow_mcf=target_flow_mcf,
             flow_geometry=flow_geometry,
             flow_decrease=flow_decrease,
@@ -150,23 +178,32 @@ def _solve_and_apply(
         problem.solve(verbose=False)
         return problem
 
-    problem = _build_solve(prev_harvest_mcf)
+    problem = _build_solve(prev_harvest_mcf, realized_history)
     note = "ok"
-    if problem.status() != "optimal" and prev_harvest_mcf is not None:
-        # The carried sequential-flow policy is infeasible from the realized
-        # state (the prior harvest level can't be sustained): the policy must
-        # relax --- this is the "declining non-declining yield" made concrete.
-        # Retry without the first-period anchor.
-        problem = _build_solve(None)
-        note = "relaxed_anchor"
+    has_history = prev_harvest_mcf is not None or bool(realized_history)
+    if problem.status() != "optimal" and has_history:
+        # The history-derived bound (carried anchor / realized-history floor)
+        # is infeasible from the realized state: loosen it minimally (P16.2,
+        # #93); drop it only if 10% does not suffice --- the "declining
+        # non-declining yield" made concrete. The within-plan flow rules stay.
+        for rtol in HISTORY_LADDER:
+            problem = _build_solve(prev_harvest_mcf, realized_history, rtol)
+            if problem.status() == "optimal":
+                note = history_note(rtol)
+                break
+        else:
+            problem = _build_solve(None, None)
+            note = "relaxed_anchor" if prev_harvest_mcf is not None else "relaxed_floor"
     if problem.status() != "optimal":
-        # Last resort: drop the flow constraint entirely rather than crash.
-        # (Reached e.g. when a realized-history rolling-mean floor cannot be
-        # sustained from the realized state; recorded via `notes`.)
+        # Last resort: drop the flow constraint entirely rather than crash,
+        # keeping every other setting of the cell (P16.3, #94: this fallback
+        # used to drop discount_path and flow_denominator silently).
         problem = add_open_loop_problem(
             model,
             flow_coefficient=flow_tolerance,
             discount_rate=discount_rate,
+            discount_path=discount_path,
+            flow_denominator=flow_denominator,
             flow_geometry="none",
             abs_period=abs_period,
             name="open",
@@ -205,6 +242,7 @@ def _solve_subproblem(
     abs_period: int,
     fix_period1_harvest_mcf: float | None = None,
     prev_harvest_mcf: float | None = None,
+    history_rtol: float = HISTORY_RTOL,
     name: str,
 ) -> tuple[object, float]:
     """Build and solve the open-loop subproblem on ``model``; return (problem, objective)."""
@@ -223,6 +261,7 @@ def _solve_subproblem(
         abs_period=abs_period,
         fix_period1_harvest_mcf=fix_period1_harvest_mcf,
         prev_harvest_mcf=prev_harvest_mcf,
+        history_rtol=history_rtol,
         name=name,
     )
     problem.solve(verbose=False)
@@ -313,17 +352,22 @@ def consistency_gap_replan(
         # policy must relax: retry without the floor and record it.
         note = "ok"
         prob_free, obj_free = _solve_subproblem(current, name="free", **kw)
-        if prob_free.status() != "optimal" and kw.get("realized_history"):
-            prob_free, obj_free = _solve_subproblem(
-                current, name="free_relaxed", **{**kw, "realized_history": None}
-            )
-            note = "relaxed_floor"
-        if prob_free.status() != "optimal" and kw.get("prev_harvest_mcf") is not None:
-            # The carried policy cannot be sustained from the realized state:
-            # relax the anchor (same rule as `sequential_replan`) and record it.
-            kw = {**kw, "prev_harvest_mcf": None}
-            prob_free, obj_free = _solve_subproblem(current, name="free_relaxed", **kw)
-            note = "relaxed_anchor"
+        has_history = kw["prev_harvest_mcf"] is not None or bool(kw["realized_history"])
+        if prob_free.status() != "optimal" and has_history:
+            # Same minimal-relaxation rule as `sequential_replan` (P16.2, #93).
+            # ``kw`` is updated so the tail-fixed solve below uses the same
+            # (loosened or dropped) constraint set as the free one (P16.3, #94).
+            for rtol in HISTORY_LADDER:
+                kw = {**kw, "history_rtol": rtol}
+                prob_free, obj_free = _solve_subproblem(current, name="free_relaxed", **kw)
+                if prob_free.status() == "optimal":
+                    note = history_note(rtol)
+                    break
+            else:
+                note = "relaxed_anchor" if kw["prev_harvest_mcf"] is not None else "relaxed_floor"
+                kw = {**kw, "prev_harvest_mcf": None, "realized_history": None}
+                kw.pop("history_rtol")
+                prob_free, obj_free = _solve_subproblem(current, name="free_relaxed", **kw)
 
         # Tail-fixed subproblem (the announced plan's period-t decision).
         _, obj_fixed = _solve_subproblem(

@@ -147,54 +147,67 @@ def test_gap_replan_honours_carried_flow_history(tmp_path) -> None:
     gap = consistency_gap_replan(fresh("g"), workdir=tmp_path / "gw", **kw)
     seq = sequential_replan(fresh("s"), workdir=tmp_path / "sw", record_solver_notes=True, **kw)
     realized = gap["realized"].to_numpy()
-    relaxed = (gap["solver_note"] == "relaxed_anchor").to_numpy()
+    notes = list(gap["solver_note"])
     for t in range(1, len(realized)):
-        if not relaxed[t]:
-            assert realized[t] >= realized[t - 1] * (1 - 1e-6), (t, realized[t - 1], realized[t])
+        if notes[t] == "relaxed_anchor":
+            continue
+        rtol = float(notes[t].split("=")[1]) if notes[t].startswith("history_rtol=") else 1e-6
+        assert realized[t] >= realized[t - 1] * (1 - rtol) * (1 - 1e-9), (t, notes[t])
     assert np.allclose(realized, seq["harvest_volume_mcf"].to_numpy(), rtol=1e-9)
 
 
-def test_null_replanning_reproduces_the_plan(tmp_path) -> None:
-    """P15.1 (issue #83) null test: with a fixed terminal date (shrinking
-    horizon) and the flow history carried, each replan solves the tail of the
-    original problem from the plan's own state, so the realized path must
-    reproduce the open-loop plan. Before the fix, float noise in realized
-    harvests (~1e-6 above the plan level) made the exact carried NDY anchor
-    infeasible, the anchor was dropped, and the path diverged (landbase 1,
-    NDY, 4%: from period 7, up to 15%)."""
+@pytest.mark.parametrize(
+    ("landbase", "policy", "rate"),
+    [
+        (1, "NDY", 0.04),
+        (1, "-10%", 0.04),
+        (1, "+/-10%", 0.04),
+        (3, "NDY", 0.04),
+        (6, "-10%", 0.04),  # P16.2 (#93) S03 reproduction: relaxed at t=12 before
+        (8, "NDY", 0.02),
+        (9, "+/-20%", 0.0),
+    ],
+)
+def test_null_replanning_reproduces_the_plan(tmp_path, landbase, policy, rate) -> None:
+    """Null test (P15.1 #83; widened in P16.2 #93): with a fixed terminal date
+    (shrinking horizon) and the flow history carried, each replan solves the
+    tail of the original problem from the plan's own state, so the realized
+    path must reproduce the open-loop plan, with no material relaxation of the
+    carried anchor (Bellman's principle). Before P16.2, float-level drift
+    (~1e-6) made the anchor infeasible at capacity-binding periods and it was
+    dropped (42 such replans in the P15 institution grid)."""
     import numpy as np
 
-    from fresh_daugherty.instance.landbases import landbase_areas
-    from fresh_daugherty.model import (
-        bootstrap_model,
-        build_woodstock_sections,
-        prepare_optimization,
-    )
-    from fresh_daugherty.replan import open_loop_projection, sequential_replan
+    from fresh_daugherty.instance.thesis import HARVEST_FLOW_POLICIES
+    from fresh_daugherty.lp import flow_kwargs_for_policy
+    from fresh_daugherty.replan import is_material_relaxation, open_loop_projection
 
     horizon = 15
-    flow = {"flow_geometry": "consecutive", "flow_decrease": 0.0}
+    pol = {p.code: p for p in HARVEST_FLOW_POLICIES}[policy]
+    flow = flow_kwargs_for_policy(pol)
 
     def fresh(name):
-        build_woodstock_sections(tmp_path / name, areas=landbase_areas(1))
+        build_woodstock_sections(tmp_path / name, areas=landbase_areas(landbase))
         model = bootstrap_model(tmp_path / name, horizon=horizon)
         return prepare_optimization(model, horizon=horizon)
 
-    plan = np.array(open_loop_projection(fresh("p"), discount_rate=0.04, **flow))
+    plan = np.array(open_loop_projection(fresh("p"), discount_rate=rate, **flow))
     seq = sequential_replan(
         fresh("s"),
         workdir=tmp_path / "sw",
-        discount_rate=0.04,
+        discount_rate=rate,
         rolling_horizon=False,
         carry_flow_history=True,
         record_solver_notes=True,
         **flow,
     )
-    # Tolerance: lp.HISTORY_RTOL (1e-6) lets each period sit up to 1e-6 below
-    # the previous harvest; over 15 periods this compounds to ~2e-5. Still far
-    # below the 5% occurrence tolerance, and no anchor may be relaxed.
-    assert np.allclose(seq["harvest_volume_mcf"].to_numpy(), plan, rtol=1e-4)
-    assert (seq["solver_note"] == "ok").all()
+    notes = list(seq["solver_note"])
+    assert not any(is_material_relaxation(n) for n in notes), notes
+    # lp.HISTORY_RTOL (1e-6) per period, plus at most a numerical loosening,
+    # compounds to well under 1e-3 over 15 periods (5% occurrence tolerance).
+    assert np.allclose(seq["harvest_volume_mcf"].to_numpy(), plan, rtol=1e-3, atol=1e-3), np.max(
+        np.abs(seq["harvest_volume_mcf"].to_numpy() - plan) / np.maximum(plan, 1.0)
+    )
 
 
 def test_gap_diagnostic_under_carried_bounded_deviation(tmp_path) -> None:

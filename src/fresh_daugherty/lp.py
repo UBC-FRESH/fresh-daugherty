@@ -131,6 +131,7 @@ def add_open_loop_problem(
     prev_harvest_mcf: float | None = None,
     flow_window: int = 2,
     realized_history: tuple[float, ...] | None = None,
+    history_rtol: float = HISTORY_RTOL,
     name: str = "open-loop",
 ) -> object:
     """Add the open-loop NPV-max LP to ``model`` and return it.
@@ -325,11 +326,11 @@ def add_open_loop_problem(
         dec = flow_coefficient if flow_decrease is None else flow_decrease
         cgen_data = _tighten_period1_harvest(
             cgen_data,
-            lb=prev_harvest_mcf * (1.0 - dec) * (1.0 - HISTORY_RTOL),
+            lb=prev_harvest_mcf * (1.0 - dec) * (1.0 - history_rtol),
             ub=(
                 None
                 if flow_increase is None
-                else prev_harvest_mcf * (1.0 + flow_increase) * (1.0 + HISTORY_RTOL)
+                else prev_harvest_mcf * (1.0 + flow_increase) * (1.0 + history_rtol)
             ),
         )
 
@@ -371,6 +372,7 @@ def add_open_loop_problem(
             flow_key=flow_key,
             flow_decrease=dec,
             realized_history=realized_history,
+            history_rtol=history_rtol,
         )
     return problem
 
@@ -444,6 +446,7 @@ def _add_rolling_mean_flow(
     flow_key: str,
     flow_decrease: float = 0.0,
     realized_history: tuple[float, ...] | None = None,
+    history_rtol: float = HISTORY_RTOL,
 ) -> None:
     """Add backwards-facing rolling-mean NDY rows to a compiled problem (E4, P12).
 
@@ -494,7 +497,7 @@ def _add_rolling_mean_flow(
                 for ij, v in mu.get(ref, {}).items():
                     coeffs[xnames[ij]] = coeffs.get(xnames[ij], 0.0) - scale * v
             else:
-                rhs += scale * float(ref) * (1.0 - HISTORY_RTOL)
+                rhs += scale * float(ref) * (1.0 - history_rtol)
         problem.add_constraint(f"flw-rm_{t:03d}_{flow_key}", coeffs, opt.SENSE_GEQ, rhs)
 
 
