@@ -82,3 +82,34 @@ def test_cap_search_converges_to_even_realized_flow(tmp_path: Path) -> None:
     assert rec.iterations <= 25
     assert len(rec.history) == rec.iterations
     assert len(rec.projected) == len(rec.realized) == 6
+
+
+def test_cap_search_projects_at_the_cell_discount_rate(tmp_path, monkeypatch) -> None:
+    """P14.3 (issue #78) regression: every open-loop projection inside the cap
+    search (the announced plan *and* the H_max bisection bracket) must use the
+    cell's discount rate. Before the fix both calls omitted ``discount_rate``
+    and silently used the 4% default, so E2 cells at 0/2/6% announced the 4%
+    plan and bisected from a 4% bracket."""
+    import pandas as pd
+
+    from fresh_daugherty import replan
+    from fresh_daugherty.evenflow import calibrate_even_flow_cap
+
+    calls: list[dict] = []
+
+    def fake_projection(model, **kw):
+        calls.append(kw)
+        return [100.0] * 5
+
+    def fake_replan(model, **kw):
+        return pd.DataFrame({"harvest_volume_mcf": [100.0] * 5})
+
+    monkeypatch.setattr(replan, "open_loop_projection", fake_projection)
+    monkeypatch.setattr(replan, "sequential_replan", fake_replan)
+
+    class _Model:
+        horizon = 5
+
+    calibrate_even_flow_cap(_Model(), landbase=1, workdir=tmp_path, discount_rate=0.0)
+    assert len(calls) >= 2  # bracket (NHF) projection + announced-plan projection
+    assert all(c.get("discount_rate") == 0.0 for c in calls), calls

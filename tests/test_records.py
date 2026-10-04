@@ -23,7 +23,7 @@ _STALE_E3 = pytest.mark.xfail(
 )
 _E2_OPEN = pytest.mark.xfail(
     strict=True,
-    reason="4/72 E2 cells break the period-1 invariant; diagnosed in #78",
+    reason="E2 records predate the P14.3 fix (#78: projections at the 4% default); re-run in #79",
 )
 
 

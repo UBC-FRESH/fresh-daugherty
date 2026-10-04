@@ -143,7 +143,7 @@ def calibrate_even_flow_cap(
     horizon = model.horizon
 
     def _realized_report(cap: float) -> tuple[EvenFlowReport, EvenFlowReport, list, list]:
-        projected = open_loop_projection(model, target_flow_mcf=cap)
+        projected = open_loop_projection(model, discount_rate=discount_rate, target_flow_mcf=cap)
         realized_df = sequential_replan(
             model,
             workdir=workdir / f"cap_{cap:.1f}",
@@ -161,7 +161,7 @@ def calibrate_even_flow_cap(
     history: list[dict] = []
     # Bracket: H_max (unconstrained peak; almost surely not even) .. 0 (never
     # viable). If H_max is already even, the cap is unnecessary (record H_max).
-    nhf = open_loop_projection(model, flow_geometry="none")
+    nhf = open_loop_projection(model, discount_rate=discount_rate, flow_geometry="none")
     hi = float(max(nhf))
     rep_r, rep_p, proj, real = _realized_report(hi)
     history.append({"cap": hi, "is_even": rep_r.is_even, "cv": rep_r.cv})
