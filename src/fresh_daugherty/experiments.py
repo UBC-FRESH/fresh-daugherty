@@ -852,6 +852,10 @@ def _run_policy_cell(args: tuple) -> dict:
         "max_decrease": pol.max_decrease,
         "max_increase": pol.max_increase,
         "horizon": horizon,
+        # Provenance on the core grid too (P16.6, #97; S16).
+        "fd_version": _fd_version,
+        "fd_commit": _fd_commit,
+        "ws3_version": _ws3_version,
         "projected": result.projected,
         "realized": result.realized,
         **result.metrics,
