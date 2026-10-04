@@ -6,6 +6,17 @@ Every number regenerates from the tracked records via
 `PYTHONPATH=src python scripts/analyze_p10_cap_search.py`
 (tables T1–T3 as CSV+MD, figure F1 as PDF, this directory).
 
+> **Correction (P14, issue #78).** The E2 records first committed in P10 were
+> produced by code that computed the announced plan and the H_max bisection
+> bracket at the 4% default discount rate in every cell (`open_loop_projection`
+> was called without `discount_rate`). Cells at 0%, 2% and 6% therefore
+> announced the 4% plan and bisected from a 4% bracket; the period-1
+> invariant failed in 4/72 cells (all at 0%). The records were regenerated at
+> `83c7b16` (invariant holds in all 72 cells). Calibrated caps changed only at
+> 0% and 2% (median 0%, range −0.32% to +2.93%); 4% and 6% are unchanged.
+> The headline (0% occurrence, 100% convergence) is unchanged; the numbers
+> below are the corrected ones.
+
 ## Question
 
 If the NDY flow *link* is replaced by a simple per-period max-harvest cap,
@@ -31,12 +42,13 @@ secondary), to the loosest cap meeting the criterion (relative tolerance
 
 The calibrated cap **eliminates** dynamic inconsistency, everywhere. All 72
 cells converged; occurrence under the calibrated caps is **0%** at every
-discount rate (Table T1), with mean divergence 0.04–0.96% (grid max 2.5%,
-all below the 5% occurrence tolerance). The gap diagnostic confirms this is
-genuine consistency rather than tie-breaking: 96.4% of tail periods leave
+discount rate (Table T1), with mean divergence 0.02–0.19% by rate (grid maximum of cell means 0.81%,
+all below the 5% occurrence tolerance). Single periods can still deviate:
+2/72 cells have one period above 5% (maximum 7.9%). The gap diagnostic confirms this is
+genuine consistency rather than tie-breaking: 96.3% of tail periods leave
 the announced tail *optimal* (vs. the flow-constrained core, where most
 tails are strictly suboptimal or infeasible; e.g. the NDY control runs at
-78–100% occurrence). The residual 3.4% suboptimal / 0.2% infeasible tail
+78–100% occurrence). The residual 3.5% suboptimal / 0.2% infeasible tail
 periods are noise-level deviations that do not lift any cell past the
 occurrence tolerance.
 
@@ -71,3 +83,7 @@ literature the paper already cites.
   while being abandoned).
 - The cap is a volume cap; a value-denominated cap interacts with E3 and is
   noted there.
+- Open review points for the manuscript (not changed here, P14 scope is the
+  records): whether "eliminates" and the allowable-cut-effect reading are
+  supported (the cap is calibrated on the realized path; comparison with the
+  *realized* NDY volume and NPV is not yet reported).

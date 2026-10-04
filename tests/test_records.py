@@ -17,15 +17,6 @@ import pytest
 
 RECORDS = Path(__file__).resolve().parents[1] / "results" / "experiments"
 
-_STALE_E3 = pytest.mark.xfail(
-    strict=True,
-    reason="E3 records predate the e72ab2b fix (announced = volume plan); re-run in #79",
-)
-_E2_OPEN = pytest.mark.xfail(
-    strict=True,
-    reason="E2 records predate the P14.3 fix (#78: projections at the 4% default); re-run in #79",
-)
-
 
 @pytest.mark.parametrize(
     "name",
@@ -33,8 +24,8 @@ _E2_OPEN = pytest.mark.xfail(
         "grid_trajectories.csv",
         "grid_discount_paths_trajectories.csv",
         "grid_rolling_mean_trajectories.csv",
-        pytest.param("grid_cap_search_trajectories.csv", marks=_E2_OPEN),
-        pytest.param("grid_value_flow_trajectories.csv", marks=_STALE_E3),
+        "grid_cap_search_trajectories.csv",
+        "grid_value_flow_trajectories.csv",
     ],
 )
 def test_period1_announced_equals_realized(name: str) -> None:

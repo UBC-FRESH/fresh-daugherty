@@ -13,8 +13,8 @@ Analysis writeup: [p10 writeup](../results/analysis/p10_cap_search/writeup.md).
 
 Cap calibration ELIMINATES dynamic inconsistency: occurrence
 0% across the grid (mean divergence
-0.004, max
-0.025 — all below the 5% tolerance), with
+0.001, max
+0.008 — all below the 5% tolerance), with
 100% convergence. Removing the inter-period link removes the inconsistency.
 The calibrated level on landbase 1 (~9,400 MCF/period) is ~8% below the NDY
 plan's announced level — an automated allowable-cut calibration pricing the
@@ -26,7 +26,7 @@ credibility of the flow promise.
 
 | discount_rate | occurrence | mean_abs_rel_deviation | calibrated_cap_mcf | converged |
 | --- | --- | --- | --- | --- |
-| 0.0 | 0.0 | 0.0038 | 8899.4533 | 1.0 |
-| 0.02 | 0.0 | 0.0096 | 9135.3402 | 1.0 |
+| 0.0 | 0.0 | 0.0014 | 8919.7865 | 1.0 |
+| 0.02 | 0.0 | 0.0019 | 9138.7519 | 1.0 |
 | 0.04 | 0.0 | 0.001 | 9024.0398 | 1.0 |
-| 0.06 | 0.0 | 0.0007 | 9030.2152 | 1.0 |
+| 0.06 | 0.0 | 0.0002 | 9030.2152 | 1.0 |
