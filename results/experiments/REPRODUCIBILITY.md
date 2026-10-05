@@ -141,20 +141,25 @@ constraint form):
 - matplotlib 3.11.1 (figures under `results/analysis/` and `supplementary/figures/`;
   3.11.2 renders the same figures with different bytes)
 
-Every E1–E4 cell record carries `fd_version` (package version), `fd_commit`
-(the git commit of the source that produced it; `+dirty` if `src/` had
-uncommitted changes) and `ws3_version`. `tests/test_records.py` checks the
-period-1 invariant (announced == realized) over every tracked trajectory
-record.
+Every summary record (core, E1–E4, institutions, seeds) carries `fd_version`
+(package version), `fd_commit` (the git commit of the source that produced it;
+`+dirty` if `src/` had uncommitted changes) and `ws3_version`.
+`tests/test_records.py` checks provenance (one clean commit per summary), the
+period-1 invariant (announced == realized) over every trajectory record, that
+the rolling/reset institution and seed 42 reproduce `grid.csv`, that no
+objective gap is materially negative, and that under the exact tail problem
+(fixed horizon, carried history) no anchor is relaxed while the path is on plan.
 
-E3 (`grid_value_flow*`) and E2 (`grid_cap_search*`) were regenerated in P14
-(#75) at `83c7b16` after two defects were fixed (E3 revenue cells announced the
-volume plan; E2 projected at the 4% default rate); see `CHANGE_LOG.md`.
-E2 was re-run in P15 (#87) at `8b8ffd5` to add revenue columns to its gap
-records (all other columns identical to the P14 records).
-E4 (`grid_rolling_mean*`) was regenerated in P15 (#83) at `268fa6a` after bounds
-built from realized harvests received a 1e-6 relative slack (`lp.HISTORY_RTOL`);
-within-plan cells are bit-identical, realized-history cells changed.
+**All records were regenerated in P16 (#91, re-run #97)** after the defects found
+by a second pre-submission review were fixed (gap-diagnostic bound composition,
+spurious and over-coarse relaxation of history bounds, relax accounting,
+landbases rebuilt to thesis p. 79, CH-CW two-storied mature volume; see
+`CHANGE_LOG.md`): core, E1, E2, E3 and seeds at `45563fa`; E4 and the
+institution grid at `a1bf7c4` (after history bounds became minimally relaxed by
+bisection; the other grids have no history bounds and are unaffected).
+Old-vs-new headline comparison: `PYTHONPATH=src python scripts/compare_p16_records.py`
+(`results/analysis/p16_rerun/`). Earlier record histories (P14 E2/E3, P15 E2/E4)
+are superseded and kept in git history.
 
 All seed-dependent runs are fixed-seeded. The experiment is deterministic (LP
 solves), so the grid CSVs regenerate bit-for-bit given the environment.
