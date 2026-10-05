@@ -1,6 +1,6 @@
 | horizon_institution | flow_history | 0.0 | 0.02 | 0.04 | 0.06 |
 | --- | --- | --- | --- | --- | --- |
-| fixed | carried | 0.033 | 0.0 | 0.0 | 0.033 |
-| fixed | reset | 0.678 | 0.289 | 0.633 | 0.833 |
-| rolling | carried | 0.9 | 0.278 | 0.167 | 0.189 |
-| rolling | reset | 1.0 | 0.467 | 0.6 | 0.856 |
+| fixed | carried | 0.044 | 0.0 | 0.0 | 0.0 |
+| fixed | reset | 0.633 | 0.244 | 0.333 | 0.422 |
+| rolling | carried | 0.867 | 0.344 | 0.078 | 0.022 |
+| rolling | reset | 1.0 | 0.578 | 0.511 | 0.522 |

@@ -1,5 +1,5 @@
 | grid | with_cmce | without_cmce | with_magnitude | without_magnitude |
 | --- | --- | --- | --- | --- |
-| core (volume) | 77/80 | 51/80 | 0.1466 | 0.1315 |
-| E3 volume | 77/80 | 51/80 | 0.1466 | 0.1315 |
-| E3 revenue | 58/80 | 56/80 | 0.1322 | 0.1619 |
+| core (volume) | 77/80 | 49/80 | 0.1392 | 0.1163 |
+| E3 volume | 77/80 | 49/80 | 0.1392 | 0.1163 |
+| E3 revenue | 54/80 | 52/80 | 0.132 | 0.1338 |

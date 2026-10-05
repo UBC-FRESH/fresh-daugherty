@@ -641,6 +641,14 @@ See the writeup's Table T4 and paired-landbase table.
     )
     wp = e4[e4.anchoring == "within-plan"]
     rh = e4[e4.anchoring == "realized-history"]
+    _g4 = pd.read_csv(RESULTS / "grid_rolling_mean_gaps.csv")
+    _n4 = _g4.loc[(_g4.anchoring == "realized-history") & (_g4.period > 1), "solver_note"].astype(
+        str
+    )
+    _r4 = _n4[_n4.str.startswith("history_rtol=")].str.split("=").str[1].astype(float)
+    _r4 = _r4[_r4 > 1e-4]
+    rh_loosen_med, rh_loosen_max = float(_r4.median()), float(_r4.max())
+    rh_dropped = int((_n4 == "relaxed_floor").sum())
     _core = pd.read_csv(RESULTS / "grid.csv")
     ndy_occ = float(
         (_core.loc[_core.flow_policy == "NDY", "occurrence"].astype(str) == "True").mean()
@@ -663,9 +671,11 @@ Constraint SHAPE is not the operative margin: within-plan rolling-mean
 occurrence {wp.occurrence.mean():.0%} vs pointwise NDY ({ndy_occ:.0%}). The ANCHORING
 INSTITUTION is: realized-history anchoring mitigates (occurrence
 {rh.occurrence.mean():.0%}, magnitude {rh.mean_abs_rel_deviation.mean():.3f})
-but the floor cannot be sustained in {rh.relax_share.mean():.0%} of replan
-periods (mean relax_share) — the declining-NDY mechanism as recorded
-infeasibility.
+but the floor cannot be held exactly in {rh.relax_share.mean():.0%} of replans
+(mean relax_share), where it is loosened minimally (median
+{rh_loosen_med:.1%}, maximum {rh_loosen_max:.0%} of the floor; dropped in
+{rh_dropped} replans) — the declining-NDY mechanism as small, persistent
+shortfalls.
 
 ![Landbase 1 at 4%: pointwise NDY vs rolling-mean readings]({f1})
 

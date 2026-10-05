@@ -13,14 +13,15 @@ Analysis writeup: [p10 writeup](../results/analysis/p10_cap_search/writeup.md).
 
 Under the calibrated caps, occurrence is 0% across the
 grid (mean divergence 0.001, max
-0.008 — all below the 5% tolerance), with
+0.006 — all below the 5% tolerance), with
 100% convergence; single periods can still deviate by more than 5% in
-2/72 cells. The calibrated
-level on landbase 1 (~9,400 MCF/period) is ~8% below the NDY plan's
-*announced* level; against the volume that replanned NDY actually delivers,
-the cap's total volume is about equal (median
--0.5%) and its NPV is
--4.6% (median; page 10).
+1/72 scenarios. The calibrated
+level on landbase 1 at 4% (9,110 MCF/period) is 8% below the
+NDY plan's *announced* level (9,879). Against what replanned NDY
+actually delivers, the cap's total volume differs by
++1.7% and its NPV by
+-0.3% (medians over
+scenarios; per-scenario spread on page 10).
 
 ![Landbase 1 at 4%: NDY flow link vs calibrated cap](figures/e2_ndy_vs_cap.png)
 
@@ -28,7 +29,7 @@ the cap's total volume is about equal (median
 
 | discount_rate | occurrence | mean_abs_rel_deviation | calibrated_cap_mcf | converged |
 | --- | --- | --- | --- | --- |
-| 0.0 | 0.0 | 0.0014 | 8919.7865 | 1.0 |
-| 0.02 | 0.0 | 0.0019 | 9138.7519 | 1.0 |
-| 0.04 | 0.0 | 0.001 | 9024.0398 | 1.0 |
-| 0.06 | 0.0 | 0.0002 | 9030.2152 | 1.0 |
+| 0.0 | 0.0 | 0.0014 | 10113.5562 | 1.0 |
+| 0.02 | 0.0 | 0.0017 | 10373.7233 | 1.0 |
+| 0.04 | 0.0 | 0.0013 | 10287.4934 | 1.0 |
+| 0.06 | 0.0 | 0.0006 | 10129.1338 | 1.0 |

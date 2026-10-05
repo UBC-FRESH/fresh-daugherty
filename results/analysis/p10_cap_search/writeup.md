@@ -1,5 +1,13 @@
 # E2 extension write-up — max-harvest-cap even-flow search (P10)
 
+> **Superseded numbers (P16, #91; 2026-10-05).** This write-up records the
+> phase's original reasoning; its numbers predate the P16 re-run (defect fixes
+> and landbases rebuilt to thesis p. 79; see `CHANGE_LOG.md`). Current values:
+> the tables in this directory (regenerated from the records) and
+> `supplementary/06-extension-e2-cap-search.md`; old-vs-new summary in
+> `results/analysis/p16_rerun/old_vs_new.md`.
+
+
 Draft for transfer to the manuscript's Extensions section (see
 `planning/manuscript-expansion-plan.md` in `fresh_daugherty_manuscript`).
 Every number regenerates from the tracked records via

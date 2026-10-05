@@ -2,6 +2,41 @@
 
 Append-only project narrative, reverse-chronological.
 
+## v0.2.0 (unreleased) — P16 audit fixes and full re-run
+
+Phase 16 on `feature/p16-audit-fixes` (parent #91; children #92–#99; stacked
+on P15). A second antagonistic pre-submission review found defects that the
+maintainer's agent confirmed; all were fixed with regression tests and every
+grid was re-run once. Hand-off: `planning/p16-manuscript-handoff.md`;
+old-vs-new: `results/analysis/p16_rerun/old_vs_new.md`.
+
+- P16.1 (#92): the gap diagnostic's period-1 band overwrote (or was overwritten
+  by) the carried anchor and the E2 cap; bounds are now intersected. Under
+  carried history the "announced plan optimal" share had been inflated (rolling/
+  carried 87% → 58%).
+- P16.2 (#93): history-derived bounds (carried anchor, realized-history floor)
+  were dropped whenever infeasible, including from float-level drift on the
+  plan's own path (42 spurious relaxations under the exact tail problem). Now
+  loosened minimally (numerical steps, then bisection to 1e-3) and recorded.
+  Both runners share the rule.
+- P16.3 (#94): relax shares count material relaxations over replans 2..T; the
+  relaxed tail-fixed solve uses the relaxed constraint set; the dropped-flow
+  fallback keeps `discount_path`/`flow_denominator`; the claim that the model
+  shows no horizon-end liquidation is corrected (79/360 plans).
+- P16.4 (#95): landbases 3–18 rebuilt to thesis p. 79 (9–18 had 13–18% CM-CE).
+- P16.5 (#96): regeneration-choice probe; decision: keep fixed regeneration,
+  disclose (no treatment costs or thinnings in the objective). Found a ws3
+  transition-parser defect (masks reset per `*CASE` block).
+- P16.8 (#99): the CH-CW two-storied mature type shared the sawtimber yield
+  curve (10.27 vs 4.66 MCF/ac).
+- P16.6 (#97): provenance on every summary; record tests extended; all grids
+  re-run (core, E1–E3, seeds at `45563fa`; E4, institutions at `a1bf7c4`).
+  Headlines: core flow-constrained 263/360 → 235/360; institutions exact tail
+  6/360 → 4/360; E3 revenue 200 → 190/360; E4 realized-history 95 → 57/144.
+- P16.7 (#98): manuscript figures from the records with one style
+  (`scripts/make_figures.py`); supplement narrative numbers computed from the
+  records; P9–P12 write-ups marked as superseded; docs updated.
+
 ## v0.2.0 (unreleased) — P15 review analyses
 
 Phase 15 on `feature/p15-review-analyses` (parent #82; children #83–#89;

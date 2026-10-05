@@ -52,11 +52,27 @@ Known limitations
   reconstruction calibrated to the thesis anchors (PNV magnitudes match to
   ~1%; rotation ages are approximate, because the thesis's irregular rotation
   pattern encodes the unavailable Umpqua yield tables).
-- **Model form**: Model I (not the thesis's Model II); noted as a fidelity
-  caveat, not a deviation of substance.
-- **Simulator horizon**: the default rolling fixed horizon avoids the
-  terminal-period artifact of a shrinking horizon; both are available.
-- **Regenerated-prescription choice**: harvest regenerates to the base managed
-  prescription; the full prescription-choice fan-out is a refinement.
-- **Landbases 3-8** (area-control-harvest-derived) are documented as not yet
-  constructed.
+- **Model form**: Model I (not the thesis's Model II, which ``ws3`` does not
+  yet compile with harvest-flow constraints); the two are equivalent only when
+  they encompass the same management alternatives.
+- **Replanning institution**: by default each replan covers a full horizon
+  rolled forward from the realized state with a fresh flow constraint (rolling
+  horizon, reset flow history), as in the thesis. ``rolling_horizon=False``
+  keeps the original terminal date and ``carry_flow_history=True`` anchors each
+  replan's first harvest to the realized previous harvest; with both, each
+  replan solves the exact tail of the original problem (the null test in
+  ``tests/test_replan.py``). History-derived bounds (carried anchor,
+  realized-history rolling-mean floor) that are infeasible from the realized
+  state are loosened minimally and the loosening is recorded
+  (``replan.minimal_history_relaxation``).
+- **Regeneration**: a harvested stand regenerates under a fixed prescription
+  (mature stands under planting, managed stands under their own prescription),
+  and the objective has no treatment costs or commercial thinnings, so the
+  thesis's choice of management intensity at regeneration is not represented
+  (probe and decision: ``planning/p16-regen-choice-probe.md``).
+- **Landbases**: all eighteen are constructed from the thesis's descriptions
+  (pp. 78-80, Table 5.5); every choice the thesis leaves open is listed in
+  ``instance.landbases.LANDBASE_ASSUMPTIONS``.
+- **Terminal constraints**: the thesis's ending-period constraints are
+  experimental and off; horizon-end effects are present, so results are also
+  reported on the thesis's periods 2-11 window.

@@ -1,5 +1,9 @@
 # P15 hand-off to the manuscript (issue #89)
 
+> **Superseded (P16, #91).** Every number below predates the P16 re-run; use
+> `planning/p16-manuscript-handoff.md`.
+
+
 Numbers for the manuscript's response to the pre-submission review, each with
 its tracked source. All tables regenerate via `scripts/analyze_p15_*.py`
 (re-run by `scripts/build_supplement.py`); summary in

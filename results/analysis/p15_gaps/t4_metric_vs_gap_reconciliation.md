@@ -1,4 +1,4 @@
 | metric_inconsistent | False | True |
 | --- | --- | --- |
-| False | 2 | 95 |
-| True | 0 | 263 |
+| False | 1 | 124 |
+| True | 0 | 235 |

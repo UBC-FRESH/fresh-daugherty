@@ -12,12 +12,13 @@ Analysis writeup: [p9 writeup](../results/analysis/p9_discount_shapes/writeup.md
 ## Headline
 
 Declining rates make inconsistency MORE pervasive, not less: flow-constrained
-occurrence is 99% across the E1 paths, with mean
-magnitude 0.18 (vs 0.07-0.11 at constant
-2-6%). The no-flow control cells under declining paths diverge at
-100% occurrence with genuinely suboptimal/infeasible
-tails — a preference-level (Strotz) inconsistency channel, separated from the
-structural one in the writeup.
+occurrence is 97% across the E1 paths, with mean
+magnitude 0.16 (constant rates, by
+rate: 0%: 0.21, 2%: 0.06, 4%: 0.06, 6%: 0.07). The flow-unconstrained control under declining paths
+diverges at 100% occurrence, consistent with the
+preference-level (Strotz) channel of re-applying a declining schedule from each
+planner's present, but not separated here from the low-rate rolling-horizon
+effect (the control at a constant 0% rate: 100%).
 
 ![Occurrence and magnitude by discount scheme](figures/e1_occurrence_magnitude.png)
 
@@ -27,7 +28,7 @@ structural one in the writeup.
 
 | discount_path | occurrence | mean_abs_rel_deviation |
 | --- | --- | --- |
-| invj-4pc-k1 | 1.0 | 0.204 |
-| invj-4pc-k2 | 1.0 | 0.186 |
-| linear-4pc-0pc | 0.978 | 0.16 |
-| linear-6pc-0pc | 0.978 | 0.157 |
+| invj-4pc-k1 | 1.0 | 0.2 |
+| invj-4pc-k2 | 1.0 | 0.176 |
+| linear-4pc-0pc | 0.967 | 0.136 |
+| linear-6pc-0pc | 0.911 | 0.126 |
