@@ -16,21 +16,21 @@ core grid). Shares of replan periods (period > 1) by tail status:
 
 | flow_policy | infeasible | optimal | suboptimal |
 | --- | --- | --- | --- |
-| +/-10% | 0.27 | 0.335 | 0.395 |
-| +/-20% | 0.239 | 0.286 | 0.475 |
-| -10% | 0.139 | 0.549 | 0.312 |
-| -20% | 0.13 | 0.56 | 0.311 |
-| NDY | 0.511 | 0.15 | 0.339 |
-| NHF | 0.059 | 0.766 | 0.176 |
+| +/-10% | 0.255 | 0.329 | 0.416 |
+| +/-20% | 0.229 | 0.289 | 0.482 |
+| -10% | 0.144 | 0.531 | 0.325 |
+| -20% | 0.129 | 0.555 | 0.316 |
+| NDY | 0.56 | 0.136 | 0.305 |
+| NHF | 0.062 | 0.758 | 0.18 |
 
 ## By discount rate
 
 | discount_rate | infeasible | optimal | suboptimal |
 | --- | --- | --- | --- |
-| 0.0 | 0.107 | 0.256 | 0.637 |
-| 0.02 | 0.288 | 0.423 | 0.289 |
-| 0.04 | 0.246 | 0.546 | 0.208 |
-| 0.06 | 0.257 | 0.538 | 0.205 |
+| 0.0 | 0.114 | 0.239 | 0.647 |
+| 0.02 | 0.294 | 0.411 | 0.294 |
+| 0.04 | 0.246 | 0.553 | 0.201 |
+| 0.06 | 0.265 | 0.528 | 0.206 |
 
 Reading: under flow-constrained policies the announced tail is predominantly
 **suboptimal** (strictly improvable) or **infeasible** (cannot even be

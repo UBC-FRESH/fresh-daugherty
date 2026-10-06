@@ -1,0 +1,10 @@
+| discount_path | group | n | inconsistent_2-11 | occurrence_2-11 | magnitude_2-11 | inconsistent_1-15 | occurrence_1-15 | magnitude_1-15 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| invj-4pc-k1 | NHF | 18 | 18 | 1.0 | 0.4899 | 18 | 1.0 | 0.4592 |
+| invj-4pc-k1 | flow-constrained | 90 | 83 | 0.922 | 0.1535 | 90 | 1.0 | 0.1992 |
+| invj-4pc-k2 | NHF | 18 | 16 | 0.889 | 0.3746 | 18 | 1.0 | 0.376 |
+| invj-4pc-k2 | flow-constrained | 90 | 85 | 0.944 | 0.112 | 90 | 1.0 | 0.1761 |
+| linear-4pc-0pc | NHF | 18 | 15 | 0.833 | 0.1237 | 18 | 1.0 | 0.2723 |
+| linear-4pc-0pc | flow-constrained | 90 | 67 | 0.744 | 0.0781 | 88 | 0.978 | 0.1356 |
+| linear-6pc-0pc | NHF | 18 | 12 | 0.667 | 0.0602 | 18 | 1.0 | 0.2274 |
+| linear-6pc-0pc | flow-constrained | 90 | 65 | 0.722 | 0.075 | 84 | 0.933 | 0.1292 |

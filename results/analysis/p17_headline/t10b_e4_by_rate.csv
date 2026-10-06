@@ -1,0 +1,9 @@
+anchoring,discount_rate,n,inconsistent_2-11,occurrence_2-11,magnitude_2-11,inconsistent_1-15,occurrence_1-15,magnitude_1-15
+realized-history,0.0,36,11,0.306,0.0296,17,0.472,0.0731
+realized-history,0.02,36,10,0.278,0.0342,18,0.5,0.0518
+realized-history,0.04,36,2,0.056,0.0255,11,0.306,0.0394
+realized-history,0.06,36,0,0.0,0.0214,4,0.111,0.034
+within-plan,0.0,36,34,0.944,0.099,36,1.0,0.1326
+within-plan,0.02,36,19,0.528,0.05,31,0.861,0.0668
+within-plan,0.04,36,24,0.667,0.0559,32,0.889,0.0681
+within-plan,0.06,36,18,0.5,0.0533,26,0.722,0.0668

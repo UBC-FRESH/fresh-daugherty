@@ -42,6 +42,8 @@ ANALYSIS_SCRIPTS = [
     "scripts/analyze_p15_gaps.py",
     "scripts/analyze_p15_descriptives.py",
     "scripts/analyze_p15_seeds.py",
+    "scripts/analyze_p17_headline.py",
+    "scripts/analyze_p17_thesis_comparison.py",
 ]
 
 #: (page filename, title) — the supplement's table of contents.
@@ -718,7 +720,33 @@ issue #82). Every table regenerates from the tracked records via the
 {_link(RESULTS / "grid_seeds.csv", "seed grid")}; core, E2-E4 records as in
 pages 02 and 06-08.
 
-## Replanning institution
+## Headline basis: the thesis's observation window (P17)
+
+Since P17 (#101) the paper's headline basis is the thesis's observation window,
+periods 2-11 (thesis p. 83), because without the thesis's terminal constraints
+end-of-horizon effects inflate the full-horizon metric; periods 1-15 are kept as
+a sensitivity. Both bases side by side (`scripts/analyze_p17_headline.py`):
+
+{_tab("p17_headline", "t1_core_overall")}
+
+{_tab("p17_headline", "t2_core_by_rate")}
+
+{_tab("p17_headline", "t6_institutions")}
+
+## Comparison with the thesis on matched populations
+
+The thesis's volume inconsistency (eq. 5-1, periods 2-11) on full-choice
+equivalents of its combination sets vs its Table 6.2 (p. 99), its
+carried-history test (pp. 118-120) and its per-landbase reference run (NDY, 4%,
+p. 124) (`scripts/analyze_p17_thesis_comparison.py`):
+
+{_tab("p17_thesis_comparison", "t1_by_landbase_subset")}
+
+{_tab("p17_thesis_comparison", "t2_carried_history_subset")}
+
+{_tab("p17_thesis_comparison", "t3_reference_run_by_landbase")}
+
+## Replanning institution (full horizon, periods 1-15)
 
 Flow-constrained occurrence: rolling horizon + reset flow history (the core
 grid) {_io("rolling", "reset")}; fixed horizon + reset {_io("fixed", "reset")};

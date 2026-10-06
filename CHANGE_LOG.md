@@ -2,6 +2,32 @@
 
 Append-only project narrative, reverse-chronological.
 
+## v0.2.0 (unreleased) — P17 audit-3 fixes and full re-run
+
+Phase 17 on `feature/p17-audit3-fixes` (parent #101; children #102–#108;
+stacked on P16). A third pre-submission review confirmed the P16 fixes and
+found the following, each confirmed independently. Hand-off:
+`planning/p17-manuscript-handoff.md`.
+
+- P17.1 (#102): E4's realized-history rolling-mean floor read the realized
+  harvests in reverse order (periods 2..k used the oldest instead of the most
+  recent). Fixed; test on the compiled floor constants. E4 realized-history
+  loosening falls from max 22% to max 3.1% of the floor.
+- P17.2 (#103): mature volumes now give a model-discounted period-1 value equal
+  to thesis Table 5.4 (was 0.746 x Table 5.4: the back-calculation ignored
+  discounting and escalation). Mature volumes x1.34.
+- P17.3 (#104): one-sided history loosening; `fd_commit` on every per-period
+  record; stale docstrings.
+- P17.4 (#105): every record carries the thesis-window metrics (periods 2-11,
+  `*_2_11`, incl. eq. 5-1), the paper's new headline basis (maintainer
+  decision) because end-of-horizon effects inflate the 1-15 metric.
+- P17.5 (#106): all grids re-run at `042c345`. Periods 2-11 (1-15): core
+  flow-constrained 187/360 (239/360); exact tail 0/360 (4/360).
+- P17.6 (#107): `analyze_p17_headline.py` (both bases) and
+  `analyze_p17_thesis_comparison.py` (thesis Table 6.2 subsets, carried-history
+  test pp. 118-120, per-landbase reference run p. 124); manuscript figures in
+  thousand m3 with zero-based axes, E1 on the 2-11 basis; supplement page 10.
+
 ## v0.2.0 (unreleased) — P16 audit fixes and full re-run
 
 Phase 16 on `feature/p16-audit-fixes` (parent #91; children #92–#99; stacked

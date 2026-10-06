@@ -11,9 +11,13 @@ scanned sources at runtime.
 
 The typed records below are the calibration targets; the tests
 (`tests/test_calibration.py`, `tests/test_thesis_data.py`) assert the
-reconstruction reproduces them (mature-type PNVs match Table 5.4 exactly;
-managed prescriptions match Table 5.3 in sign and broad rotation range;
-CM-CE is the negatively-valued stratum).
+reconstruction reproduces them: managed prescriptions match Table 5.3 in
+sign and broad rotation range, and CM-CE is the negatively valued stratum.
+The mature-type volumes are *calibrated* to Table 5.4: each is chosen so that
+the model's own discounted value (4%, price escalation, end-of-period
+discounting) of harvesting the stand in period 1 equals Table 5.4's period-1
+PNV (`model.mature_volume_mcf`). Volumes are flat over age, so the period-2
+values are not matched exactly (table below; `model.mature_value_check`).
 
 ### Table 5.4 — mature-type PNVs ($/ac, 4% discount)
 
@@ -24,6 +28,21 @@ CM-CE is the negatively-valued stratum).
 | CD-CP | sawtimber | 3421.0 | 2813.0 |
 | CR-CF | sawtimber | 6582.0 | 5579.0 |
 | CM-CE | sawtimber | -1042.0 | -674.0 |
+
+### Model value of a mature harvest vs Table 5.4 ($/ac, 4%)
+
+| ecoclass | vegetation_type | period | model_value_per_ac | table_5_4_per_ac | ratio |
+| --- | --- | --- | --- | --- | --- |
+| CH-CW | sawtimber | 1 | 7646.0 | 7646.0 | 1.0 |
+| CH-CW | sawtimber | 2 | 5705.775 | 6167.0 | 0.925 |
+| CH-CW | two-storied | 1 | 3468.0 | 3468.0 | 1.0 |
+| CH-CW | two-storied | 2 | 2587.971 | 2970.0 | 0.871 |
+| CD-CP | sawtimber | 1 | 3421.0 | 3421.0 | 1.0 |
+| CD-CP | sawtimber | 2 | 2552.898 | 2813.0 | 0.908 |
+| CR-CF | sawtimber | 1 | 6582.0 | 6582.0 | 1.0 |
+| CR-CF | sawtimber | 2 | 4911.772 | 5579.0 | 0.88 |
+| CM-CE | sawtimber | 1 | -1042.0 | -1042.0 | 1.0 |
+| CM-CE | sawtimber | 2 | -777.585 | -674.0 | 1.154 |
 
 ### Table 5.3 — managed-prescription PNV anchors ($/ac, 4% discount)
 

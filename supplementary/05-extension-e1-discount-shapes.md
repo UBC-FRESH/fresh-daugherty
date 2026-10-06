@@ -12,7 +12,7 @@ Analysis writeup: [p9 writeup](../results/analysis/p9_discount_shapes/writeup.md
 ## Headline
 
 Declining rates make inconsistency MORE pervasive, not less: flow-constrained
-occurrence is 97% across the E1 paths, with mean
+occurrence is 98% across the E1 paths, with mean
 magnitude 0.16 (constant rates, by
 rate: 0%: 0.21, 2%: 0.06, 4%: 0.06, 6%: 0.07). The flow-unconstrained control under declining paths
 diverges at 100% occurrence, consistent with the
@@ -28,7 +28,7 @@ effect (the control at a constant 0% rate: 100%).
 
 | discount_path | occurrence | mean_abs_rel_deviation |
 | --- | --- | --- |
-| invj-4pc-k1 | 1.0 | 0.2 |
+| invj-4pc-k1 | 1.0 | 0.199 |
 | invj-4pc-k2 | 1.0 | 0.176 |
-| linear-4pc-0pc | 0.967 | 0.136 |
-| linear-6pc-0pc | 0.911 | 0.126 |
+| linear-4pc-0pc | 0.978 | 0.136 |
+| linear-6pc-0pc | 0.933 | 0.129 |

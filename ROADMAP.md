@@ -27,7 +27,7 @@ synchronized with GitHub issues, planning notes, pull requests, and
 | P14 E3 corrective: open-loop projection under revenue-denominated flow rows | [#75](https://github.com/UBC-FRESH/fresh-daugherty/issues/75) (children #76–#80) | `feature/p14-e3-fix` | Complete — PR [#81](https://github.com/UBC-FRESH/fresh-daugherty/pull/81) open (E3 + E2 records regenerated; manuscript `fresh_daugherty_manuscript@a24dbce`) |
 | P15 Review analyses (pre-submission referee audit) | [#82](https://github.com/UBC-FRESH/fresh-daugherty/issues/82) (children #83–#89) | `feature/p15-review-analyses` | Complete — PR [#90](https://github.com/UBC-FRESH/fresh-daugherty/pull/90) open (stacked on PR #81) |
 | P16 Audit fixes (second antagonistic review) | [#91](https://github.com/UBC-FRESH/fresh-daugherty/issues/91) (children #92–#99) | `feature/p16-audit-fixes` | Complete — PR [#100](https://github.com/UBC-FRESH/fresh-daugherty/pull/100) open (stacked on PR #90) |
-| P17 Audit-3 fixes (third antagonistic review) | [#101](https://github.com/UBC-FRESH/fresh-daugherty/issues/101) (children #102–#108) | `feature/p17-audit3-fixes` | In progress (stacked on PR #100) |
+| P17 Audit-3 fixes (third antagonistic review) | [#101](https://github.com/UBC-FRESH/fresh-daugherty/issues/101) (children #102–#108) | `feature/p17-audit3-fixes` | Complete — PR pending (stacked on PR #100) |
 
 ## v0.2.0 Scope Expansion (2026-09)
 
