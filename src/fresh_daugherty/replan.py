@@ -42,6 +42,11 @@ _AREA_COLS = ("forest", "ecoclass", "rx", "origin", "state", "age", "area_ac")
 #: (and in the paper) so the "occurs in N% of cells" claim is well-defined.
 OCCURRENCE_TOLERANCE = 0.05
 
+#: The thesis's observation window (thesis p. 83: planners 2-11, periods 2-11),
+#: the paper's headline basis (P17.4, #105); periods beyond it are prone to
+#: end-of-horizon effects because the thesis's terminal constraints are off.
+THESIS_WINDOW: tuple[int, int] = (2, 11)
+
 
 def extract_areas(model: ws3.forest.ForestModel, period: int) -> pd.DataFrame:
     """Extract the realized area per (development type, age) at ``period``.
@@ -604,7 +609,9 @@ def inconsistency_metrics(
     lull that the replanning fills, or vice versa, gives delta_t ~ 1 rather than
     an exploding ratio). ``eps`` is a small floor so a both-zero period scores 0.
     The reported magnitudes are the mean and max of ``delta_t`` over the horizon
-    and the relative change in total volume ``(sum r - sum p) / max(|sum p|, 1)``.
+    and the relative change in total volume ``(sum r - sum p) / max(|sum p|, 1)``;
+    the ``*_2_11`` entries give the mean, its occurrence and the thesis's volume
+    inconsistency (eq. 5-1) on the thesis's window, periods 2-11.
     A plan is judged dynamically inconsistent (``occurrence``) when the mean
     relative deviation exceeds ``occurrence_tolerance`` (default
     ``OCCURRENCE_TOLERANCE``). The first-period decision is consistent by
@@ -618,6 +625,12 @@ def inconsistency_metrics(
     denom = np.maximum(np.maximum(np.abs(p), np.abs(r)), floor)
     rel = np.abs(p - r) / denom
     mean_rel = float(rel.mean())
+    # Thesis window (1-based periods lo..hi, clipped to the horizon).
+    lo, hi = THESIS_WINDOW
+    w = slice(lo - 1, min(hi, n))
+    mean_w = float(rel[w].mean()) if n >= lo else 0.0
+    proj_w = float(p[w].sum()) if n >= lo else 0.0
+    thesis_iv = float(np.abs(p[w] - r[w]).sum() / proj_w) if proj_w > 0 else 0.0
     return {
         "max_abs_rel_deviation": float(rel.max()),
         "mean_abs_rel_deviation": mean_rel,
@@ -626,11 +639,18 @@ def inconsistency_metrics(
         "total_rel_change": float((r.sum() - p.sum()) / max(abs(p.sum()), 1.0)),
         "occurrence": bool(mean_rel > occurrence_tolerance),
         "occurrence_tolerance": float(occurrence_tolerance),
+        # Thesis-window basis (periods 2-11): mean symmetric divergence, its
+        # occurrence, and the thesis's volume inconsistency (eq. 5-1,
+        # sum |p - r| / sum p over the window).
+        "mean_abs_rel_deviation_2_11": mean_w,
+        "occurrence_2_11": bool(mean_w > occurrence_tolerance),
+        "thesis_volume_inconsistency_2_11": thesis_iv,
     }
 
 
 __all__ = [
     "OCCURRENCE_TOLERANCE",
+    "THESIS_WINDOW",
     "build_model",
     "extract_areas",
     "inconsistency_metrics",

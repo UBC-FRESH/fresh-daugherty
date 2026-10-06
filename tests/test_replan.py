@@ -320,3 +320,18 @@ def test_minimal_history_relaxation_finds_the_smallest_loosening() -> None:
         lambda _r: types.SimpleNamespace(status=lambda: "infeasible")
     )
     assert none is None and r is None
+
+
+def test_thesis_window_metrics() -> None:
+    """P17.4 (#105): the periods 2-11 window metrics (thesis p. 83) ignore
+    period 1 and periods 12-15, and eq. 5-1 divides by announced volume over
+    the window only."""
+    proj = [100.0] * 15
+    real = [100.0] + [90.0] * 10 + [10.0] * 4  # 10% short on 2-11, 90% on 12-15
+    m = inconsistency_metrics(proj, real)
+    assert m["mean_abs_rel_deviation_2_11"] == pytest.approx(0.10)
+    assert m["thesis_volume_inconsistency_2_11"] == pytest.approx(0.10)
+    assert m["occurrence_2_11"] is True
+    assert m["mean_abs_rel_deviation"] == pytest.approx((10 * 0.1 + 4 * 0.9) / 15)
+    short = inconsistency_metrics([100.0] * 5, [100.0] * 4 + [80.0])
+    assert short["mean_abs_rel_deviation_2_11"] == pytest.approx(0.05)
