@@ -80,6 +80,13 @@ def main() -> None:
         OUT / "t6_institutions",
     )
 
+    _md(
+        _summ(inst, ["horizon_institution", "flow_history", "group", "discount_rate"]),
+        OUT / "t6b_institutions_by_rate",
+    )
+    pos = core[core.discount_rate > 0]
+    _md(_summ(pos, ["group"]), OUT / "t1b_core_positive_rates")
+
     e1 = pd.read_csv(RESULTS / "grid_discount_paths.csv")
     e1["group"] = e1.flow_policy.where(e1.flow_policy == "NHF", "flow-constrained")
     _md(_summ(e1, ["discount_path", "group"]), OUT / "t7_e1_by_path")

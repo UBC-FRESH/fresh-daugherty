@@ -83,6 +83,54 @@ p. 124) (`scripts/analyze_p17_thesis_comparison.py`):
 | 17 | 0.0638 | 0.0638 | <3% |
 | 18 | 0.0552 | 0.0552 | <3% |
 
+By harvest-flow policy on the thesis's Table 6.8 populations (p. 111; 4%, full
+choices; bounded decline on landbases 1-10 only):
+
+| policy | n | mean | median | thesis_mean | thesis_median |
+| --- | --- | --- | --- | --- | --- |
+| NDY | 18 | 0.0507 | 0.0516 | 0.06 | 0.034 |
+| -10% | 10 | 0.0318 | 0.007 | 0.157 | 0.192 |
+| -20% | 10 | 0.0315 | 0.0058 | 0.161 | 0.169 |
+| +/-10% | 18 | 0.0474 | 0.0148 | 0.071 | 0.046 |
+| +/-20% | 18 | 0.1128 | 0.0834 | 0.082 | 0.064 |
+
+Institutions by discount rate (both bases):
+
+| horizon_institution | flow_history | group | discount_rate | n | inconsistent_2-11 | occurrence_2-11 | magnitude_2-11 | inconsistent_1-15 | occurrence_1-15 | magnitude_1-15 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| fixed | carried | NHF | 0.0 | 18 | 0 | 0.0 | 0.0 | 2 | 0.111 | 0.0085 |
+| fixed | carried | NHF | 0.02 | 18 | 0 | 0.0 | 0.0 | 0 | 0.0 | 0.0 |
+| fixed | carried | NHF | 0.04 | 18 | 0 | 0.0 | 0.0 | 0 | 0.0 | 0.0 |
+| fixed | carried | NHF | 0.06 | 18 | 0 | 0.0 | 0.0 | 0 | 0.0 | 0.0 |
+| fixed | carried | flow-constrained | 0.0 | 90 | 0 | 0.0 | 0.0 | 4 | 0.044 | 0.0068 |
+| fixed | carried | flow-constrained | 0.02 | 90 | 0 | 0.0 | 0.0 | 0 | 0.0 | 0.0 |
+| fixed | carried | flow-constrained | 0.04 | 90 | 0 | 0.0 | 0.0 | 0 | 0.0 | 0.0 |
+| fixed | carried | flow-constrained | 0.06 | 90 | 0 | 0.0 | 0.0 | 0 | 0.0 | 0.0 |
+| fixed | reset | NHF | 0.0 | 18 | 0 | 0.0 | 0.0 | 2 | 0.111 | 0.0085 |
+| fixed | reset | NHF | 0.02 | 18 | 0 | 0.0 | 0.0 | 0 | 0.0 | 0.0 |
+| fixed | reset | NHF | 0.04 | 18 | 0 | 0.0 | 0.0 | 0 | 0.0 | 0.0 |
+| fixed | reset | NHF | 0.06 | 18 | 0 | 0.0 | 0.0 | 0 | 0.0 | 0.0 |
+| fixed | reset | flow-constrained | 0.0 | 90 | 61 | 0.678 | 0.1376 | 54 | 0.6 | 0.1615 |
+| fixed | reset | flow-constrained | 0.02 | 90 | 17 | 0.189 | 0.0267 | 21 | 0.233 | 0.033 |
+| fixed | reset | flow-constrained | 0.04 | 90 | 29 | 0.322 | 0.0383 | 30 | 0.333 | 0.0468 |
+| fixed | reset | flow-constrained | 0.06 | 90 | 30 | 0.333 | 0.0491 | 38 | 0.422 | 0.0616 |
+| rolling | carried | NHF | 0.0 | 18 | 18 | 1.0 | 0.507 | 18 | 1.0 | 0.5048 |
+| rolling | carried | NHF | 0.02 | 18 | 1 | 0.056 | 0.0222 | 10 | 0.556 | 0.0441 |
+| rolling | carried | NHF | 0.04 | 18 | 0 | 0.0 | 0.0 | 0 | 0.0 | 0.0 |
+| rolling | carried | NHF | 0.06 | 18 | 0 | 0.0 | 0.0 | 0 | 0.0 | 0.0 |
+| rolling | carried | flow-constrained | 0.0 | 90 | 74 | 0.822 | 0.134 | 79 | 0.878 | 0.1835 |
+| rolling | carried | flow-constrained | 0.02 | 90 | 11 | 0.122 | 0.0226 | 34 | 0.378 | 0.0463 |
+| rolling | carried | flow-constrained | 0.04 | 90 | 2 | 0.022 | 0.0078 | 9 | 0.1 | 0.0187 |
+| rolling | carried | flow-constrained | 0.06 | 90 | 0 | 0.0 | 0.0048 | 2 | 0.022 | 0.0146 |
+| rolling | reset | NHF | 0.0 | 18 | 18 | 1.0 | 0.507 | 18 | 1.0 | 0.5048 |
+| rolling | reset | NHF | 0.02 | 18 | 1 | 0.056 | 0.0222 | 10 | 0.556 | 0.0441 |
+| rolling | reset | NHF | 0.04 | 18 | 0 | 0.0 | 0.0 | 0 | 0.0 | 0.0 |
+| rolling | reset | NHF | 0.06 | 18 | 0 | 0.0 | 0.0 | 0 | 0.0 | 0.0 |
+| rolling | reset | flow-constrained | 0.0 | 90 | 89 | 0.989 | 0.174 | 90 | 1.0 | 0.2113 |
+| rolling | reset | flow-constrained | 0.02 | 90 | 26 | 0.289 | 0.0414 | 54 | 0.6 | 0.0638 |
+| rolling | reset | flow-constrained | 0.04 | 90 | 37 | 0.411 | 0.0448 | 46 | 0.511 | 0.0568 |
+| rolling | reset | flow-constrained | 0.06 | 90 | 35 | 0.389 | 0.0532 | 49 | 0.544 | 0.0706 |
+
 ## Replanning institution (full horizon, periods 1-15)
 
 Flow-constrained occurrence: rolling horizon + reset flow history (the core
@@ -126,15 +174,6 @@ Gap-diagnostic tail status by institution (flow-constrained, periods > 1):
 | fixed/reset | 0.589 | 0.497 | 0.397 | 0.319 | 0.264 |
 | rolling/carried | 0.642 | 0.544 | 0.344 | 0.244 | 0.214 |
 | rolling/reset | 0.872 | 0.767 | 0.664 | 0.461 | 0.397 |
-
-The thesis's volume-inconsistency measure (eq. 5-1, periods 2-11) against its
-reported distribution:
-
-| index | n | mean | median | min | max | share_gt_6pc | share_gt_10pc |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| flow-constrained, all 360 cells | 360.0 | 0.0888 | 0.055 | 0.0 | 0.7703 | 0.464 | 0.297 |
-| thesis-matched subset | 144.0 | 0.0552 | 0.0501 | 0.0 | 0.333 | 0.347 | 0.132 |
-| thesis (178 runs; pp. 92, 124) | 178.0 | 0.09 | 0.072 | 0.017 | 0.292 | 0.6 | 0.27 |
 
 | window | inconsistent | cells | mean_magnitude |
 | --- | --- | --- | --- |

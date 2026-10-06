@@ -131,7 +131,39 @@ def main() -> None:
     # four young-growth landbases (7-10; landbase 9 is the exception, below 3%).
     t3["thesis_p124"] = ["<3%" if lb == 9 or lb >= 11 else ">5%" for lb in t3.index]
     _md(t3, OUT / "t3_reference_run_by_landbase")
-    print(f"wrote tables T1-T3 to {OUT}/")
+    # T4: by harvest-flow policy on the thesis's Table 6.8 populations (p. 111):
+    # NDY and the symmetric policies on landbases 1-18, the bounded-decline
+    # policies on landbases 1-10, all at 4% with full choices.
+    t68 = {
+        "NDY": (0.060, 0.034),
+        "-10%": (0.157, 0.192),
+        "-20%": (0.161, 0.169),
+        "+/-10%": (0.071, 0.046),
+        "+/-20%": (0.082, 0.064),
+    }
+    rows = []
+    for pol, (tm, tmed) in t68.items():
+        lbs = range(1, 11) if pol in ("-10%", "-20%") else range(1, 19)
+        sub = core[
+            (core.flow_policy == pol) & (core.discount_rate == 0.04) & core.landbase.isin(lbs)
+        ]
+        rows.append(
+            {
+                "policy": pol,
+                "n": len(sub),
+                "mean": round(float(sub[IV].mean()), 4),
+                "median": round(float(sub[IV].median()), 4),
+                "thesis_mean": tm,
+                "thesis_median": tmed,
+            }
+        )
+    _md(pd.DataFrame(rows).set_index("policy"), OUT / "t4_by_policy_table_6_8")
+
+    # T5: per landbase, mean over the thesis's full-choice sets it ran there.
+    full = pd.concat(parts)
+    t5 = full.groupby("landbase")[IV].agg(["size", "mean"]).round(4)
+    _md(t5, OUT / "t5_by_landbase_matched_sets")
+    print(f"wrote tables T1-T5 to {OUT}/")
 
 
 if __name__ == "__main__":

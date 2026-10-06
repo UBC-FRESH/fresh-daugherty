@@ -746,6 +746,15 @@ p. 124) (`scripts/analyze_p17_thesis_comparison.py`):
 
 {_tab("p17_thesis_comparison", "t3_reference_run_by_landbase")}
 
+By harvest-flow policy on the thesis's Table 6.8 populations (p. 111; 4%, full
+choices; bounded decline on landbases 1-10 only):
+
+{_tab("p17_thesis_comparison", "t4_by_policy_table_6_8")}
+
+Institutions by discount rate (both bases):
+
+{_tab("p17_headline", "t6b_institutions_by_rate")}
+
 ## Replanning institution (full horizon, periods 1-15)
 
 Flow-constrained occurrence: rolling horizon + reset flow history (the core
@@ -768,11 +777,6 @@ Gap-diagnostic tail status by institution (flow-constrained, periods > 1):
 ## Occurrence threshold and evaluation window
 
 {_tab("p15_metrics", "t1_occurrence_vs_tolerance")}
-
-The thesis's volume-inconsistency measure (eq. 5-1, periods 2-11) against its
-reported distribution:
-
-{_tab("p15_metrics", "t2_thesis_volume_inconsistency")}
 
 {_tab("p15_metrics", "t3_window")}
 
