@@ -104,8 +104,15 @@ def _solve_rate(tmp_path, rate, horizon=8):
     model = prepare_optimization(
         bootstrap_model(tmp_path / "model", horizon=horizon), horizon=horizon
     )
+    # Terminal rows off: on this short horizon the final-harvest cap pins the
+    # whole NDY plan at 1.2 x LTSY whatever the rate (P18.2); these tests check
+    # the objective's discounting mechanics.
     problem = add_open_loop_problem(
-        model, discount_rate=rate, flow_geometry="consecutive", flow_decrease=0.0
+        model,
+        discount_rate=rate,
+        flow_geometry="consecutive",
+        flow_decrease=0.0,
+        terminal_constraints=False,
     )
     df = solve_open_loop(model, problem)
     return problem, df["harvest_volume_mcf"].to_numpy()
@@ -132,8 +139,15 @@ def _solve_path(tmp_path, path, horizon=8):
     model = prepare_optimization(
         bootstrap_model(tmp_path / "model", horizon=horizon), horizon=horizon
     )
+    # Terminal rows off: on this short horizon the final-harvest cap pins the
+    # whole NDY plan at 1.2 x LTSY whatever the rate (P18.2); these tests check
+    # the objective's discounting mechanics.
     problem = add_open_loop_problem(
-        model, discount_path=path, flow_geometry="consecutive", flow_decrease=0.0
+        model,
+        discount_path=path,
+        flow_geometry="consecutive",
+        flow_decrease=0.0,
+        terminal_constraints=False,
     )
     df = solve_open_loop(model, problem)
     return problem, df["harvest_volume_mcf"].to_numpy()
@@ -310,3 +324,66 @@ def test_history_loosening_is_one_sided() -> None:
     lb, ub = _period1_bounds(prev_harvest_mcf=10000.0, history_rtol=0.05, **flow)
     assert lb == pytest.approx(9000.0 * 0.95)
     assert ub == pytest.approx(11000.0 * (1 + HISTORY_RTOL))
+
+
+@pytest.mark.parametrize("landbase", [1, 9])
+def test_inventory_coefficient_matches_ws3_inventory_of_applied_plan(tmp_path, landbase) -> None:
+    """P18.2 (#112): the ending-inventory row's coefficients are in total units
+    of the post-action state, so the row activity equals ws3's own inventory of
+    the applied schedule in every period (the earlier coefficient used per-acre
+    units and the pre-action state)."""
+    from ws3 import common
+
+    build_woodstock_sections(tmp_path / "m", areas=landbase_areas(landbase))
+    model = prepare_optimization(bootstrap_model(tmp_path / "m", horizon=6), horizon=6)
+    problem = add_open_loop_problem(
+        model, flow_geometry="consecutive", flow_decrease=0.0, discount_rate=0.04
+    )
+    problem.solve(verbose=False)
+    sln = problem.solution()
+    activity = dict.fromkeys(model.periods, 0.0)
+    for i, tree in problem.trees.items():
+        for path in tree.paths():
+            x = sln["x_{}".format(common.hex_id((i, tuple(n.data("acode") for n in path))))]
+            for t, v in path[-1].data("inventory").items():
+                activity[t] += x * v
+    solve_open_loop(model, problem)
+    for t in model.periods:
+        assert activity[t] == pytest.approx(model.inventory(t, "totvol"), rel=1e-6), t
+
+
+@pytest.mark.parametrize("landbase", [1, 3, 9, 11])
+@pytest.mark.parametrize("rate", [0.0, 0.04])
+def test_terminal_constraints_hold_and_bind(tmp_path, landbase, rate) -> None:
+    """P18.2 (#112, thesis p. 77): with a flow policy, the plan ends with at
+    least 80% of the regulated forest's average inventory and harvests at most
+    120% of its long-term sustained yield in the final period; at 0% (where
+    liquidation pays) the inventory floor binds."""
+    from fresh_daugherty.lp import regulated_forest_targets
+
+    build_woodstock_sections(tmp_path / "m", areas=landbase_areas(landbase))
+    model = prepare_optimization(bootstrap_model(tmp_path / "m", horizon=15), horizon=15)
+    targets = regulated_forest_targets(model)
+    problem = add_open_loop_problem(
+        model, flow_geometry="consecutive", flow_decrease=0.0, discount_rate=rate
+    )
+    df = solve_open_loop(model, problem)
+    assert problem.status() == "optimal"
+    end_inventory = model.inventory(15, "totvol")
+    assert end_inventory >= 0.8 * targets["avg_inventory_mcf"] * (1 - 1e-6)
+    assert df["harvest_volume_mcf"].iloc[-1] <= 1.2 * targets["ltsy_mcf_per_period"] * (1 + 1e-6)
+    if rate == 0.0:
+        assert end_inventory == pytest.approx(0.8 * targets["avg_inventory_mcf"], rel=1e-4)
+
+
+def test_terminal_constraints_not_used_without_flow_policy(tmp_path) -> None:
+    """Thesis p. 80: no terminal constraints in the flow-unconstrained runs."""
+    build_woodstock_sections(tmp_path / "m", areas=landbase_areas(1))
+    model = prepare_optimization(bootstrap_model(tmp_path / "m", horizon=4), horizon=4)
+    m = _CaptureModel()
+    m.periods = model.periods
+    m.dtypes = model.dtypes
+    m.period_length = model.period_length
+    add_open_loop_problem(m, flow_geometry="none")
+    assert "inventory" not in (m.kw["cgen_data"] or {})
+    assert "inventory" not in m.kw["coeff_funcs"]

@@ -29,7 +29,8 @@ form) or undiscounted net revenue (``cflw_rv``, E3 / P11) via
 
 from __future__ import annotations
 
-import numpy as np
+import itertools
+
 import pandas as pd
 import ws3
 
@@ -41,7 +42,7 @@ from fresh_daugherty.instance.thesis import (
     THESIS_DISCOUNT_RATE,
     HarvestFlowPolicy,
 )
-from fresh_daugherty.model import MATURE_RX_BY_TYPE, ecoclass_code
+from fresh_daugherty.model import ecoclass_code
 
 #: Relative slack on bounds built from *realized* harvests (the carried flow
 #: anchor and the realized-history rolling-mean floor). Realized volumes carry
@@ -92,6 +93,26 @@ def _escalated(base: float, year: float) -> float:
     return base * (1.0 + PRICE_ESCALATION_RATE) ** min(year, PRICE_ESCALATION_YEARS)
 
 
+def _tighten_period_harvest(
+    cgen_data: dict | None,
+    *,
+    period: int,
+    lb: float | None = None,
+    ub: float | None = None,
+) -> dict:
+    """Intersect harvest-volume bounds for ``period`` with any already present
+    (an empty intersection makes the problem infeasible)."""
+    cgen_data = cgen_data or {}
+    hv = cgen_data.setdefault("cflw_hv", {})
+    lbs = hv.setdefault("lb", {})
+    ubs = hv.setdefault("ub", {})
+    if lb is not None:
+        lbs[period] = max(lbs.get(period, lb), lb)
+    if ub is not None:
+        ubs[period] = min(ubs.get(period, ub), ub)
+    return cgen_data
+
+
 def _tighten_period1_harvest(
     cgen_data: dict | None, *, lb: float | None = None, ub: float | None = None
 ) -> dict:
@@ -102,15 +123,50 @@ def _tighten_period1_harvest(
     all requested bounds regardless of order. An empty intersection (lb > ub)
     is kept and makes the problem infeasible, which is the correct reading.
     """
-    cgen_data = cgen_data or {}
-    hv = cgen_data.setdefault("cflw_hv", {})
-    lbs = hv.setdefault("lb", {})
-    ubs = hv.setdefault("ub", {})
-    if lb is not None:
-        lbs[1] = max(lbs.get(1, lb), lb)
-    if ub is not None:
-        ubs[1] = min(ubs.get(1, ub), ub)
-    return cgen_data
+    return _tighten_period_harvest(cgen_data, period=1, lb=lb, ub=ub)
+
+
+def regulated_forest_targets(model: ws3.forest.ForestModel) -> dict[str, float]:
+    """Average inventory and long-term sustained yield of the forest regulated
+    under each stratum's regeneration prescription (thesis p. 77).
+
+    Each stratum's area (at the subproblem's first period) regenerates under a
+    fixed prescription: mature (existing) stands under planting (rx2), managed
+    stands under their own prescription. For each (ecoclass, prescription) the
+    rotation is the Table 5.3 highest-PNV rotation R; the average inventory per
+    acre is the mean standing volume over a rotation (trapezoid over ages 0..R
+    on the period grid) and the sustained yield per acre per period is
+    V(R) / R x period length, from the model's own yield curves. Returns total
+    ``avg_inventory_mcf`` and ``ltsy_mcf_per_period``.
+    """
+    from fresh_daugherty.instance.reconstruct import calibrated_params
+    from fresh_daugherty.instance.thesis import (
+        PNV_ROTATION_ANCHORS,
+        Ecoclass,
+        Prescription,
+    )
+    from fresh_daugherty.model import MAX_AGE, _yield_points_for
+
+    params = calibrated_params()
+    by_code = {ecoclass_code(e).lower(): e for e in Ecoclass}
+    area: dict[tuple[Ecoclass, Prescription], float] = {}
+    for dtk, dt in model.dtypes.items():
+        a = float(sum(dt._areas[1].values()))
+        if a <= 0:
+            continue
+        eco = by_code[str(dtk[1]).lower()]
+        rx = Prescription.PLANT if str(dtk[3]) == "existing" else Prescription(int(str(dtk[2])[2:]))
+        area[(eco, rx)] = area.get((eco, rx), 0.0) + a
+    inv = ltsy = 0.0
+    step = model.period_length
+    for (eco, rx), a in area.items():
+        r = PNV_ROTATION_ANCHORS[(eco, rx)].optimal_rotation_yr
+        curve = dict(_yield_points_for(eco, rx, params[(eco, rx)], MAX_AGE))
+        vols = [curve[age] for age in range(0, r + 1, step)]
+        avg = sum((v0 + v1) / 2 for v0, v1 in itertools.pairwise(vols)) / (len(vols) - 1)
+        inv += a * avg
+        ltsy += a * curve[r] / r * step
+    return {"avg_inventory_mcf": inv, "ltsy_mcf_per_period": ltsy}
 
 
 def add_open_loop_problem(
@@ -125,7 +181,7 @@ def add_open_loop_problem(
     flow_geometry: str = "period1",
     flow_decrease: float | None = None,
     flow_increase: float | None = None,
-    terminal_constraints: bool = False,  # EXPERIMENTAL: see note in docstring
+    terminal_constraints: bool = True,
     abs_period: int = 1,
     fix_period1_harvest_mcf: float | None = None,
     prev_harvest_mcf: float | None = None,
@@ -168,16 +224,15 @@ def add_open_loop_problem(
     *relative* period (each replanning planner applies the path from her own
     present; discounting stays relative while price escalation is absolute).
 
-    ``terminal_constraints`` (EXPERIMENTAL, default off): adds the thesis's
-    ending-period inventory floor (ending growing stock >= 80% of the regulated
-    forest's average inventory; thesis p.77). Known issue: the per-path
-    ending-inventory coefficient does not yet match ws3's growing-stock
-    accounting (regenerated-DT handling), so the floor can be infeasible; the
-    constraints are off by default (see `planning/thesis-formulation.md` and
-    issue #42). Horizon-end effects are present without them (many open-loop plans
-    harvest far more in period 15 than before; counts in
-    ``results/analysis/p15_metrics``), which is why results are reported on the
-    thesis's periods 2-11 window as the headline basis (P17.4, #105).
+    ``terminal_constraints`` (default on; thesis p. 77): with every
+    flow-constrained policy (not NHF, not the E2 cap; thesis p. 80) the final
+    period carries (i) an ending-inventory floor, standing volume >= 80% of the
+    average inventory of the forest regulated under each stratum's regeneration
+    prescription, and (ii) a final-harvest cap, harvest <= 120% of that
+    forest's long-term sustained yield, both at the Table 5.3 highest-PNV
+    rotation (``regulated_forest_targets``). The inventory coefficient is ws3's
+    own inventory of each column's post-action state (P18.2, #112; an earlier
+    hand-rolled coefficient used per-acre units and the pre-action state).
     """
     period_length = model.period_length
     path = discount_path if discount_path is not None else constant_path(discount_rate)
@@ -226,15 +281,17 @@ def add_open_loop_problem(
         return out
 
     def coeff_c_inventory(fm: ws3.forest.ForestModel, path) -> dict[int, float]:
-        """Standing (growing-stock) volume per ac along the path, per period.
-
-        Uses the model's compiled yield curves at each node's age, so it is
-        consistent with ws3's inventory accounting (flat past culmination).
-        """
+        """Standing volume at the end of each period along the path, in total
+        units (the column's stratum area x yield), from ws3's own inventory of
+        the post-action state. ``ForestModel.inventory`` ages areas by one
+        period before matching ``age``, so the filter is ``_age`` plus one
+        period (verified against the inventory of an applied schedule)."""
         out: dict[int, float] = {}
         for t, n in enumerate(path, start=1):
             d = n.data()
-            out[t] = _standing_volume_per_ac(fm, d["dtk"], float(d["age"]))
+            out[t] = fm.inventory(
+                t, yname="totvol", age=d["_age"] + fm.period_length, dtype_keys=[d["_dtk"]]
+            )
         return out
 
     if flow_geometry not in ("period1", "consecutive", "none", "rolling_mean"):
@@ -253,10 +310,8 @@ def add_open_loop_problem(
     # (E2 cap, gap-diagnostic period-1 fix) always stay on volume.
     flow_key = "cflw_hv" if flow_denominator == "volume" else "cflw_rv"
 
-    # The thesis's ending-period (terminal) inventory constraint (p.77): ending
-    # growing stock >= 80% of the regulated forest's average inventory. Used
-    # with all harvest-flow-constrained runs to minimize horizon effects
-    # (prevent horizon-end liquidation of the growing stock).
+    # The thesis's terminal constraints (p. 77), with every harvest-flow policy
+    # but not NHF (p. 80), nor the E2 cap (which replaces the flow constraint).
     use_terminal_inv = terminal_constraints and target_flow_mcf is None and flow_geometry != "none"
 
     coeff_funcs = {"z": coeff_c_z, "cflw_hv": coeff_c_hv, "cflw_rv": coeff_c_rv}
@@ -298,21 +353,13 @@ def add_open_loop_problem(
         cflw_e = {flow_key: spec}
 
     if use_terminal_inv:
-        # Ending-inventory floor (thesis p.77): ending growing stock >= 80% of
-        # the regulated forest's average inventory. Target = 0.8 * sum over
-        # ecoclasses of (landbase ecoclass area * avg inventory per ac).
-        targets = _terminal_targets()
-        eco_area: dict[str, float] = {}
-        for dtk, dt in model.dtypes.items():
-            eco = str(dtk[1]).lower()
-            eco_area[eco] = eco_area.get(eco, 0.0) + float(sum(dt._areas[1].values()))
-        inv_target = 0.8 * sum(
-            eco_area.get(eco, 0.0) * avg_inv for eco, (avg_inv, _l) in targets.items()
-        )
+        targets = regulated_forest_targets(model)
         final_period = list(model.periods)[-1]
-        if inv_target > 0:
-            cgen_data = cgen_data or {}
-            cgen_data["inventory"] = {"lb": {final_period: inv_target}}
+        cgen_data = cgen_data or {}
+        cgen_data["inventory"] = {"lb": {final_period: 0.8 * targets["avg_inventory_mcf"]}}
+        cgen_data = _tighten_period_harvest(
+            cgen_data, period=final_period, ub=1.2 * targets["ltsy_mcf_per_period"]
+        )
 
     if prev_harvest_mcf is not None and flow_geometry == "consecutive":
         if flow_denominator != "volume":
@@ -377,67 +424,6 @@ def add_open_loop_problem(
             history_rtol=history_rtol,
         )
     return problem
-
-
-def _terminal_targets() -> dict[str, tuple[float, float]]:
-    """Per-ecoclass (average inventory, LTSY) per acre for the regenerated forest.
-
-    The thesis's ending-period constraints (p.77) tie the terminal state to the
-    forest regulated under the selected regenerated prescriptions, at the
-    highest-PNV rotation. Harvest regenerates to the base (PLANT) prescription.
-    Returns {ecoclass_code: (avg_inventory_mcf_ac, ltsy_mcf_ac_period)} where
-    LTSY (long-term sustained yield) per period = standing volume at the
-    optimal rotation / rotation * period_length.
-    """
-    import numpy as np
-
-    from fresh_daugherty.instance.feis import real_yield_curve
-    from fresh_daugherty.instance.thesis import (
-        PERIOD_LENGTH_YEARS,
-        PNV_ROTATION_ANCHORS,
-        Ecoclass,
-        Prescription,
-    )
-
-    out: dict[str, tuple[float, float]] = {}
-    for eco in Ecoclass:
-        anchor = PNV_ROTATION_ANCHORS.get((eco, Prescription.PLANT))
-        if anchor is None:
-            continue
-        r = anchor.optimal_rotation_yr
-        curve = real_yield_curve(eco, Prescription.PLANT, max_age=r)
-        v_r = curve.get(r, 0.0)
-        avg_inv = float(np.mean([curve.get(int(a), 0.0) for a in range(0, r + 1, 10)]))
-        ltsy = (v_r / r) * PERIOD_LENGTH_YEARS  # MCF/ac per period, harvestable in perpetuity
-        out[ecoclass_code(eco).lower()] = (avg_inv, ltsy)
-    return out
-
-
-def _standing_volume_per_ac(model: ws3.forest.ForestModel, dtk, age: float) -> float:
-    """Standing volume (MCF/ac) of a development type at a given age.
-
-    Mature/existing DTs are in ``model.dtypes``; regenerated (managed) DTs are
-    created by transitions during the solve and are evaluated from the FEIS
-    yield curve. Flat past culmination, so safe for over-mature ages.
-    """
-    rx, origin = str(dtk[2]), str(dtk[3])
-    if rx in MATURE_RX_BY_TYPE.values() or origin == "existing":
-        dt = model.dtypes.get(dtk)
-        if dt is None:
-            return 0.0
-        curve = dt.ycomp("totvol")
-        return float(curve.interp(min(age, model.max_age))) if curve is not None else 0.0
-    # Regenerated / managed DT: FEIS standing-volume curve at the age.
-    from fresh_daugherty.instance.feis import real_yield_curve
-    from fresh_daugherty.instance.thesis import Ecoclass, Prescription
-
-    eco = next(e for e in Ecoclass if ecoclass_code(e).lower() == str(dtk[1]).lower())
-    curve = real_yield_curve(eco, Prescription(int(rx[2:])), max_age=int(max(age, 300)))
-    ages = sorted(curve)
-    if not ages:
-        return 0.0
-    age_c = min(max(age, ages[0]), ages[-1])
-    return float(np.interp(age_c, ages, [curve[a] for a in ages]))
 
 
 def _add_rolling_mean_flow(

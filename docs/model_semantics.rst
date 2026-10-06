@@ -73,10 +73,16 @@ Known limitations
 - **Landbases**: all eighteen are constructed from the thesis's descriptions
   (pp. 78-80, Table 5.5); every choice the thesis leaves open is listed in
   ``instance.landbases.LANDBASE_ASSUMPTIONS``.
-- **Terminal constraints**: the thesis's ending-period constraints are
-  experimental and off; horizon-end effects are present, so every record also
-  carries the metrics on the thesis's observation window, periods 2-11
-  (``replan.THESIS_WINDOW``; ``*_2_11`` columns), the paper's headline basis.
+- **Terminal constraints**: as in the thesis (p. 77), every flow-constrained
+  run requires the final-period standing volume to be at least 80% of the
+  average inventory of the forest regulated under the regeneration
+  prescriptions, and caps the final-period harvest at 120% of its long-term
+  sustained yield, both at the highest-PNV rotations
+  (``lp.regulated_forest_targets``); not used without a flow policy or with the
+  E2 cap (thesis p. 80). Every record also carries the metrics on the thesis's
+  observation window, periods 2-11 (``*_2_11`` columns).
+- **Young-age yields**: below the first tabled FEIS age, yield curves follow
+  the cell's calibrated Chapman-Richards shape scaled to the first FEIS value.
 - **Mature-stand calibration**: mature volumes are flat over age and chosen so
   that the model's own discounted value of a period-1 harvest (4%) equals the
   thesis's Table 5.4; period-2 values are within 13% except CM-CE
