@@ -138,7 +138,8 @@ def test_realized_history_reading_floors_against_realized(tmp_path) -> None:
             continue
         rtol = float(notes[t].split("=")[1]) if notes[t].startswith("history_rtol=") else 1e-6
         window = v[max(0, t - k) : t]
-        assert v[t] >= (sum(window) / len(window)) * (1 - rtol) * (1 - 1e-6)
+        # 1e-5: float drift between the LP solution and the applied schedule (P16.2)
+        assert v[t] >= (sum(window) / len(window)) * (1 - rtol) * (1 - 1e-5)
 
 
 @pytest.mark.parametrize(

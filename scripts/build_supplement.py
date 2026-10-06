@@ -212,6 +212,9 @@ the tracked experiment records by `scripts/build_supplement.py` (see
             if eco in list(Ecoclass) and rx in list(Prescription)
         ]
     )
+    from fresh_daugherty.model import mature_value_check
+
+    mature_check = mature_value_check().round(3)
     _write(
         "01-case-study-data.md",
         f"""# 01 — Case-study data and validation anchors
@@ -227,13 +230,21 @@ scanned sources at runtime.
 
 The typed records below are the calibration targets; the tests
 (`tests/test_calibration.py`, `tests/test_thesis_data.py`) assert the
-reconstruction reproduces them (mature-type PNVs match Table 5.4 exactly;
-managed prescriptions match Table 5.3 in sign and broad rotation range;
-CM-CE is the negatively-valued stratum).
+reconstruction reproduces them: managed prescriptions match Table 5.3 in
+sign and broad rotation range, and CM-CE is the negatively valued stratum.
+The mature-type volumes are *calibrated* to Table 5.4: each is chosen so that
+the model's own discounted value (4%, price escalation, end-of-period
+discounting) of harvesting the stand in period 1 equals Table 5.4's period-1
+PNV (`model.mature_volume_mcf`). Volumes are flat over age, so the period-2
+values are not matched exactly (table below; `model.mature_value_check`).
 
 ### Table 5.4 — mature-type PNVs ($/ac, 4% discount)
 
 {_md_table(t54)}
+
+### Model value of a mature harvest vs Table 5.4 ($/ac, 4%)
+
+{_md_table(mature_check)}
 
 ### Table 5.3 — managed-prescription PNV anchors ($/ac, 4% discount)
 

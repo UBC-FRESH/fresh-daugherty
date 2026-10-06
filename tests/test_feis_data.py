@@ -72,7 +72,7 @@ def test_model_lev_reproduces_anchor_signs() -> None:
 def test_mature_volume_crosscheck_independent() -> None:
     """The mature volumes back-computed from the Table 5.4 PNV anchors are
     cross-checked against the independent FEIS standing-volume curves (P1.4).
-    The Table 5.4 match is by construction; this is the independent check that
+    The period-1 Table 5.4 match is a calibration; this is the independent check that
     the volumes are at least the same order of magnitude."""
     df = mature_volume_crosscheck()
     assert len(df) == 5

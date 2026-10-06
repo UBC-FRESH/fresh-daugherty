@@ -22,7 +22,10 @@ from fresh_daugherty.instance.reconstruct import calibrated_params, yield_volume
 from fresh_daugherty.instance.thesis import (
     MATURE_TYPE_PNV,
     PERIOD_LENGTH_YEARS,
+    PRICE_ESCALATION_RATE,
+    PRICE_ESCALATION_YEARS,
     ROTATION_RANGES,
+    THESIS_DISCOUNT_RATE,
     Ecoclass,
     Prescription,
 )
@@ -89,13 +92,56 @@ def _yield_points_for(eco, rx, recon_model, max_age: int) -> list[tuple[int, flo
         return _yield_points(recon_model["yield"], max_age)
 
 
+#: The LP's value factor for a period-1 harvest at the thesis's 4% rate (Table
+#: 5.4's rate): price escalation to the end of period 1 times the period-1
+#: discount factor, the same convention as ``lp.add_open_loop_problem``.
+MATURE_PERIOD1_VALUE_FACTOR = (1.0 + PRICE_ESCALATION_RATE) ** min(
+    PERIOD_LENGTH_YEARS, PRICE_ESCALATION_YEARS
+) * (1.0 + THESIS_DISCOUNT_RATE) ** (-PERIOD_LENGTH_YEARS)
+
+
 def mature_volume_mcf(mt, net_price_per_mcf: float) -> float:
     """Recover the mature stand volume (MCF/ac) from its Table 5.4 PNV anchor.
 
-    Period-1 PNV is essentially the undiscounted single-harvest net revenue of
-    the existing stand, so ``V ~ PNV_period1 / net_price_per_mcf``.
+    The volume is chosen so that the model's own discounted value of harvesting
+    the stand in period 1 at 4% equals Table 5.4's period-1 PNV:
+    ``V = PNV_1 / (net_price * MATURE_PERIOD1_VALUE_FACTOR)``. (P17.2, #103: the
+    earlier ``V = PNV_1 / net_price`` ignored discounting and escalation, so the
+    model valued mature stands at 0.746 x Table 5.4.) Volumes are flat over age,
+    so Table 5.4's period-2 values are not matched exactly (see
+    ``mature_value_check``).
     """
-    return float(mt.pnv_period1_per_ac / net_price_per_mcf)
+    return float(mt.pnv_period1_per_ac / (net_price_per_mcf * MATURE_PERIOD1_VALUE_FACTOR))
+
+
+def mature_value_check() -> pd.DataFrame:
+    """Model value per acre of harvesting each mature type in periods 1 and 2
+    (4%, the LP's convention) against Table 5.4."""
+    from fresh_daugherty.instance.feis import real_ecoclass_net_revenue
+
+    rows = []
+    for mt in MATURE_TYPE_PNV:
+        net = real_ecoclass_net_revenue(mt.ecoclass)
+        vol = mature_volume_mcf(mt, net)
+        for t, pnv in ((1, mt.pnv_period1_per_ac), (2, mt.pnv_period2_per_ac)):
+            year = t * PERIOD_LENGTH_YEARS
+            value = (
+                vol
+                * net
+                * (1.0 + PRICE_ESCALATION_RATE) ** min(year, PRICE_ESCALATION_YEARS)
+                * (1.0 + THESIS_DISCOUNT_RATE) ** (-year)
+            )
+            rows.append(
+                {
+                    "ecoclass": mt.ecoclass.value,
+                    "vegetation_type": mt.vegetation_type,
+                    "period": t,
+                    "model_value_per_ac": value,
+                    "table_5_4_per_ac": pnv,
+                    "ratio": value / pnv,
+                }
+            )
+    return pd.DataFrame(rows)
 
 
 def _mature_yield_points(net_volume: float, age_yr: int, max_age: int) -> list[tuple[int, float]]:
@@ -254,6 +300,7 @@ def prepare_optimization(model: ws3.forest.ForestModel, *, horizon: int) -> ws3.
 __all__ = [
     "BASE_YEAR",
     "FOREST",
+    "MATURE_PERIOD1_VALUE_FACTOR",
     "MATURE_RX",
     "MATURE_RX_BY_TYPE",
     "THEME_COUNT",
@@ -261,6 +308,7 @@ __all__ = [
     "build_woodstock_sections",
     "ecoclass_code",
     "mature_rx",
+    "mature_value_check",
     "mature_volume_mcf",
     "prepare_optimization",
 ]
