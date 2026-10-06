@@ -4,7 +4,10 @@ Reads the pre-P16 records from git history (``--old-ref``, default ``45563fa``,
 the last commit before the re-run) and the current records from the working
 tree, and writes ``results/analysis/p16_rerun/old_vs_new.{csv,md}``.
 
-    PYTHONPATH=src python scripts/compare_p16_records.py [--old-ref REF]
+    PYTHONPATH=src python scripts/compare_p16_records.py [--old-ref REF] [--out DIR]
+
+P17 (#106): ``--old-ref 7693024 --out results/analysis/p17_rerun`` compares the
+P16 records with the P17 re-run (full-horizon basis).
 """
 
 from __future__ import annotations
@@ -97,17 +100,19 @@ def _summaries(get) -> list[dict]:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--old-ref", default="45563fa")
+    parser.add_argument("--out", type=Path, default=OUT)
     args = parser.parse_args()
+    out_dir = args.out
     old = pd.DataFrame(_summaries(lambda n: _old(args.old_ref, n)))
     new = pd.DataFrame(_summaries(lambda n: pd.read_csv(RESULTS / n)))
     m = old.merge(new, on=["grid", "subset"], suffixes=("_old", "_new"), how="outer")
-    OUT.mkdir(parents=True, exist_ok=True)
-    m.to_csv(OUT / "old_vs_new.csv", index=False)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    m.to_csv(out_dir / "old_vs_new.csv", index=False)
     header = "| " + " | ".join(m.columns) + " |"
     sep = "| " + " | ".join("---" for _ in m.columns) + " |"
     body = ["| " + " | ".join(str(v) for v in row) + " |" for row in m.to_numpy()]
-    (OUT / "old_vs_new.md").write_text("\n".join([header, sep, *body]) + "\n")
-    print(f"wrote {OUT}/old_vs_new.md ({len(m)} rows)")
+    (out_dir / "old_vs_new.md").write_text("\n".join([header, sep, *body]) + "\n")
+    print(f"wrote {out_dir}/old_vs_new.md ({len(m)} rows)")
 
 
 if __name__ == "__main__":
