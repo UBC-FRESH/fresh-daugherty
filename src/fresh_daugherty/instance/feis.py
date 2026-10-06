@@ -101,8 +101,13 @@ def real_yield_curve(
     """Interpolated standing-volume (MCF/ac) by age curve from the real table.
 
     The FEIS regen-harvest volumes give standing volume at the tabled ages;
-    this linearly interpolates to a 10-year grid and extends the curve flat
-    past the last tabled age (over-mature). Returns {age: MCF/ac}.
+    this linearly interpolates between them on a 10-year grid and extends the
+    curve flat past the last tabled age (over-mature). The FEIS tables start at
+    55-175 years, often above the minimum rotation age, so below the first
+    tabled age the curve follows the calibrated Chapman-Richards curve of the
+    same (ecoclass, prescription) cell, scaled to pass through the first FEIS
+    value (P18.1, #111: the curve was previously held flat there, crediting
+    young stands with an older stand's volume). Returns {age: MCF/ac}.
     """
     table = real_yield_table(ecoclass, prescription)
     if table is None:
@@ -117,9 +122,23 @@ def real_yield_curve(
         raise ValueError(f"FEIS table {table['table']} has no regen volumes")
     ages = sorted(pts)
     grid = np.arange(0, max_age + 1, 10)
-    # Interpolate between tabled ages; hold flat below the first / above the last.
+    # Interpolate between tabled ages; hold flat above the last.
     vols = np.interp(grid, ages, [pts[a] for a in ages])
+    first_age, first_vol = ages[0], pts[ages[0]]
+    shape = _young_age_shape(ecoclass, prescription)
+    scale = first_vol / shape(first_age) if shape(first_age) > 0 else 0.0
+    young = grid < first_age
+    vols[young] = [scale * shape(float(a)) for a in grid[young]]
     return {int(a): float(v) for a, v in zip(grid, vols, strict=True)}
+
+
+def _young_age_shape(ecoclass: Ecoclass, prescription: Prescription):
+    """Calibrated Chapman-Richards volume curve of the cell (shape for ages
+    below the first FEIS entry; see ``real_yield_curve``)."""
+    from fresh_daugherty.instance.reconstruct import calibrated_params, yield_volume
+
+    params = calibrated_params()[(ecoclass, prescription)]["yield"]
+    return lambda age: float(yield_volume(age, params))
 
 
 def mature_volume_crosscheck() -> pd.DataFrame:
