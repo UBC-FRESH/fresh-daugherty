@@ -3,15 +3,15 @@
 Reproduces Daugherty (1991)'s iterative LP simulation of sequential
 replanning. The open-loop LP is solved; then, repeatedly, the current
 period's decision is taken, the forest state is advanced, and the LP is
-re-solved from the realized state over the remaining horizon (the future
-planner re-optimizing under the same goals). The open-loop plan's projected
-trajectory is compared with the realized replanned trajectory; their
-divergence is the dynamic inconsistency.
-
-The open-loop LP is an *open-loop* formulation: it precommits future planners
-to a schedule. The realized trajectory is what actually unfolds when each
-future planner re-optimizes. Their divergence — the plan "not being followed"
-— is the failure of Bellman's principle of optimality.
+re-solved from the realized state (the future planner re-optimizing under the
+same goals). By default each replan covers a full horizon rolled forward from
+the realized state with a fresh flow constraint (``rolling_horizon=True``,
+``carry_flow_history=False``), as in the thesis; ``rolling_horizon=False`` keeps
+the original terminal date and ``carry_flow_history=True`` anchors each
+replan's first harvest to the realized previous harvest (both together: the
+exact tail problem). The open-loop plan's projected trajectory is compared with
+the realized replanned trajectory; their divergence is the dynamic
+inconsistency under the chosen replanning institution.
 """
 
 from __future__ import annotations
@@ -342,7 +342,9 @@ def consistency_gap_replan(
     merely choosing an alternate LP optimum (which would give gap ~ 0).
 
     Returns a per-period frame: period, announced, realized, obj_free,
-    obj_fixed, objective_gap.
+    obj_fixed, objective_gap, tail_status ("optimal" / "suboptimal" /
+    "infeasible"), solver_note (see ``sequential_replan``), and, with
+    ``collect_revenue``, announced_revenue and realized_revenue.
     """
     workdir = Path(workdir)
     horizon = model.horizon
@@ -541,7 +543,9 @@ def sequential_replan(
     True: the window reaches back into the *realized* past harvests.
 
     ``record_solver_notes`` (E4): add a per-period ``solver_note`` column
-    ("ok" / "relaxed_anchor" / "dropped_flow") recording fallback events —
+    ("ok"; "history_rtol=<r>" when a history bound was loosened by r;
+    "relaxed_anchor" / "relaxed_floor" when it was dropped; "dropped_flow"
+    when every flow row was dropped) recording fallback events —
     relevant when a realized-history rolling-mean floor cannot be sustained.
     """
     workdir = Path(workdir)

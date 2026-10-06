@@ -64,6 +64,21 @@ TOLERANCE = 0.05
 MAG = "mean_abs_rel_deviation_2_11"
 
 
+def _shade_window(ax) -> None:
+    """Mark the scored window, periods 2-11 (the thesis's observation window)."""
+    ax.axvspan(1.5, 11.5, color="0.92", zorder=0, lw=0)
+    ax.text(
+        6.5,
+        0.02,
+        "scored window (periods 2-11)",
+        transform=ax.get_xaxis_transform(),
+        ha="center",
+        va="bottom",
+        fontsize=7,
+        color="0.35",
+    )
+
+
 def _save(fig: plt.Figure, name: str) -> Path:
     OUT.mkdir(parents=True, exist_ok=True)
     fig.savefig(OUT / f"{name}.pdf", metadata={"CreationDate": None})
@@ -106,8 +121,9 @@ def fig_declining_ndy() -> Path:
     ax.set_xlabel("Planning period (10 years)")
     ax.set_ylabel(VOLUME_LABEL)
     ax.set_ylim(bottom=0)
+    _shade_window(ax)
     ax.set_xticks(range(1, int(t.period.max()) + 1))
-    ax.legend(frameon=False, loc="lower left")
+    ax.legend(frameon=False, loc="lower left", bbox_to_anchor=(0.0, 0.08))
     fig.tight_layout()
     return _save(fig, "fig_declining_ndy")
 
@@ -182,8 +198,9 @@ def fig_e2_ndy_vs_cap() -> Path:
     ax.set_xlabel("Planning period (10 years)")
     ax.set_ylabel(VOLUME_LABEL)
     ax.set_ylim(bottom=0)
+    _shade_window(ax)
     ax.set_xticks(range(1, int(ndy.period.max()) + 1))
-    ax.legend(frameon=False, loc="lower left")
+    ax.legend(frameon=False, loc="lower left", bbox_to_anchor=(0.0, 0.08))
     fig.tight_layout()
     return _save(fig, "fig_e2_ndy_vs_cap")
 
