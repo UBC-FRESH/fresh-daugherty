@@ -149,6 +149,12 @@ def regulated_forest_targets(model: ws3.forest.ForestModel) -> dict[str, float]:
 
     params = calibrated_params()
     by_code = {ecoclass_code(e).lower(): e for e in Ecoclass}
+    # Read the subproblem's initial areas: building or applying a previous
+    # problem leaves the model's period-1 areas changed, and the targets
+    # (right-hand sides) must not depend on what was built before (P18.2
+    # follow-up: the free and tail-fixed problems of one replan got different
+    # targets). ws3 resets the same way before building trees.
+    model.reset()
     area: dict[tuple[Ecoclass, Prescription], float] = {}
     for dtk, dt in model.dtypes.items():
         a = float(sum(dt._areas[1].values()))

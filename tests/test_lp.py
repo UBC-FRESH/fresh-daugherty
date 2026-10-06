@@ -221,6 +221,9 @@ class _CaptureModel:
     def nthemes(self) -> int:
         return 5
 
+    def reset(self) -> None:
+        pass
+
     def add_problem(self, **kw):
         self.kw = kw
         return object()
@@ -387,3 +390,26 @@ def test_terminal_constraints_not_used_without_flow_policy(tmp_path) -> None:
     add_open_loop_problem(m, flow_geometry="none")
     assert "inventory" not in (m.kw["cgen_data"] or {})
     assert "inventory" not in m.kw["coeff_funcs"]
+
+
+def test_terminal_rows_do_not_depend_on_previous_builds(tmp_path) -> None:
+    """P18.2 follow-up: building and solving one problem must not change the
+    terminal targets of the next problem built on the same model (they were
+    read from mutable model state, so a replan's tail-fixed problem got other
+    right-hand sides than its free problem and could score higher)."""
+    from fresh_daugherty.lp import regulated_forest_targets
+
+    build_woodstock_sections(tmp_path / "m", areas=landbase_areas(15))
+    model = prepare_optimization(bootstrap_model(tmp_path / "m", horizon=15), horizon=15)
+    first = regulated_forest_targets(model)
+    kw = {"flow_geometry": "consecutive", "flow_decrease": 0.0, "discount_rate": 0.04}
+    p1 = add_open_loop_problem(model, name="a", **kw)
+    solve_open_loop(model, p1)
+    p2 = add_open_loop_problem(model, name="b", **kw)
+    assert regulated_forest_targets(model) == pytest.approx(first)
+    rows = [n for n in p1._constraints if n.startswith("gen-")]
+    assert rows
+    for n in rows:
+        assert p2._constraints[n].rhs == pytest.approx(p1._constraints[n].rhs), n
+    p2.solve(verbose=False)
+    assert p2.z() == pytest.approx(p1.z(), rel=1e-9)
