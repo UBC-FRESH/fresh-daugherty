@@ -485,8 +485,11 @@ def _add_rolling_mean_flow(
         for p in range(t - window, t):
             if p >= 1:
                 terms.append(("var", p))
-            elif -p < len(hist):
-                terms.append(("const", hist[p]))  # p<=0: hist[-1] most recent
+            elif 1 - p <= len(hist):
+                # p <= 0 is before this plan's present: relative period 0 is the
+                # most recent realized harvest (hist[-1]), -1 the one before.
+                # (P17.1, #102: this read hist[p], so p = 0 took the oldest.)
+                terms.append(("const", hist[p - 1]))
         if not terms:
             continue
         n = len(terms)
