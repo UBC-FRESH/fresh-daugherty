@@ -174,11 +174,10 @@ def add_open_loop_problem(
     ending-inventory coefficient does not yet match ws3's growing-stock
     accounting (regenerated-DT handling), so the floor can be infeasible; the
     constraints are off by default (see `planning/thesis-formulation.md` and
-    issue #42). Horizon-end effects are present without them: in the P15 core
-    grid, 79 of 360 flow-constrained open-loop plans harvest more than twice the
-    mean of periods 1-14 in period 15 (56 of them at a 0% rate), which is why
-    results are also reported on the thesis's periods 2-11 window (P16.3, #94;
-    an earlier version of this note said the model showed no liquidation).
+    issue #42). Horizon-end effects are present without them (many open-loop plans
+    harvest far more in period 15 than before; counts in
+    ``results/analysis/p15_metrics``), which is why results are reported on the
+    thesis's periods 2-11 window as the headline basis (P17.4, #105).
     """
     period_length = model.period_length
     path = discount_path if discount_path is not None else constant_path(discount_rate)
@@ -333,7 +332,7 @@ def add_open_loop_problem(
             ub=(
                 None
                 if flow_increase is None
-                else prev_harvest_mcf * (1.0 + flow_increase) * (1.0 + history_rtol)
+                else prev_harvest_mcf * (1.0 + flow_increase) * (1.0 + HISTORY_RTOL)
             ),
         )
 

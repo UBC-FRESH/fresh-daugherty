@@ -129,7 +129,10 @@ def history_note(rtol: float) -> str:
 
 
 def minimal_history_relaxation(solve) -> tuple[object | None, float | None]:
-    """Smallest loosening of the history bound that makes the subproblem feasible.
+    """Smallest loosening (to within ``HISTORY_RTOL_PRECISION`` above the
+    numerical steps) of the history lower bound that makes the subproblem
+    feasible. Only the lower bound is loosened; a carried upper bound (bounded
+    increase) keeps ``lp.HISTORY_RTOL`` (P17.3, #104).
 
     ``solve(rtol)`` builds and solves the subproblem with the history bound
     loosened by ``rtol`` and returns the problem. Returns ``(problem, rtol)``,

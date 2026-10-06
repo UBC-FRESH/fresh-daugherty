@@ -299,3 +299,14 @@ def test_mature_calibration_uses_the_lp_value_convention() -> None:
 
     lp_factor = constant_path(0.04).factors(horizon=1)[0] * _escalated(1.0, 10)
     assert lp_factor == pytest.approx(MATURE_PERIOD1_VALUE_FACTOR, rel=1e-12)
+
+
+def test_history_loosening_is_one_sided() -> None:
+    """P17.3 (#104, review T20): loosening a carried anchor widens only the
+    lower bound; the bounded-increase upper bound keeps HISTORY_RTOL."""
+    from fresh_daugherty.lp import HISTORY_RTOL
+
+    flow = {"flow_geometry": "consecutive", "flow_decrease": 0.1, "flow_increase": 0.1}
+    lb, ub = _period1_bounds(prev_harvest_mcf=10000.0, history_rtol=0.05, **flow)
+    assert lb == pytest.approx(9000.0 * 0.95)
+    assert ub == pytest.approx(11000.0 * (1 + HISTORY_RTOL))
