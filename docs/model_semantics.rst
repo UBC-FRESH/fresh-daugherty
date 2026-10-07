@@ -85,9 +85,11 @@ Known limitations
   sensitivity (``grid_terminal_rotation_model.csv``).
 - **Price escalation**: the 1%/yr real escalation (50 years) applies to each
   ecoclass's net value per unit volume (stumpage less access cost), so the
-  negatively valued CM-CE stratum also becomes more negative over time; the
-  thesis escalated log prices and logging costs but held hauling and road
-  costs constant (p. 74). Every record also carries the metrics on the thesis's
+  negatively valued CM-CE stratum also becomes more negative over time. The
+  thesis escalated delivered log prices and stump-to-mill logging costs at the
+  same rate, so stumpage rose 1%/yr, with hauling and road costs uniform
+  across ecoclasses (p. 74); here the access costs differ by ecoclass and
+  escalate with the net value. Every record also carries the metrics on the thesis's
   observation window, periods 2-11 (``*_2_11`` columns).
 - **Young-age yields**: below the first tabled FEIS age, yield curves follow
   the cell's calibrated Chapman-Richards shape scaled to the first FEIS value.

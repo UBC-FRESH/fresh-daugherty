@@ -35,3 +35,7 @@ Basis: periods 2-11 unless stated.
 - Revenue NDY: projected volume period 2 / period 1 = 0.62 on landbase 1 at 4%;
   worst single-period ratio from a positive harvest 0.30 (`t6`).
 - Net-value escalation (V15): disclosed, not changed (maintainer decision).
+  Round 6 (W01): thesis p. 74 escalates delivered log prices and stump-to-mill
+  logging costs (so stumpage +1%/yr); "constant for all ecoclasses" means
+  uniform across ecoclasses, not constant over time. The difference is that
+  our per-ecoclass access costs escalate with the net value.
