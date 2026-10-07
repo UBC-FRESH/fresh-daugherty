@@ -3,8 +3,10 @@
 ## 0.2.0 — 2026-10-07
 
 The archived benchmark record behind the CJFR manuscript "Dynamic
-inconsistency in open-loop LP forest plans: an open, reproducible benchmark of
-Daugherty (1991)". Phases P9-P19 (see `CHANGE_LOG.md` and `ROADMAP.md`).
+inconsistency of promised future yields in open-loop LP forest plans: an open,
+reproducible benchmark of Daugherty (1991) and four tests of mitigation".
+Zenodo: 10.5281/zenodo.23218533 (this version; concept DOI
+10.5281/zenodo.21981433). Phases P9-P19 (see `CHANGE_LOG.md` and `ROADMAP.md`).
 
 - **Extensions** E1-E4 (P9-P12): declining discount rates, a calibrated
   max-harvest cap, a revenue-denominated flow, a rolling-mean flow; curated
