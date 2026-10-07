@@ -20,8 +20,8 @@ only), so the modelling trap it documents is repeatedly rediscovered.
 This project reproduces the thesis stack openly so the result becomes citable
 and the trap detectable, and it backs a short peer-reviewed paper.
 
-Status: ``v0.1.0b1`` is released (archived on Zenodo); v0.2.0 (phases
-P14-P19) is in development and produces the records behind the manuscript
+Status: ``v0.2.0`` (phases P9-P19) is released and archived on Zenodo (concept DOI
+10.5281/zenodo.21981433); it holds the records behind the manuscript
 (``results/experiments/``). The current plan is ``planning/v0.2.0-plan.md``;
 ``ROADMAP.md`` is the issue-tracker view.
 
