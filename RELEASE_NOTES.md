@@ -1,5 +1,32 @@
 # fresh-daugherty Release Notes
 
+## 0.2.0 — 2026-10-07
+
+The archived benchmark record behind the CJFR manuscript "Dynamic
+inconsistency in open-loop LP forest plans: an open, reproducible benchmark of
+Daugherty (1991)". Phases P9-P19 (see `CHANGE_LOG.md` and `ROADMAP.md`).
+
+- **Extensions** E1-E4 (P9-P12): declining discount rates, a calibrated
+  max-harvest cap, a revenue-denominated flow, a rolling-mean flow; curated
+  supplement (`supplementary/`, P13).
+- **Review analyses** (P15): four replanning institutions (rolling or fixed
+  horizon, reset or carried flow history), objective-gap diagnostic on every
+  grid, tolerance and window sensitivity, seed sensitivity, thesis comparisons
+  on matched populations.
+- **Fidelity fixes** (P14, P16-P18): E3 announced plan; gap-diagnostic bound
+  composition; minimal, recorded loosening of history bounds; landbases
+  rebuilt from the thesis's descriptions; mature-volume calibration to Table
+  5.4; the thesis's terminal constraints (p. 77) on every flow-constrained
+  run; young-age yields on the calibrated Chapman-Richards shape.
+- **Final audit** (P19): terminal-rotation sensitivity
+  (`grid_terminal_rotation_model.csv`); every manuscript number tracked by an
+  analysis script.
+- **Records**: all grids regenerated at `35f6a65` (sensitivity at `545d8ca`);
+  every record carries `fd_commit`. Records produced before the version bump
+  carry `fd_version=0.1.0b1`; `fd_commit` identifies the source.
+- Headline (periods 2-11): 178/360 flow-constrained scenarios inconsistent
+  (49%); exact tail problem 1/360.
+
 ## 0.1.0a2 — 2026-08-15
 
 Real-data reconstruction. The case study is now built from the **real Umpqua

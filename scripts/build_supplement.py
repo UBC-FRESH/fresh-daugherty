@@ -423,7 +423,8 @@ grids themselves regenerate via the tracked CLI entry points below.
 ## Archive
 
 The complete benchmark record is archived with a DOI:
-<https://doi.org/10.5281/zenodo.21981434> (release v0.1.0b1).
+<https://doi.org/10.5281/zenodo.21981433> (concept DOI, resolving to the latest
+release; the manuscript's records are release v0.2.0).
 """,
     )
 

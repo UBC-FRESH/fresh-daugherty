@@ -2,6 +2,13 @@
 
 Append-only project narrative, reverse-chronological.
 
+## v0.2.0 — released 2026-10-07 (#123)
+
+PRs #81, #90, #100, #109, #116 and #122 merged into `main` (P14-P19); version
+0.2.0; GitHub release `v0.2.0` archived on Zenodo (concept DOI
+10.5281/zenodo.21981433). The "v0.2.0 (unreleased)" entries below are the
+phase narrative of this release.
+
 ## v0.2.0 (unreleased) — P19 audit-5 fixes
 
 Phase 19 on `feature/p19-audit5-fixes` (parent #117; children #118-#121;
