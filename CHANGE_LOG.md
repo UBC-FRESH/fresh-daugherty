@@ -2,6 +2,26 @@
 
 Append-only project narrative, reverse-chronological.
 
+## v0.2.0 (unreleased) — P19 audit-5 fixes
+
+Phase 19 on `feature/p19-audit5-fixes` (parent #117; children #118-#121;
+stacked on P18). Hand-off: `planning/p19-manuscript-handoff.md`.
+
+- P19.1 (#118): `feis.model_lev` searched off-grid ages, where the yield curve
+  has no volume, so its range and CM-CE sign checks could not fail; it now
+  searches the model's period grid with annual compounding. The model's own
+  highest-PNV rotations are the shortest permitted ones (productive) and the
+  longest (CM-CE), unlike Table 5.3. New `terminal_rotation` option
+  (`table53` default, `model`), threaded to every call site with a
+  regression test; sensitivity grid `grid_terminal_rotation_model.csv` at
+  `545d8ca`: 161/360 vs 178/360 inconsistent (periods 2-11), NHF identical.
+- P19.2 (#119): `scripts/analyze_p19_round5.py` tracks every number of the
+  final audit; `analyze_p15_descriptives.py` scores periods 2-11 and compares
+  E2 with replanned NDY over periods 1-11 (and 1-15).
+- P19.3 (#120): stale supplement, README, docs and comment text; the E2
+  supplement page no longer claims all calibrated runs are below the
+  tolerance.
+
 ## v0.2.0 (unreleased) — P18 terminal constraints and young-age yields
 
 Phase 18 on `feature/p18-terminal-constraints` (parent #110; children
