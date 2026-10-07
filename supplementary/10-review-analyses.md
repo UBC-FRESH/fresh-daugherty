@@ -16,30 +16,30 @@ a sensitivity. Both bases side by side (`scripts/analyze_p17_headline.py`):
 
 | group | n | inconsistent_2-11 | occurrence_2-11 | magnitude_2-11 | inconsistent_1-15 | occurrence_1-15 | magnitude_1-15 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| NHF | 72 | 19 | 0.264 | 0.1323 | 28 | 0.389 | 0.1372 |
-| flow-constrained | 360 | 187 | 0.519 | 0.0783 | 239 | 0.664 | 0.1006 |
+| NHF | 72 | 34 | 0.472 | 0.1675 | 34 | 0.472 | 0.1712 |
+| flow-constrained | 360 | 178 | 0.494 | 0.0719 | 203 | 0.564 | 0.0878 |
 
 | group | discount_rate | n | inconsistent_2-11 | occurrence_2-11 | magnitude_2-11 | inconsistent_1-15 | occurrence_1-15 | magnitude_1-15 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| NHF | 0.0 | 18 | 18 | 1.0 | 0.507 | 18 | 1.0 | 0.5048 |
-| NHF | 0.02 | 18 | 1 | 0.056 | 0.0222 | 10 | 0.556 | 0.0441 |
+| NHF | 0.0 | 18 | 18 | 1.0 | 0.4916 | 18 | 1.0 | 0.5154 |
+| NHF | 0.02 | 18 | 16 | 0.889 | 0.1785 | 16 | 0.889 | 0.1693 |
 | NHF | 0.04 | 18 | 0 | 0.0 | 0.0 | 0 | 0.0 | 0.0 |
 | NHF | 0.06 | 18 | 0 | 0.0 | 0.0 | 0 | 0.0 | 0.0 |
-| flow-constrained | 0.0 | 90 | 89 | 0.989 | 0.174 | 90 | 1.0 | 0.2113 |
-| flow-constrained | 0.02 | 90 | 26 | 0.289 | 0.0414 | 54 | 0.6 | 0.0638 |
-| flow-constrained | 0.04 | 90 | 37 | 0.411 | 0.0448 | 46 | 0.511 | 0.0568 |
-| flow-constrained | 0.06 | 90 | 35 | 0.389 | 0.0532 | 49 | 0.544 | 0.0706 |
+| flow-constrained | 0.0 | 90 | 90 | 1.0 | 0.1611 | 90 | 1.0 | 0.192 |
+| flow-constrained | 0.02 | 90 | 26 | 0.289 | 0.0434 | 43 | 0.478 | 0.0536 |
+| flow-constrained | 0.04 | 90 | 28 | 0.311 | 0.0378 | 32 | 0.356 | 0.0476 |
+| flow-constrained | 0.06 | 90 | 34 | 0.378 | 0.0453 | 38 | 0.422 | 0.0581 |
 
 | horizon_institution | flow_history | group | n | inconsistent_2-11 | occurrence_2-11 | magnitude_2-11 | inconsistent_1-15 | occurrence_1-15 | magnitude_1-15 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| fixed | carried | NHF | 72 | 0 | 0.0 | 0.0 | 2 | 0.028 | 0.0021 |
-| fixed | carried | flow-constrained | 360 | 0 | 0.0 | 0.0 | 4 | 0.011 | 0.0017 |
-| fixed | reset | NHF | 72 | 0 | 0.0 | 0.0 | 2 | 0.028 | 0.0021 |
-| fixed | reset | flow-constrained | 360 | 137 | 0.381 | 0.0629 | 143 | 0.397 | 0.0757 |
-| rolling | carried | NHF | 72 | 19 | 0.264 | 0.1323 | 28 | 0.389 | 0.1372 |
-| rolling | carried | flow-constrained | 360 | 87 | 0.242 | 0.0423 | 124 | 0.344 | 0.0658 |
-| rolling | reset | NHF | 72 | 19 | 0.264 | 0.1323 | 28 | 0.389 | 0.1372 |
-| rolling | reset | flow-constrained | 360 | 187 | 0.519 | 0.0783 | 239 | 0.664 | 0.1006 |
+| fixed | carried | NHF | 72 | 0 | 0.0 | 0.0 | 0 | 0.0 | 0.0 |
+| fixed | carried | flow-constrained | 360 | 1 | 0.003 | 0.0003 | 0 | 0.0 | 0.0002 |
+| fixed | reset | NHF | 72 | 0 | 0.0 | 0.0 | 0 | 0.0 | 0.0 |
+| fixed | reset | flow-constrained | 360 | 98 | 0.272 | 0.0461 | 88 | 0.244 | 0.0419 |
+| rolling | carried | NHF | 72 | 34 | 0.472 | 0.1675 | 34 | 0.472 | 0.1712 |
+| rolling | carried | flow-constrained | 360 | 87 | 0.242 | 0.0349 | 118 | 0.328 | 0.054 |
+| rolling | reset | NHF | 72 | 34 | 0.472 | 0.1675 | 34 | 0.472 | 0.1712 |
+| rolling | reset | flow-constrained | 360 | 178 | 0.494 | 0.0719 | 203 | 0.564 | 0.0878 |
 
 ## Comparison with the thesis on matched populations
 
@@ -50,168 +50,168 @@ p. 124) (`scripts/analyze_p17_thesis_comparison.py`):
 
 | subset | n | mean | median | thesis_n | thesis_mean | thesis_median |
 | --- | --- | --- | --- | --- | --- | --- |
-| landbases 1-6 (over-mature) | 54 | 0.0727 | 0.0537 | 90 | 0.1185 | 0.096 |
-| landbases 7-10 (young growth) | 36 | 0.0456 | 0.0494 | 48 | 0.0684 | 0.066 |
-| landbases 11-18 (random) | 40 | 0.0451 | 0.0487 | 40 | 0.053 | 0.052 |
-| all | 130 | 0.0567 | 0.0498 | 178 | 0.0902 | 0.0715 |
+| landbases 1-6 (over-mature) | 54 | 0.0782 | 0.0763 | 90 | 0.1185 | 0.096 |
+| landbases 7-10 (young growth) | 36 | 0.0343 | 0.0165 | 48 | 0.0684 | 0.066 |
+| landbases 11-18 (random) | 40 | 0.0366 | 0.0442 | 40 | 0.053 | 0.052 |
+| all | 130 | 0.0532 | 0.0442 | 178 | 0.0902 | 0.0715 |
 
 | horizon_institution | flow_history | size | mean | median | thesis_mean |
 | --- | --- | --- | --- | --- | --- |
 | fixed | carried | 50 | 0.0 | 0.0 | nan |
-| fixed | reset | 50 | 0.0633 | 0.0511 | nan |
-| rolling | carried | 50 | 0.0076 | 0.0005 | 0.019 |
-| rolling | reset | 50 | 0.068 | 0.0583 | nan |
+| fixed | reset | 50 | 0.0474 | 0.0145 | nan |
+| rolling | carried | 50 | 0.0055 | 0.0003 | 0.019 |
+| rolling | reset | 50 | 0.0524 | 0.0333 | nan |
 
 | landbase | thesis_volume_inconsistency_2_11 | mean_abs_rel_deviation_2_11 | thesis_p124 |
 | --- | --- | --- | --- |
-| 1 | 0.0681 | 0.0681 | >5% |
-| 2 | 0.0523 | 0.0523 | >5% |
-| 3 | 0.0944 | 0.1011 | >5% |
-| 4 | 0.0 | 0.0 | >5% |
-| 5 | 0.0496 | 0.0412 | >5% |
-| 6 | 0.0028 | 0.0025 | >5% |
-| 7 | 0.0879 | 0.0867 | >5% |
-| 8 | 0.0106 | 0.0102 | >5% |
-| 9 | 0.0594 | 0.0594 | <3% |
-| 10 | 0.0655 | 0.0655 | >5% |
-| 11 | 0.0562 | 0.0562 | <3% |
-| 12 | 0.0496 | 0.0496 | <3% |
-| 13 | 0.049 | 0.049 | <3% |
-| 14 | 0.0509 | 0.0509 | <3% |
-| 15 | 0.0474 | 0.0474 | <3% |
-| 16 | 0.0502 | 0.0502 | <3% |
-| 17 | 0.0638 | 0.0638 | <3% |
-| 18 | 0.0552 | 0.0552 | <3% |
+| 1 | 0.0954 | 0.0954 | >5% |
+| 2 | 0.0732 | 0.0732 | >5% |
+| 3 | 0.0876 | 0.0876 | >5% |
+| 4 | 0.0246 | 0.0246 | >5% |
+| 5 | 0.0826 | 0.0872 | >5% |
+| 6 | 0.0035 | 0.0035 | >5% |
+| 7 | 0.0638 | 0.0637 | >5% |
+| 8 | 0.0 | 0.0 | >5% |
+| 9 | 0.0547 | 0.0547 | <3% |
+| 10 | 0.0539 | 0.0539 | >5% |
+| 11 | 0.0494 | 0.0494 | <3% |
+| 12 | 0.0509 | 0.0509 | <3% |
+| 13 | 0.0513 | 0.0513 | <3% |
+| 14 | 0.0507 | 0.0507 | <3% |
+| 15 | 0.0506 | 0.0506 | <3% |
+| 16 | 0.0565 | 0.0565 | <3% |
+| 17 | 0.0675 | 0.0675 | <3% |
+| 18 | 0.0564 | 0.0564 | <3% |
 
 By harvest-flow policy on the thesis's Table 6.8 populations (p. 111; 4%, full
 choices; bounded decline on landbases 1-10 only):
 
 | policy | n | mean | median | thesis_mean | thesis_median |
 | --- | --- | --- | --- | --- | --- |
-| NDY | 18 | 0.0507 | 0.0516 | 0.06 | 0.034 |
-| -10% | 10 | 0.0318 | 0.007 | 0.157 | 0.192 |
-| -20% | 10 | 0.0315 | 0.0058 | 0.161 | 0.169 |
-| +/-10% | 18 | 0.0474 | 0.0148 | 0.071 | 0.046 |
-| +/-20% | 18 | 0.1128 | 0.0834 | 0.082 | 0.064 |
+| NDY | 18 | 0.054 | 0.0543 | 0.06 | 0.034 |
+| -10% | 10 | 0.0264 | 0.002 | 0.157 | 0.192 |
+| -20% | 10 | 0.0235 | 0.0055 | 0.161 | 0.169 |
+| +/-10% | 18 | 0.036 | 0.0083 | 0.071 | 0.046 |
+| +/-20% | 18 | 0.0631 | 0.0377 | 0.082 | 0.064 |
 
 Institutions by discount rate (both bases):
 
 | horizon_institution | flow_history | group | discount_rate | n | inconsistent_2-11 | occurrence_2-11 | magnitude_2-11 | inconsistent_1-15 | occurrence_1-15 | magnitude_1-15 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| fixed | carried | NHF | 0.0 | 18 | 0 | 0.0 | 0.0 | 2 | 0.111 | 0.0085 |
+| fixed | carried | NHF | 0.0 | 18 | 0 | 0.0 | 0.0 | 0 | 0.0 | 0.0 |
 | fixed | carried | NHF | 0.02 | 18 | 0 | 0.0 | 0.0 | 0 | 0.0 | 0.0 |
 | fixed | carried | NHF | 0.04 | 18 | 0 | 0.0 | 0.0 | 0 | 0.0 | 0.0 |
 | fixed | carried | NHF | 0.06 | 18 | 0 | 0.0 | 0.0 | 0 | 0.0 | 0.0 |
-| fixed | carried | flow-constrained | 0.0 | 90 | 0 | 0.0 | 0.0 | 4 | 0.044 | 0.0068 |
+| fixed | carried | flow-constrained | 0.0 | 90 | 1 | 0.011 | 0.001 | 0 | 0.0 | 0.0007 |
 | fixed | carried | flow-constrained | 0.02 | 90 | 0 | 0.0 | 0.0 | 0 | 0.0 | 0.0 |
 | fixed | carried | flow-constrained | 0.04 | 90 | 0 | 0.0 | 0.0 | 0 | 0.0 | 0.0 |
-| fixed | carried | flow-constrained | 0.06 | 90 | 0 | 0.0 | 0.0 | 0 | 0.0 | 0.0 |
-| fixed | reset | NHF | 0.0 | 18 | 0 | 0.0 | 0.0 | 2 | 0.111 | 0.0085 |
+| fixed | carried | flow-constrained | 0.06 | 90 | 0 | 0.0 | 0.0 | 0 | 0.0 | 0.0001 |
+| fixed | reset | NHF | 0.0 | 18 | 0 | 0.0 | 0.0 | 0 | 0.0 | 0.0 |
 | fixed | reset | NHF | 0.02 | 18 | 0 | 0.0 | 0.0 | 0 | 0.0 | 0.0 |
 | fixed | reset | NHF | 0.04 | 18 | 0 | 0.0 | 0.0 | 0 | 0.0 | 0.0 |
 | fixed | reset | NHF | 0.06 | 18 | 0 | 0.0 | 0.0 | 0 | 0.0 | 0.0 |
-| fixed | reset | flow-constrained | 0.0 | 90 | 61 | 0.678 | 0.1376 | 54 | 0.6 | 0.1615 |
-| fixed | reset | flow-constrained | 0.02 | 90 | 17 | 0.189 | 0.0267 | 21 | 0.233 | 0.033 |
-| fixed | reset | flow-constrained | 0.04 | 90 | 29 | 0.322 | 0.0383 | 30 | 0.333 | 0.0468 |
-| fixed | reset | flow-constrained | 0.06 | 90 | 30 | 0.333 | 0.0491 | 38 | 0.422 | 0.0616 |
-| rolling | carried | NHF | 0.0 | 18 | 18 | 1.0 | 0.507 | 18 | 1.0 | 0.5048 |
-| rolling | carried | NHF | 0.02 | 18 | 1 | 0.056 | 0.0222 | 10 | 0.556 | 0.0441 |
+| fixed | reset | flow-constrained | 0.0 | 90 | 40 | 0.444 | 0.0863 | 28 | 0.311 | 0.0586 |
+| fixed | reset | flow-constrained | 0.02 | 90 | 17 | 0.189 | 0.0285 | 15 | 0.167 | 0.0252 |
+| fixed | reset | flow-constrained | 0.04 | 90 | 18 | 0.2 | 0.0299 | 20 | 0.222 | 0.0331 |
+| fixed | reset | flow-constrained | 0.06 | 90 | 23 | 0.256 | 0.0398 | 25 | 0.278 | 0.0508 |
+| rolling | carried | NHF | 0.0 | 18 | 18 | 1.0 | 0.4916 | 18 | 1.0 | 0.5154 |
+| rolling | carried | NHF | 0.02 | 18 | 16 | 0.889 | 0.1785 | 16 | 0.889 | 0.1693 |
 | rolling | carried | NHF | 0.04 | 18 | 0 | 0.0 | 0.0 | 0 | 0.0 | 0.0 |
 | rolling | carried | NHF | 0.06 | 18 | 0 | 0.0 | 0.0 | 0 | 0.0 | 0.0 |
-| rolling | carried | flow-constrained | 0.0 | 90 | 74 | 0.822 | 0.134 | 79 | 0.878 | 0.1835 |
-| rolling | carried | flow-constrained | 0.02 | 90 | 11 | 0.122 | 0.0226 | 34 | 0.378 | 0.0463 |
-| rolling | carried | flow-constrained | 0.04 | 90 | 2 | 0.022 | 0.0078 | 9 | 0.1 | 0.0187 |
-| rolling | carried | flow-constrained | 0.06 | 90 | 0 | 0.0 | 0.0048 | 2 | 0.022 | 0.0146 |
-| rolling | reset | NHF | 0.0 | 18 | 18 | 1.0 | 0.507 | 18 | 1.0 | 0.5048 |
-| rolling | reset | NHF | 0.02 | 18 | 1 | 0.056 | 0.0222 | 10 | 0.556 | 0.0441 |
+| rolling | carried | flow-constrained | 0.0 | 90 | 81 | 0.9 | 0.1067 | 89 | 0.989 | 0.153 |
+| rolling | carried | flow-constrained | 0.02 | 90 | 4 | 0.044 | 0.0182 | 19 | 0.211 | 0.0337 |
+| rolling | carried | flow-constrained | 0.04 | 90 | 1 | 0.011 | 0.0089 | 7 | 0.078 | 0.0183 |
+| rolling | carried | flow-constrained | 0.06 | 90 | 1 | 0.011 | 0.0059 | 3 | 0.033 | 0.011 |
+| rolling | reset | NHF | 0.0 | 18 | 18 | 1.0 | 0.4916 | 18 | 1.0 | 0.5154 |
+| rolling | reset | NHF | 0.02 | 18 | 16 | 0.889 | 0.1785 | 16 | 0.889 | 0.1693 |
 | rolling | reset | NHF | 0.04 | 18 | 0 | 0.0 | 0.0 | 0 | 0.0 | 0.0 |
 | rolling | reset | NHF | 0.06 | 18 | 0 | 0.0 | 0.0 | 0 | 0.0 | 0.0 |
-| rolling | reset | flow-constrained | 0.0 | 90 | 89 | 0.989 | 0.174 | 90 | 1.0 | 0.2113 |
-| rolling | reset | flow-constrained | 0.02 | 90 | 26 | 0.289 | 0.0414 | 54 | 0.6 | 0.0638 |
-| rolling | reset | flow-constrained | 0.04 | 90 | 37 | 0.411 | 0.0448 | 46 | 0.511 | 0.0568 |
-| rolling | reset | flow-constrained | 0.06 | 90 | 35 | 0.389 | 0.0532 | 49 | 0.544 | 0.0706 |
+| rolling | reset | flow-constrained | 0.0 | 90 | 90 | 1.0 | 0.1611 | 90 | 1.0 | 0.192 |
+| rolling | reset | flow-constrained | 0.02 | 90 | 26 | 0.289 | 0.0434 | 43 | 0.478 | 0.0536 |
+| rolling | reset | flow-constrained | 0.04 | 90 | 28 | 0.311 | 0.0378 | 32 | 0.356 | 0.0476 |
+| rolling | reset | flow-constrained | 0.06 | 90 | 34 | 0.378 | 0.0453 | 38 | 0.422 | 0.0581 |
 
 ## Replanning institution (full horizon, periods 1-15)
 
 Flow-constrained occurrence: rolling horizon + reset flow history (the core
-grid) 239/360 (66%); fixed horizon + reset 143/360 (40%);
-rolling + carried 124/360 (34%); fixed horizon + carried history
+grid) 203/360 (56%); fixed horizon + reset 88/360 (24%);
+rolling + carried 118/360 (33%); fixed horizon + carried history
 (each replan solves the exact tail of the original problem)
-4/360 (1%). A null test (CI) confirms that fixed + carried
+0/360 (0%). A null test (CI) confirms that fixed + carried
 replanning from the plan's own state reproduces the plan.
 
 | horizon_institution | flow_history | inconsistent | cells | occurrence | mean_magnitude | relax_share |
 | --- | --- | --- | --- | --- | --- | --- |
-| fixed | carried | 4 | 360 | 0.0111 | 0.0017 | 0.0 |
-| fixed | reset | 143 | 360 | 0.3972 | 0.0757 | 0.0 |
-| rolling | carried | 124 | 360 | 0.3444 | 0.0658 | 0.0988 |
-| rolling | reset | 239 | 360 | 0.6639 | 0.1006 | 0.0 |
+| fixed | carried | 0 | 360 | 0.0 | 0.0002 | 0.0 |
+| fixed | reset | 88 | 360 | 0.2444 | 0.0419 | 0.0 |
+| rolling | carried | 118 | 360 | 0.3278 | 0.054 | 0.1365 |
+| rolling | reset | 203 | 360 | 0.5639 | 0.0878 | 0.0 |
 
 NHF control by institution:
 
 | horizon_institution | flow_history | inconsistent | cells | mean_magnitude |
 | --- | --- | --- | --- | --- |
-| fixed | carried | 2 | 72 | 0.0021 |
-| fixed | reset | 2 | 72 | 0.0021 |
-| rolling | carried | 28 | 72 | 0.1372 |
-| rolling | reset | 28 | 72 | 0.1372 |
+| fixed | carried | 0 | 72 | 0.0 |
+| fixed | reset | 0 | 72 | 0.0 |
+| rolling | carried | 34 | 72 | 0.1712 |
+| rolling | reset | 34 | 72 | 0.1712 |
 
 Gap-diagnostic tail status by institution (flow-constrained, periods > 1):
 
 | horizon_institution | flow_history | infeasible | optimal | suboptimal |
 | --- | --- | --- | --- | --- |
-| fixed | carried | 0.0 | 0.997 | 0.003 |
-| fixed | reset | 0.115 | 0.568 | 0.317 |
-| rolling | carried | 0.344 | 0.557 | 0.099 |
-| rolling | reset | 0.263 | 0.368 | 0.369 |
+| fixed | carried | 0.001 | 0.998 | 0.001 |
+| fixed | reset | 0.102 | 0.587 | 0.311 |
+| rolling | carried | 0.317 | 0.552 | 0.131 |
+| rolling | reset | 0.239 | 0.331 | 0.429 |
 
 ## Occurrence threshold and evaluation window
 
 | index | tol_0.02 | tol_0.03 | tol_0.05 | tol_0.075 | tol_0.1 |
 | --- | --- | --- | --- | --- | --- |
-| core (rolling/reset) | 0.872 | 0.767 | 0.664 | 0.461 | 0.397 |
-| fixed/carried | 0.036 | 0.031 | 0.011 | 0.0 | 0.0 |
-| fixed/reset | 0.589 | 0.497 | 0.397 | 0.319 | 0.264 |
-| rolling/carried | 0.642 | 0.544 | 0.344 | 0.244 | 0.214 |
-| rolling/reset | 0.872 | 0.767 | 0.664 | 0.461 | 0.397 |
+| core (rolling/reset) | 0.822 | 0.711 | 0.564 | 0.417 | 0.358 |
+| fixed/carried | 0.003 | 0.003 | 0.0 | 0.0 | 0.0 |
+| fixed/reset | 0.497 | 0.367 | 0.244 | 0.169 | 0.131 |
+| rolling/carried | 0.544 | 0.453 | 0.328 | 0.242 | 0.214 |
+| rolling/reset | 0.822 | 0.711 | 0.564 | 0.417 | 0.358 |
 
 | window | inconsistent | cells | mean_magnitude |
 | --- | --- | --- | --- |
-| periods 1-15 (paper) | 239 | 360 | 0.1006 |
-| periods 2-11 (thesis) | 187 | 360 | 0.0783 |
+| periods 1-15 (paper) | 203 | 360 | 0.0878 |
+| periods 2-11 (thesis) | 178 | 360 | 0.0719 |
 
 ## Objective-gap diagnostic (core institution)
 
 | group | discount_rate | infeasible | optimal | suboptimal |
 | --- | --- | --- | --- | --- |
-| NHF | 0.0 | 0.099 | 0.377 | 0.524 |
-| NHF | 0.02 | 0.151 | 0.655 | 0.194 |
+| NHF | 0.0 | 0.071 | 0.429 | 0.5 |
+| NHF | 0.02 | 0.218 | 0.468 | 0.313 |
 | NHF | 0.04 | 0.0 | 1.0 | 0.0 |
 | NHF | 0.06 | 0.0 | 1.0 | 0.0 |
-| flow-constrained | 0.0 | 0.117 | 0.211 | 0.672 |
-| flow-constrained | 0.02 | 0.323 | 0.363 | 0.314 |
-| flow-constrained | 0.04 | 0.295 | 0.463 | 0.241 |
-| flow-constrained | 0.06 | 0.318 | 0.434 | 0.248 |
+| flow-constrained | 0.0 | 0.149 | 0.1 | 0.751 |
+| flow-constrained | 0.02 | 0.267 | 0.359 | 0.375 |
+| flow-constrained | 0.04 | 0.257 | 0.442 | 0.301 |
+| flow-constrained | 0.06 | 0.285 | 0.425 | 0.29 |
 
 First non-optimal period per cell (gap as % of the subproblem NPV):
 
 | index | cells_with_a_deviation | first_is_infeasible | first_suboptimal_median_gap_pc_npv | first_suboptimal_p90_gap_pc_npv | first_period_median |
 | --- | --- | --- | --- | --- | --- |
-| NHF | 28.0 | 0.0 | 0.0298 | 2.2146 | 3.0 |
-| flow-constrained | 358.0 | 83.0 | 0.0892 | 3.6406 | 5.0 |
+| NHF | 34.0 | 0.0 | 0.0499 | 0.6169 | 2.0 |
+| flow-constrained | 357.0 | 53.0 | 0.056 | 1.2502 | 4.0 |
 
 | group | rule | inconsistent | cells |
 | --- | --- | --- | --- |
-| flow-constrained | metric: mean divergence > 5% | 239 | 360 |
-| flow-constrained | gap: any period infeasible or gap >= 1e-06 of NPV | 358 | 360 |
-| flow-constrained | gap: any period infeasible or gap >= 0.0001 of NPV | 358 | 360 |
-| flow-constrained | gap: any period infeasible or gap >= 0.001 of NPV | 358 | 360 |
-| flow-constrained | gap: any period infeasible or gap >= 0.01 of NPV | 355 | 360 |
-| NHF | metric: mean divergence > 5% | 28 | 72 |
-| NHF | gap: any period infeasible or gap >= 1e-06 of NPV | 28 | 72 |
-| NHF | gap: any period infeasible or gap >= 0.0001 of NPV | 28 | 72 |
-| NHF | gap: any period infeasible or gap >= 0.001 of NPV | 28 | 72 |
-| NHF | gap: any period infeasible or gap >= 0.01 of NPV | 28 | 72 |
+| flow-constrained | metric: mean divergence > 5% | 203 | 360 |
+| flow-constrained | gap: any period infeasible or gap >= 1e-06 of NPV | 357 | 360 |
+| flow-constrained | gap: any period infeasible or gap >= 0.0001 of NPV | 357 | 360 |
+| flow-constrained | gap: any period infeasible or gap >= 0.001 of NPV | 354 | 360 |
+| flow-constrained | gap: any period infeasible or gap >= 0.01 of NPV | 332 | 360 |
+| NHF | metric: mean divergence > 5% | 34 | 72 |
+| NHF | gap: any period infeasible or gap >= 1e-06 of NPV | 34 | 72 |
+| NHF | gap: any period infeasible or gap >= 0.0001 of NPV | 34 | 72 |
+| NHF | gap: any period infeasible or gap >= 0.001 of NPV | 34 | 72 |
+| NHF | gap: any period infeasible or gap >= 0.01 of NPV | 34 | 72 |
 
 ## Descriptives
 
@@ -219,35 +219,35 @@ Paired landbases with/without the negatively valued CM-CE ecoclass:
 
 | grid | with_cmce | without_cmce | with_magnitude | without_magnitude |
 | --- | --- | --- | --- | --- |
-| core (volume) | 79/80 | 51/80 | 0.1411 | 0.1111 |
-| E3 volume | 79/80 | 51/80 | 0.1411 | 0.1111 |
-| E3 revenue | 53/80 | 50/80 | 0.123 | 0.1254 |
+| core (volume) | 72/80 | 38/80 | 0.1357 | 0.0895 |
+| E3 volume | 72/80 | 38/80 | 0.1357 | 0.0895 |
+| E3 revenue | 53/80 | 45/80 | 0.1296 | 0.1109 |
 
 By discount rate (flow-constrained):
 
 | discount_rate | inconsistent | cells | occurrence | mean_magnitude |
 | --- | --- | --- | --- | --- |
-| 0.0 | 90.0 | 90.0 | 1.0 | 0.2113 |
-| 0.02 | 54.0 | 90.0 | 0.6 | 0.0638 |
-| 0.04 | 46.0 | 90.0 | 0.5111 | 0.0568 |
-| 0.06 | 49.0 | 90.0 | 0.5444 | 0.0706 |
+| 0.0 | 90.0 | 90.0 | 1.0 | 0.192 |
+| 0.02 | 43.0 | 90.0 | 0.4778 | 0.0536 |
+| 0.04 | 32.0 | 90.0 | 0.3556 | 0.0476 |
+| 0.06 | 38.0 | 90.0 | 0.4222 | 0.0581 |
 
 E2 calibrated cap vs the *realized* NDY path (median relative difference):
 
 | discount_rate | volume_cap_vs_realized_ndy | volume_cap_vs_announced_ndy | npv_cap_vs_realized_ndy |
 | --- | --- | --- | --- |
-| 0.0 | 0.0768 | -0.1254 | 0.0804 |
-| 0.02 | 0.0129 | -0.0483 | 0.0043 |
-| 0.04 | 0.0158 | -0.0496 | -0.0067 |
-| 0.06 | 0.0248 | -0.0343 | -0.0073 |
-| all (median) | 0.017 | -0.0953 | -0.0036 |
+| 0.0 | 0.0631 | -0.0853 | 0.0456 |
+| 0.02 | 0.0544 | -0.0049 | 0.0337 |
+| 0.04 | 0.011 | -0.0507 | -0.0189 |
+| 0.06 | 0.0162 | -0.0436 | -0.0203 |
+| all (median) | 0.0233 | -0.0523 | -0.0058 |
 
 ## Random landbases: seed sensitivity
 
 | landbase_seed | inconsistent | cells | occurrence | mean_magnitude |
 | --- | --- | --- | --- | --- |
-| 42.0 | 82.0 | 160.0 | 0.5125 | 0.0787 |
-| 1042.0 | 81.0 | 160.0 | 0.5062 | 0.0819 |
-| 2042.0 | 75.0 | 160.0 | 0.4688 | 0.0803 |
-| 3042.0 | 84.0 | 160.0 | 0.525 | 0.0785 |
-| 4042.0 | 90.0 | 160.0 | 0.5625 | 0.0853 |
+| 42.0 | 72.0 | 160.0 | 0.45 | 0.0686 |
+| 1042.0 | 75.0 | 160.0 | 0.4688 | 0.0701 |
+| 2042.0 | 74.0 | 160.0 | 0.4625 | 0.07 |
+| 3042.0 | 78.0 | 160.0 | 0.4875 | 0.0698 |
+| 4042.0 | 76.0 | 160.0 | 0.475 | 0.0721 |

@@ -16,27 +16,27 @@ core grid). Shares of replan periods (period > 1) by tail status:
 
 | flow_policy | infeasible | optimal | suboptimal |
 | --- | --- | --- | --- |
-| +/-10% | 0.255 | 0.329 | 0.416 |
-| +/-20% | 0.229 | 0.289 | 0.482 |
-| -10% | 0.144 | 0.531 | 0.325 |
-| -20% | 0.129 | 0.555 | 0.316 |
-| NDY | 0.56 | 0.136 | 0.305 |
-| NHF | 0.062 | 0.758 | 0.18 |
+| +/-10% | 0.127 | 0.365 | 0.508 |
+| +/-20% | 0.152 | 0.263 | 0.585 |
+| -10% | 0.116 | 0.469 | 0.415 |
+| -20% | 0.11 | 0.448 | 0.441 |
+| NDY | 0.692 | 0.111 | 0.196 |
+| NHF | 0.072 | 0.724 | 0.203 |
 
 ## By discount rate
 
 | discount_rate | infeasible | optimal | suboptimal |
 | --- | --- | --- | --- |
-| 0.0 | 0.114 | 0.239 | 0.647 |
-| 0.02 | 0.294 | 0.411 | 0.294 |
-| 0.04 | 0.246 | 0.553 | 0.201 |
-| 0.06 | 0.265 | 0.528 | 0.206 |
+| 0.0 | 0.136 | 0.155 | 0.709 |
+| 0.02 | 0.259 | 0.377 | 0.364 |
+| 0.04 | 0.214 | 0.535 | 0.251 |
+| 0.06 | 0.237 | 0.521 | 0.242 |
 
 Reading: under flow-constrained policies the announced tail is predominantly
 **suboptimal** (strictly improvable) or **infeasible** (cannot even be
 implemented) from the realized state — genuine inconsistency. Under NHF the
 announced tail stays optimal where the control is consistent; where the control
-diverges (0%: 18/18, 2%: 10/18, 4%: 0/18, 6%: 0/18), the deviations are material
-(28/72 NHF scenarios with a gap of at least 1% of the
+diverges (0%: 18/18, 2%: 16/18, 4%: 0/18, 6%: 0/18), the deviations are material
+(34/72 NHF scenarios with a gap of at least 1% of the
 optimum, or infeasible) and mostly disappear under a fixed horizon
-(2/72): a rolling-horizon effect rather than tie-breaking.
+(0/72): a rolling-horizon effect rather than tie-breaking.

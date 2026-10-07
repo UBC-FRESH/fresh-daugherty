@@ -1,9 +1,9 @@
 group,discount_rate,infeasible,optimal,suboptimal
-NHF,0.0,0.099,0.377,0.524
-NHF,0.02,0.151,0.655,0.194
+NHF,0.0,0.071,0.429,0.5
+NHF,0.02,0.218,0.468,0.313
 NHF,0.04,0.0,1.0,0.0
 NHF,0.06,0.0,1.0,0.0
-flow-constrained,0.0,0.117,0.211,0.672
-flow-constrained,0.02,0.323,0.363,0.314
-flow-constrained,0.04,0.295,0.463,0.241
-flow-constrained,0.06,0.318,0.434,0.248
+flow-constrained,0.0,0.149,0.1,0.751
+flow-constrained,0.02,0.267,0.359,0.375
+flow-constrained,0.04,0.257,0.442,0.301
+flow-constrained,0.06,0.285,0.425,0.29

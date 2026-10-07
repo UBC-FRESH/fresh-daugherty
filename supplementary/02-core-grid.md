@@ -8,11 +8,11 @@ Per-cell records: [grid.csv](../results/experiments/grid.csv) and
 
 ## Headline
 
-- Flow-constrained cells: **66%** exhibit dynamic
+- Flow-constrained cells: **56%** exhibit dynamic
   inconsistency (mean relative divergence > 5%).
-- Flow-unconstrained (NHF) control: **39%**; by
-  discount rate 0%: 18/18, 2%: 10/18, 4%: 0/18, 6%: 0/18. Under a fixed horizon the control's
-  divergence falls to 2/72 (a rolling-horizon effect; see
+- Flow-unconstrained (NHF) control: **47%**; by
+  discount rate 0%: 18/18, 2%: 16/18, 4%: 0/18, 6%: 0/18. Under a fixed horizon the control's
+  divergence falls to 0/72 (a rolling-horizon effect; see
   [03](03-gap-diagnostic.md) and [10](10-review-analyses.md)).
 
 ## The declining non-declining yield
@@ -23,28 +23,28 @@ Per-cell records: [grid.csv](../results/experiments/grid.csv) and
 
 | flow_policy | occurrence | mean_abs_rel_deviation |
 | --- | --- | --- |
-| +/-10% | 0.625 | 0.084 |
-| +/-20% | 0.833 | 0.119 |
-| -10% | 0.5 | 0.104 |
-| -20% | 0.5 | 0.115 |
-| NDY | 0.861 | 0.081 |
-| NHF | 0.389 | 0.137 |
+| +/-10% | 0.514 | 0.079 |
+| +/-20% | 0.639 | 0.1 |
+| -10% | 0.375 | 0.076 |
+| -20% | 0.431 | 0.098 |
+| NDY | 0.861 | 0.087 |
+| NHF | 0.472 | 0.171 |
 
 Flow-constrained policies only:
 
 | flow_policy | occurrence | mean_abs_rel_deviation |
 | --- | --- | --- |
-| +/-10% | 0.625 | 0.084 |
-| +/-20% | 0.833 | 0.119 |
-| -10% | 0.5 | 0.104 |
-| -20% | 0.5 | 0.115 |
-| NDY | 0.861 | 0.081 |
+| +/-10% | 0.514 | 0.079 |
+| +/-20% | 0.639 | 0.1 |
+| -10% | 0.375 | 0.076 |
+| -20% | 0.431 | 0.098 |
+| NDY | 0.861 | 0.087 |
 
 ## Occurrence and magnitude by discount rate
 
 | discount_rate | occurrence | mean_abs_rel_deviation |
 | --- | --- | --- |
-| 0.0 | 1.0 | 0.26 |
-| 0.02 | 0.593 | 0.061 |
-| 0.04 | 0.426 | 0.047 |
-| 0.06 | 0.454 | 0.059 |
+| 0.0 | 1.0 | 0.246 |
+| 0.02 | 0.546 | 0.073 |
+| 0.04 | 0.296 | 0.04 |
+| 0.06 | 0.352 | 0.048 |
