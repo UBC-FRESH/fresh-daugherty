@@ -62,6 +62,12 @@ constraint is present but opt-in (`terminal_constraints=False`) and flagged
 experimental. The paper states this honestly (Methods/limitations) rather than
 carrying a silent caveat.
 
+**Correction (P16.3, #94, 2026-10-04):** finding (a) does not hold for the
+grid. In the P15 core grid, 79 of 360 flow-constrained open-loop plans harvest
+more than twice the mean of periods 1-14 in period 15 (maximum 9.9x; 56 of the
+79 at a 0% rate). Terminal constraints remain off (user decision R08); results
+are also reported on the thesis's periods 2-11 window.
+
 ## Experiment design (ch. 5)
 
 - Landbases (Table 5.5, p. 78): 18 initial forest conditions, each 10,000 ac.

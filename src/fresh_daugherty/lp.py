@@ -41,7 +41,7 @@ from fresh_daugherty.instance.thesis import (
     THESIS_DISCOUNT_RATE,
     HarvestFlowPolicy,
 )
-from fresh_daugherty.model import MATURE_RX, ecoclass_code
+from fresh_daugherty.model import MATURE_RX_BY_TYPE, ecoclass_code
 
 #: Relative slack on bounds built from *realized* harvests (the carried flow
 #: anchor and the realized-history rolling-mean floor). Realized volumes carry
@@ -92,6 +92,27 @@ def _escalated(base: float, year: float) -> float:
     return base * (1.0 + PRICE_ESCALATION_RATE) ** min(year, PRICE_ESCALATION_YEARS)
 
 
+def _tighten_period1_harvest(
+    cgen_data: dict | None, *, lb: float | None = None, ub: float | None = None
+) -> dict:
+    """Intersect period-1 harvest-volume bounds with any already present.
+
+    Every caller that bounds the period-1 harvest (cap, carried anchor,
+    tail-fixed band) goes through here, so the result is the intersection of
+    all requested bounds regardless of order. An empty intersection (lb > ub)
+    is kept and makes the problem infeasible, which is the correct reading.
+    """
+    cgen_data = cgen_data or {}
+    hv = cgen_data.setdefault("cflw_hv", {})
+    lbs = hv.setdefault("lb", {})
+    ubs = hv.setdefault("ub", {})
+    if lb is not None:
+        lbs[1] = max(lbs.get(1, lb), lb)
+    if ub is not None:
+        ubs[1] = min(ubs.get(1, ub), ub)
+    return cgen_data
+
+
 def add_open_loop_problem(
     model: ws3.forest.ForestModel,
     *,
@@ -110,6 +131,7 @@ def add_open_loop_problem(
     prev_harvest_mcf: float | None = None,
     flow_window: int = 2,
     realized_history: tuple[float, ...] | None = None,
+    history_rtol: float = HISTORY_RTOL,
     name: str = "open-loop",
 ) -> object:
     """Add the open-loop NPV-max LP to ``model`` and return it.
@@ -150,10 +172,13 @@ def add_open_loop_problem(
     ending-period inventory floor (ending growing stock >= 80% of the regulated
     forest's average inventory; thesis p.77). Known issue: the per-path
     ending-inventory coefficient does not yet match ws3's growing-stock
-    accounting (regenerated-DT handling), so the floor can be infeasible. With
-    the corrected (Table 5.4-faithful) case-study data the model does not
-    exhibit the horizon-end liquidation these constraints guard against, so they
-    are off by default; see `planning/thesis-formulation.md` and issue #42.
+    accounting (regenerated-DT handling), so the floor can be infeasible; the
+    constraints are off by default (see `planning/thesis-formulation.md` and
+    issue #42). Horizon-end effects are present without them: in the P15 core
+    grid, 79 of 360 flow-constrained open-loop plans harvest more than twice the
+    mean of periods 1-14 in period 15 (56 of them at a 0% rate), which is why
+    results are also reported on the thesis's periods 2-11 window (P16.3, #94;
+    an earlier version of this note said the model showed no liquidation).
     """
     period_length = model.period_length
     path = discount_path if discount_path is not None else constant_path(discount_rate)
@@ -290,32 +315,43 @@ def add_open_loop_problem(
             cgen_data = cgen_data or {}
             cgen_data["inventory"] = {"lb": {final_period: inv_target}}
 
-    if fix_period1_harvest_mcf is not None:
-        # Fix the period-1 harvest volume to a tight band around the announced
-        # value (used by the objective-gap consistency diagnostic to evaluate
-        # the announced plan's decision in a subproblem). A tight relative band
-        # (not exact equality) so discreteness in achievable harvest doesn't
-        # make a genuinely-implementable decision read as infeasible.
-        cgen_data = cgen_data or {}
-        hv_bounds = cgen_data.setdefault("cflw_hv", {"lb": {}, "ub": {}})
-        eps = 0.01
-        hv_bounds.setdefault("lb", {})[1] = fix_period1_harvest_mcf * (1.0 - eps)
-        hv_bounds.setdefault("ub", {})[1] = fix_period1_harvest_mcf * (1.0 + eps)
-
     if prev_harvest_mcf is not None and flow_geometry == "consecutive":
+        if flow_denominator != "volume":
+            # The carried anchor bounds period-1 *volume*; a revenue-denominated
+            # policy would need a revenue anchor. Refuse rather than silently
+            # anchor the wrong quantity (P16.1, #92).
+            raise ValueError("carried flow history is implemented for volume-denominated flow only")
         # Carry the harvest-flow history: the subproblem's first-period harvest
         # is anchored to the realized previous period's harvest (the sequential
         # -flow policy's payoff/feasibility-relevant state), so the replanned
         # policy is the SAME policy, not a reset one. H_1 within the policy's
         # (decrease, increase) tolerances of H_prev.
         dec = flow_coefficient if flow_decrease is None else flow_decrease
-        cgen_data = cgen_data or {}
-        hv_bounds = cgen_data.setdefault("cflw_hv", {"lb": {}, "ub": {}})
-        hv_bounds.setdefault("lb", {})[1] = prev_harvest_mcf * (1.0 - dec) * (1.0 - HISTORY_RTOL)
-        if flow_increase is not None:
-            hv_bounds.setdefault("ub", {})[1] = (
-                prev_harvest_mcf * (1.0 + flow_increase) * (1.0 + HISTORY_RTOL)
-            )
+        cgen_data = _tighten_period1_harvest(
+            cgen_data,
+            lb=prev_harvest_mcf * (1.0 - dec) * (1.0 - history_rtol),
+            ub=(
+                None
+                if flow_increase is None
+                else prev_harvest_mcf * (1.0 + flow_increase) * (1.0 + history_rtol)
+            ),
+        )
+
+    if fix_period1_harvest_mcf is not None:
+        # Fix the period-1 harvest volume to a tight band around the announced
+        # value (used by the objective-gap consistency diagnostic to evaluate
+        # the announced plan's decision in a subproblem). A tight relative band
+        # (not exact equality) so discreteness in achievable harvest doesn't
+        # make a genuinely-implementable decision read as infeasible. The band
+        # is intersected with any other period-1 bound (carried anchor, cap):
+        # the tail-fixed problem is the free problem plus the band (P16.1,
+        # #92; previously these writes overwrote each other).
+        eps = 0.01
+        cgen_data = _tighten_period1_harvest(
+            cgen_data,
+            lb=fix_period1_harvest_mcf * (1.0 - eps),
+            ub=fix_period1_harvest_mcf * (1.0 + eps),
+        )
 
     problem = model.add_problem(
         name=name,
@@ -339,6 +375,7 @@ def add_open_loop_problem(
             flow_key=flow_key,
             flow_decrease=dec,
             realized_history=realized_history,
+            history_rtol=history_rtol,
         )
     return problem
 
@@ -385,7 +422,7 @@ def _standing_volume_per_ac(model: ws3.forest.ForestModel, dtk, age: float) -> f
     yield curve. Flat past culmination, so safe for over-mature ages.
     """
     rx, origin = str(dtk[2]), str(dtk[3])
-    if rx == MATURE_RX or origin == "existing":
+    if rx in MATURE_RX_BY_TYPE.values() or origin == "existing":
         dt = model.dtypes.get(dtk)
         if dt is None:
             return 0.0
@@ -412,6 +449,7 @@ def _add_rolling_mean_flow(
     flow_key: str,
     flow_decrease: float = 0.0,
     realized_history: tuple[float, ...] | None = None,
+    history_rtol: float = HISTORY_RTOL,
 ) -> None:
     """Add backwards-facing rolling-mean NDY rows to a compiled problem (E4, P12).
 
@@ -462,7 +500,7 @@ def _add_rolling_mean_flow(
                 for ij, v in mu.get(ref, {}).items():
                     coeffs[xnames[ij]] = coeffs.get(xnames[ij], 0.0) - scale * v
             else:
-                rhs += scale * float(ref) * (1.0 - HISTORY_RTOL)
+                rhs += scale * float(ref) * (1.0 - history_rtol)
         problem.add_constraint(f"flw-rm_{t:03d}_{flow_key}", coeffs, opt.SENSE_GEQ, rhs)
 
 

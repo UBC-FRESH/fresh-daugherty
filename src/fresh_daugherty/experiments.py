@@ -12,6 +12,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 import ws3 as _ws3
 
@@ -552,13 +553,12 @@ def _run_rolling_cell(args: tuple) -> tuple[dict, list[dict], list[dict]]:
         "flow_window": window,
         "anchoring": "realized-history" if realized_reading else "within-plan",
     }
-    relax_share = (
-        float((gap["solver_note"] != "ok").mean()) if "solver_note" in gap.columns else 0.0
-    )
+    relax_share, numeric_share = _relaxation_shares(gap)
     summary = {
         **keys,
         "horizon": horizon,
         "relax_share": relax_share,
+        "numeric_slack_share": numeric_share,
         "fd_version": _fd_version,
         "fd_commit": _fd_commit,
         "ws3_version": _ws3_version,
@@ -672,14 +672,14 @@ def _run_institution_cell(args: tuple) -> tuple[dict, list[dict], list[dict]]:
         "horizon_institution": horizon_kind,
         "flow_history": history,
     }
-    notes = gap["solver_note"] if "solver_note" in gap.columns else None
-    relax_share = float((notes[1:] != "ok").mean()) if notes is not None and len(notes) > 1 else 0.0
+    relax_share, numeric_share = _relaxation_shares(gap)
     summary = {
         **keys,
         "max_decrease": pol.max_decrease,
         "max_increase": pol.max_increase,
         "horizon": horizon,
         "relax_share": relax_share,
+        "numeric_slack_share": numeric_share,
         "fd_version": _fd_version,
         "fd_commit": _fd_commit,
         "ws3_version": _ws3_version,
@@ -810,6 +810,21 @@ def run_seed_grid(
     return summary, trajectories
 
 
+def _relaxation_shares(gap: pd.DataFrame) -> tuple[float, float]:
+    """Shares of replans (periods 2..T; period 1 is the plan itself) whose
+    history-derived bound was relaxed materially, and loosened only
+    numerically (<= ``replan.NUMERIC_RTOL_MAX``). P16.2/P16.3 (#93, #94):
+    E4 previously counted period 1 and every non-"ok" note alike."""
+    from fresh_daugherty.replan import is_material_relaxation
+
+    if "solver_note" not in gap.columns or len(gap) < 2:
+        return 0.0, 0.0
+    notes = [str(n) for n in gap.loc[gap["period"] > 1, "solver_note"]]
+    material = [is_material_relaxation(n) for n in notes]
+    numeric = [n != "ok" and not m for n, m in zip(notes, material, strict=True)]
+    return float(np.mean(material)), float(np.mean(numeric))
+
+
 def _policy_slug(code: str) -> str:
     """Filesystem-safe slug for a harvest-flow policy code (e.g. '+/-10%' -> 'pm10pct')."""
     return code.replace("+", "p").replace("/", "").replace("-", "m").replace("%", "pct")
@@ -837,6 +852,10 @@ def _run_policy_cell(args: tuple) -> dict:
         "max_decrease": pol.max_decrease,
         "max_increase": pol.max_increase,
         "horizon": horizon,
+        # Provenance on the core grid too (P16.6, #97; S16).
+        "fd_version": _fd_version,
+        "fd_commit": _fd_commit,
+        "ws3_version": _ws3_version,
         "projected": result.projected,
         "realized": result.realized,
         **result.metrics,

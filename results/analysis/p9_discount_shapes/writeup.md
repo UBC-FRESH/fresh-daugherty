@@ -1,5 +1,13 @@
 # E1 extension write-up — time-varying discount-rate shapes (P9)
 
+> **Superseded numbers (P16, #91; 2026-10-05).** This write-up records the
+> phase's original reasoning; its numbers predate the P16 re-run (defect fixes
+> and landbases rebuilt to thesis p. 79; see `CHANGE_LOG.md`). Current values:
+> the tables in this directory (regenerated from the records) and
+> `supplementary/05-extension-e1-discount-shapes.md`; old-vs-new summary in
+> `results/analysis/p16_rerun/old_vs_new.md`.
+
+
 Draft for transfer to the manuscript's Extensions section (see
 `planning/manuscript-expansion-plan.md` in `fresh_daugherty_manuscript`).
 Every number regenerates from the tracked records via

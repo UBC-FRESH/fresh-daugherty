@@ -129,9 +129,13 @@ def test_realized_history_reading_floors_against_realized(tmp_path) -> None:
     assert "solver_note" in df.columns
     v = list(df["harvest_volume_mcf"])
     notes = list(df["solver_note"])
-    assert set(notes) <= {"ok", "relaxed_anchor", "dropped_flow"}
+    # P16.2 (#93): minimal-relaxation ladder; the floor holds up to the
+    # recorded loosening unless it was dropped.
+    for n in notes:
+        assert n in {"ok", "relaxed_floor", "dropped_flow"} or n.startswith("history_rtol="), n
     for t in range(1, len(v)):
-        if notes[t] != "ok":
+        if notes[t] in ("relaxed_floor", "dropped_flow"):
             continue
+        rtol = float(notes[t].split("=")[1]) if notes[t].startswith("history_rtol=") else 1e-6
         window = v[max(0, t - k) : t]
-        assert v[t] >= (sum(window) / len(window)) * (1 - 1e-3)
+        assert v[t] >= (sum(window) / len(window)) * (1 - rtol) * (1 - 1e-6)

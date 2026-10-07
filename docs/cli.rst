@@ -43,7 +43,20 @@ relative deviation between the open-loop projection and the realized
 replanned trajectory, and the total-volume change. Options match
 ``open-loop``.
 
-The experiment grid (inconsistency occurrence/magnitude across landbases,
-discount rates, and harvest-flow policies) is available from the Python API
-(``fresh_daugherty.experiments.run_experiment_grid``); see
-:doc:`quickstart`.
+Experiment grids
+----------------
+
+Each grid command runs its scenarios in parallel (``--workers``) and writes a
+summary CSV plus trajectory (and, where applicable, objective-gap) records.
+The exact commands that produced the tracked records are in
+``results/experiments/REPRODUCIBILITY.md``.
+
+- ``grid`` — the core scenario grid (landbase x discount rate x harvest-flow
+  policy).
+- ``grid-discount-paths`` — E1, declining discount-rate paths.
+- ``grid-cap-search`` — E2, calibrated max-harvest cap.
+- ``grid-value-flow`` — E3, volume- vs revenue-denominated flow constraints.
+- ``grid-rolling-mean`` — E4, rolling-mean non-declining yield.
+- ``grid-institutions`` — the core grid under rolling/fixed horizon x
+  reset/carried flow history.
+- ``grid-seeds`` — the random landbases 11-18 under further generator seeds.

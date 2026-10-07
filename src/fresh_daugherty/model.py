@@ -46,6 +46,17 @@ OVER_MATURE_AGE_CAP = 250
 #: prescription "mature" DTs at their Table 5.4 ages.
 MATURE_RX = "mature"
 
+#: Prescription-theme code per mature vegetation type (Table 5.4). Each type
+#: needs its own development type: CH-CW has two mature types (sawtimber and
+#: two-storied) with different volumes, which shared one DT key, and hence the
+#: sawtimber yield curve, until P16.8 (#99).
+MATURE_RX_BY_TYPE: dict[str, str] = {"sawtimber": MATURE_RX, "two-storied": f"{MATURE_RX}2s"}
+
+
+def mature_rx(mt) -> str:
+    """Prescription-theme code of a mature vegetation type (``MatureTypePnv``)."""
+    return MATURE_RX_BY_TYPE[mt.vegetation_type]
+
 
 def ecoclass_code(eco: Ecoclass) -> str:
     """Single-token ecoclass code for the ws3 theme (no hyphen)."""
@@ -123,7 +134,7 @@ def build_woodstock_sections(
 
     # --- landscape / themes ---
     ecoclasses = sorted({ecoclass_code(e) for e in Ecoclass})
-    rx_codes = sorted({f"rx{int(rx)}" for rx in Prescription} | {MATURE_RX})
+    rx_codes = sorted({f"rx{int(rx)}" for rx in Prescription} | set(MATURE_RX_BY_TYPE.values()))
     (out / f"{model_name}.lan").write_text(
         "*THEME FOREST\numpqua\n\n"
         "*THEME ECOCLASS\n" + "".join(f"{c}\n" for c in ecoclasses) + "\n"
@@ -154,7 +165,7 @@ def build_woodstock_sections(
             f.write("\n")
         # Mature DTs (existing, over-mature).
         for mt in MATURE_TYPE_PNV:
-            dtk = _dtk(mt.ecoclass, MATURE_RX, "existing")
+            dtk = _dtk(mt.ecoclass, mature_rx(mt), "existing")
             vol = mature_volume_mcf(mt, net_price[mt.ecoclass])
             f.write(f"*Y ? {dtk[1]} {dtk[2]} {dtk[3]} {dtk[4]}\n_AGE totvol\n")
             for age, v in _mature_yield_points(vol, mt.age_yr, max_age):
@@ -177,7 +188,7 @@ def build_woodstock_sections(
         for mt in MATURE_TYPE_PNV:
             f.write(
                 f"*OPERABLE harvest\n"
-                f"? {ecoclass_code(mt.ecoclass)} {MATURE_RX} existing baseline _AGE >= 0\n"
+                f"? {ecoclass_code(mt.ecoclass)} {mature_rx(mt)} existing baseline _AGE >= 0\n"
             )
 
     # --- transitions ---
@@ -189,7 +200,7 @@ def build_woodstock_sections(
         f.write(
             # Mature (existing) -> base managed (regenerated rx2), age 0.
             "*CASE harvest\n"
-            "*SOURCE ? ? mature existing baseline\n"
+            "*SOURCE ? ? ? existing baseline\n"
             "*TARGET ? ? rx2 regenerated baseline 100 _AGE 0\n"
             # Managed (regenerated) -> itself, age 0.
             "*CASE harvest\n"
@@ -244,10 +255,12 @@ __all__ = [
     "BASE_YEAR",
     "FOREST",
     "MATURE_RX",
+    "MATURE_RX_BY_TYPE",
     "THEME_COUNT",
     "bootstrap_model",
     "build_woodstock_sections",
     "ecoclass_code",
+    "mature_rx",
     "mature_volume_mcf",
     "prepare_optimization",
 ]

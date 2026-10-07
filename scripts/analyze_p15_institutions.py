@@ -96,6 +96,18 @@ def main() -> None:
         OUT / "t7_landbase1_ndy_4pc",
     )
 
+    # T8: the thesis's volume inconsistency (eq. 5-1: periods 2-11, sum |announced
+    # - realized| / sum announced) by institution, on the thesis-matched subset
+    # (every policy at 4%, NDY at every rate). Rolling/carried corresponds to
+    # the thesis's carried-history simulations (p. 120: mean 1.9%).
+    w = traj[(traj.flow_policy != "NHF") & traj.period.between(2, 11)].copy()
+    w["absdev"] = (w.projected_mcf - w.realized_mcf).abs()
+    iv = w.groupby([*INST, *KEYS])[["absdev", "projected_mcf"]].sum()
+    iv = (iv.absdev / iv.projected_mcf).rename("thesis_IV").reset_index()
+    iv = iv[(iv.discount_rate == 0.04) | (iv.flow_policy == "NDY")]
+    t8 = iv.groupby(INST).thesis_IV.agg(["size", "mean", "median"]).round(4)
+    _md(t8, OUT / "t8_thesis_volume_inconsistency_by_institution")
+
     # Checks recorded with the tables: control == core grid; period-1 invariant.
     ctl = g[(g.horizon_institution == "rolling") & (g.flow_history == "reset")]
     m = core.merge(ctl, on=KEYS, suffixes=("_core", "_ctl"))
@@ -117,7 +129,7 @@ def main() -> None:
         }
     ).set_index("check")
     _md(checks, OUT / "t0_checks")
-    print(f"wrote tables T0-T7 to {OUT}/")
+    print(f"wrote tables T0-T8 to {OUT}/")
 
 
 if __name__ == "__main__":
