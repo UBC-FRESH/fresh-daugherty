@@ -20,7 +20,9 @@ def replan_result(tmp_path_factory):
     tmp = tmp_path_factory.mktemp("replan")
     areas = landbase_areas(1)
     build_woodstock_sections(tmp / "model", areas=areas)
-    model = prepare_optimization(bootstrap_model(tmp / "model", horizon=6), horizon=6)
+    # Horizon 10 (was 6): with the thesis's terminal constraints (P18.2) a
+    # 6-period horizon is dominated by the final-period rows.
+    model = prepare_optimization(bootstrap_model(tmp / "model", horizon=10), horizon=10)
     projected = open_loop_projection(model)
     realized = sequential_replan(model, workdir=tmp / "replans")
     return projected, list(realized["harvest_volume_mcf"])

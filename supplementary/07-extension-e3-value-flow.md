@@ -16,14 +16,14 @@ Analysis writeup: [p11 writeup](../results/analysis/p11_value_flow/writeup.md).
 ## Headline
 
 Revenue denominating MITIGATES inconsistency without eliminating it:
-flow-constrained occurrence 187/360
-(52%, revenue) vs
-239/360 (66%,
-volume); mean magnitude 0.098 vs
-0.101. The effect differs by policy form
+flow-constrained occurrence 181/360
+(50%, revenue) vs
+203/360 (56%,
+volume); mean magnitude 0.093 vs
+0.088. The effect differs by policy form
 (table below): NDY and bounded decline fall sharply, symmetric bounded
 deviation rises slightly. Revenue NDY drives projected CM-CE harvest to
-exactly zero (vs 4.2%-4.3% of projected volume under volume NDY on
+exactly zero (vs 0.0%-5.3% of projected volume under volume NDY on
 landbase 1), and on the paired landbases (with vs without CM-CE) the extra
 inconsistency associated with negatively valued strata disappears under
 revenue denominating; inconsistency persists through the remaining strata.
@@ -35,13 +35,13 @@ See the writeup's Table T4 and paired-landbase table.
 
 | flow_denominator | flow_policy | occurrence | mean_abs_rel_deviation |
 | --- | --- | --- | --- |
-| revenue | +/-10% | 0.708 | 0.101 |
-| revenue | +/-20% | 0.819 | 0.134 |
-| revenue | -10% | 0.319 | 0.092 |
-| revenue | -20% | 0.417 | 0.104 |
-| revenue | NDY | 0.333 | 0.06 |
-| volume | +/-10% | 0.625 | 0.084 |
-| volume | +/-20% | 0.833 | 0.119 |
-| volume | -10% | 0.5 | 0.104 |
-| volume | -20% | 0.5 | 0.115 |
-| volume | NDY | 0.861 | 0.081 |
+| revenue | +/-10% | 0.5 | 0.09 |
+| revenue | +/-20% | 0.875 | 0.131 |
+| revenue | -10% | 0.333 | 0.078 |
+| revenue | -20% | 0.444 | 0.093 |
+| revenue | NDY | 0.361 | 0.073 |
+| volume | +/-10% | 0.514 | 0.079 |
+| volume | +/-20% | 0.639 | 0.1 |
+| volume | -10% | 0.375 | 0.076 |
+| volume | -20% | 0.431 | 0.098 |
+| volume | NDY | 0.861 | 0.087 |

@@ -68,6 +68,14 @@ more than twice the mean of periods 1-14 in period 15 (maximum 9.9x; 56 of the
 79 at a 0% rate). Terminal constraints remain off (user decision R08); results
 are also reported on the thesis's periods 2-11 window.
 
+**Correction (P18.2, #112, 2026-10-06):** finding (b) was wrong. ws3 supports
+an ending-inventory row directly (`ForestModel.inventory` of each column's
+post-action state, in total units). Our coefficient had two bugs: it returned
+per-acre volume against a total-area target (Model I path variables are
+proportions of a stratum) and it read the pre-action state. The terminal
+constraints are now implemented as in the thesis (p. 77) with ws3's inventory
+and enabled for every flow-constrained run (not NHF, not the E2 cap; p. 80).
+
 ## Experiment design (ch. 5)
 
 - Landbases (Table 5.5, p. 78): 18 initial forest conditions, each 10,000 ac.

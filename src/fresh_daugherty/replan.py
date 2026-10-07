@@ -130,7 +130,7 @@ HISTORY_RTOL_PRECISION = 1e-3
 
 def history_note(rtol: float) -> str:
     """Solver note for a solve that needed the history bound loosened to ``rtol``."""
-    return f"history_rtol={rtol:.4g}"
+    return f"history_rtol={rtol:.10g}"
 
 
 def minimal_history_relaxation(solve) -> tuple[object | None, float | None]:

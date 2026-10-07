@@ -1,5 +1,5 @@
 horizon_institution,flow_history,infeasible,optimal,suboptimal
-fixed,carried,0.0,0.997,0.003
-fixed,reset,0.115,0.568,0.317
-rolling,carried,0.344,0.557,0.099
-rolling,reset,0.263,0.368,0.369
+fixed,carried,0.001,0.998,0.001
+fixed,reset,0.102,0.587,0.311
+rolling,carried,0.317,0.552,0.131
+rolling,reset,0.239,0.331,0.429

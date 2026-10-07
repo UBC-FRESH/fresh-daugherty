@@ -75,7 +75,7 @@ def test_policy_grid_occurrence_and_nhf_baseline(tmp_path: Path) -> None:
         landbases=(1,),
         discount_rates=(0.04,),
         policies=(pol["NHF"], pol["NDY"]),
-        horizon=6,
+        horizon=10,  # was 6; terminal constraints (P18.2) dominate shorter horizons
         workdir=tmp_path,
     )
     assert set(df["flow_policy"]) == {"NHF", "NDY"}
@@ -119,7 +119,7 @@ def test_discount_path_grid_smoke(tmp_path: Path) -> None:
         landbases=(1,),
         discount_paths=(discount_path("linear-4pc-0pc"),),
         policies=(pol["NDY"],),
-        horizon=5,
+        horizon=10,  # was 5; terminal constraints (P18.2) dominate shorter horizons
         workdir=tmp_path,
     )
     assert len(summary) == 1
@@ -130,7 +130,7 @@ def test_discount_path_grid_smoke(tmp_path: Path) -> None:
     # Provenance columns are populated.
     assert row["fd_version"] and row["ws3_version"]
     # Per-period records: horizon rows in each long-format frame.
-    assert len(trajectories) == len(gaps) == 5
+    assert len(trajectories) == len(gaps) == 10
     assert {"period", "projected_mcf", "realized_mcf"} <= set(trajectories.columns)
     assert {"period", "announced", "realized", "objective_gap", "tail_status"} <= set(gaps.columns)
     # NDY on the all-mature landbase is strongly inconsistent under the path too.

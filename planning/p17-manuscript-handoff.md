@@ -1,5 +1,9 @@
 # P17 hand-off to the manuscript (issue #107)
 
+> **Superseded (P18, #110).** Numbers below predate the P18 re-run; use
+> `planning/p18-manuscript-handoff.md`.
+
+
 Supersedes `planning/p16-manuscript-handoff.md`. All records at `042c345`
 (P17.5, #106). Headline basis: the thesis's observation window, **periods
 2–11** (thesis p. 83; record columns `*_2_11`); full horizon, periods 1–15, as

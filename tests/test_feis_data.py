@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+import itertools
+
+import pytest
+
 from fresh_daugherty.instance.feis import (
     SITE_INDEX_BY_ECOCLASS,
     SPECIES_ECONOMICS,
@@ -82,3 +86,33 @@ def test_mature_volume_crosscheck_independent() -> None:
     # The negatively valued CM-CE sawtimber has a negative PNV (cost > value).
     cmce = df[df["ecoclass"] == "CM-CE"].iloc[0]
     assert cmce["pnv_period1_per_ac"] < 0
+
+
+def test_young_age_yields_follow_a_sigmoid_from_zero() -> None:
+    """P18.1 (#111): below the first tabled FEIS age the yield curve follows
+    the cell's calibrated Chapman-Richards shape scaled to the first FEIS
+    value (it was held flat there, crediting young stands with an older
+    stand's volume). Curves start at zero, rise over the filled ages, and keep the FEIS
+    values at the tabled ages."""
+    from fresh_daugherty.instance.feis import real_yield_curve, real_yield_table
+    from fresh_daugherty.instance.landbases import _managed_cells
+
+    for eco, rx in _managed_cells():
+        curve = real_yield_curve(eco, rx, max_age=300)
+        assert curve[0] == pytest.approx(0.0, abs=1e-9), (eco, rx)
+        table = real_yield_table(eco, rx)
+        pts = {
+            e["age"]: float(e["values"][0])
+            for e in table["entries"]
+            if e["kind"] == "Regen" and e["values"] and e["values"][0] is not None
+        }
+        first = min(pts)
+        # Non-decreasing over the filled young segment (the FEIS values
+        # themselves decline slightly after culmination in a few tables).
+        young = [curve[a] for a in sorted(curve) if a <= first]
+        assert all(b >= a - 1e-9 for a, b in itertools.pairwise(young)), (eco, rx)
+        for age, vol in pts.items():
+            if age % 10 == 0:
+                assert curve[age] == pytest.approx(vol), (eco, rx, age)
+        if first > 10:
+            assert curve[first - first % 10] < pts[first] + 1e-9

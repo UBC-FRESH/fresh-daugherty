@@ -2,6 +2,30 @@
 
 Append-only project narrative, reverse-chronological.
 
+## v0.2.0 (unreleased) — P18 terminal constraints and young-age yields
+
+Phase 18 on `feature/p18-terminal-constraints` (parent #110; children
+#111-#115; stacked on P17). Hand-off: `planning/p18-manuscript-handoff.md`.
+
+- P18.1 (#111): yield curves were held flat below the first tabled FEIS age
+  (55-175 yr), crediting young stands with an older stand's volume (up to 45%
+  too high at rotation ages). They now follow the cell's calibrated
+  Chapman-Richards curve scaled to the first FEIS value.
+- P18.2 (#112): the thesis's terminal constraints (p. 77) on every
+  flow-constrained run (not NHF, not the E2 cap). The earlier experimental row
+  was not a ws3 limitation but our bug (per-acre coefficients against a total
+  target; pre-action state); coefficients are now ws3's inventory of each
+  column's post-action state. Follow-up: the targets read areas from mutated
+  model state, so a replan's free and tail-fixed problems differed (first
+  re-run aborted in E1 on the negative-gap guard); fixed with a reset and a
+  regression test. ws3 note: `ForestModel.inventory(t, age=...)` ages areas by
+  one period before matching `age`, so ws3's example `cmp_c_ci` returns 0.
+- P18.3 (#113): all grids re-run at `35f6a65`. Periods 2-11: core
+  flow-constrained 178/360 (was 187); NHF 34/72, at 0-2% and only under a
+  rolling horizon; exact tail 1/360; end-of-horizon liquidation gone (0/360
+  plans with a period-15 spike, was 78).
+- P18.4 (#114): analyses, supplement, figures regenerated; hand-off note.
+
 ## v0.2.0 (unreleased) — P17 audit-3 fixes and full re-run
 
 Phase 17 on `feature/p17-audit3-fixes` (parent #101; children #102–#108;

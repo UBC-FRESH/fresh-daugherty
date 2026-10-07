@@ -82,6 +82,10 @@ values are not matched exactly (table below; `model.mature_value_check`).
 - Yield curves: 1990 FEIS Appendix B (DFSIM Douglas-fir simulator, mountain
   hemlock from Johnson's site equations), with operational-falldown
   adjustment; CMAI culmination ages consistent with the LRMP (Table IV-3).
+  The FEIS tables start at 55-175 years; below the first tabled age each
+  curve follows the cell's calibrated Chapman-Richards shape scaled to the
+  first FEIS value (P18.1; effect at rotation ages:
+  `results/analysis/p18_young_yields/young_age_fill.md`).
 - Economics: FEIS Table B-65 stumpage/logging/manufacturing costs, Table
   B-66 price-diameter/pond-value relations, and per-ecoclass access (road)
   costs — the high-elevation access cost makes CM-CE negatively valued.

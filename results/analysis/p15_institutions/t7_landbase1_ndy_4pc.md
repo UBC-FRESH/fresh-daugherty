@@ -1,6 +1,6 @@
 | horizon_institution | flow_history | mean_abs_rel_deviation | occurrence | relax_share |
 | --- | --- | --- | --- | --- |
-| rolling | reset | 0.085 | True | 0.0 |
-| rolling | carried | 0.0134 | False | 0.3571 |
-| fixed | reset | 0.0848 | True | 0.0 |
+| rolling | reset | 0.115 | True | 0.0 |
+| rolling | carried | 0.0452 | False | 0.9286 |
+| fixed | reset | 0.0583 | True | 0.0 |
 | fixed | carried | 0.0 | False | 0.0 |

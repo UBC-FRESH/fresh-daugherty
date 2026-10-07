@@ -1,5 +1,5 @@
 | index | n | mean | median | min | max | share_gt_6pc | share_gt_10pc |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| flow-constrained, all 360 cells | 360.0 | 0.0888 | 0.055 | 0.0 | 0.7703 | 0.464 | 0.297 |
-| thesis-matched subset | 144.0 | 0.0552 | 0.0501 | 0.0 | 0.333 | 0.347 | 0.132 |
+| flow-constrained, all 360 cells | 360.0 | 0.0761 | 0.0493 | 0.0 | 0.6738 | 0.431 | 0.286 |
+| thesis-matched subset | 144.0 | 0.0551 | 0.0445 | 0.0 | 0.2698 | 0.333 | 0.167 |
 | thesis (178 runs; pp. 92, 124) | 178.0 | 0.09 | 0.072 | 0.017 | 0.292 | 0.6 | 0.27 |

@@ -1,9 +1,9 @@
 horizon_institution,flow_history,group,n,inconsistent_2-11,occurrence_2-11,magnitude_2-11,inconsistent_1-15,occurrence_1-15,magnitude_1-15
-fixed,carried,NHF,72,0,0.0,0.0,2,0.028,0.0021
-fixed,carried,flow-constrained,360,0,0.0,0.0,4,0.011,0.0017
-fixed,reset,NHF,72,0,0.0,0.0,2,0.028,0.0021
-fixed,reset,flow-constrained,360,137,0.381,0.0629,143,0.397,0.0757
-rolling,carried,NHF,72,19,0.264,0.1323,28,0.389,0.1372
-rolling,carried,flow-constrained,360,87,0.242,0.0423,124,0.344,0.0658
-rolling,reset,NHF,72,19,0.264,0.1323,28,0.389,0.1372
-rolling,reset,flow-constrained,360,187,0.519,0.0783,239,0.664,0.1006
+fixed,carried,NHF,72,0,0.0,0.0,0,0.0,0.0
+fixed,carried,flow-constrained,360,1,0.003,0.0003,0,0.0,0.0002
+fixed,reset,NHF,72,0,0.0,0.0,0,0.0,0.0
+fixed,reset,flow-constrained,360,98,0.272,0.0461,88,0.244,0.0419
+rolling,carried,NHF,72,34,0.472,0.1675,34,0.472,0.1712
+rolling,carried,flow-constrained,360,87,0.242,0.0349,118,0.328,0.054
+rolling,reset,NHF,72,34,0.472,0.1675,34,0.472,0.1712
+rolling,reset,flow-constrained,360,178,0.494,0.0719,203,0.564,0.0878
