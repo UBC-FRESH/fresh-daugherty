@@ -1,0 +1,5 @@
+horizon_institution,flow_history,+/-10%,+/-20%,-10%,-20%,NDY
+fixed,carried,0.042,0.0,0.0,0.042,0.0
+fixed,reset,0.569,0.583,0.583,0.5,0.806
+rolling,carried,0.278,0.347,0.389,0.333,0.569
+rolling,reset,0.708,0.792,0.708,0.583,0.861

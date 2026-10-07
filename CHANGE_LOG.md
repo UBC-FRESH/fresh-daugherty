@@ -2,6 +2,31 @@
 
 Append-only project narrative, reverse-chronological.
 
+## v0.2.0 (unreleased) — P15 review analyses
+
+Phase 15 on `feature/p15-review-analyses` (parent #82; children #83–#89;
+stacked on P14). Hand-off: `planning/p15-manuscript-handoff.md`; supplement
+page `supplementary/10-review-analyses.md`.
+
+- P15.1 (#83): null test (fixed horizon + carried history reproduces the plan)
+  failed, then passed after two fixes: `consistency_gap_replan` ignored
+  `carry_flow_history`; bounds from realized harvests were exact
+  (`lp.HISTORY_RTOL = 1e-6`). E4 realized-history cells re-run (occurrence
+  99/144 → 95/144; relaxed periods 21.1% → 18.8%).
+- P15.2 (#84): replanning-institution grid (1,728 cells): flow-constrained
+  occurrence rolling/reset 73% (= core), fixed/reset 61%, rolling/carried 38%,
+  fixed/carried 1.7%.
+- P15.3 (#85): tolerance sensitivity; thesis volume inconsistency (eq. 5-1) on
+  periods 2–11 vs the thesis's distribution; window and end-period share.
+- P15.4 (#86): gap diagnostic by rate x policy incl. NHF; first-deviation gap
+  (% NPV); materiality; reconciliation with the metric.
+- P15.5 (#87): paired CM-CE landbases, rate trend, per-landbase table; E2 vs
+  realized NDY on volume and NPV (E2 re-run with revenue records; other
+  columns identical).
+- P15.6 (#88): seed sensitivity for landbases 11–18 (960 cells).
+- P15.7 (#89): supplement page 10; pages 03 and 06 corrected where P15
+  overturned their reading (NHF low-rate divergence; E2 vs realized NDY).
+
 ## v0.2.0 (unreleased) — P14 E3 corrective (E3 and E2 records regenerated)
 
 Phase 14 on `feature/p14-e3-fix` (parent #75; children #76–#80). Found in

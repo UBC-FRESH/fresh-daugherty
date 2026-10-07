@@ -166,3 +166,68 @@ def test_rolling_mean_grid_smoke(tmp_path: Path) -> None:
     assert summary["fd_commit"].astype(bool).all()
     assert len(trajectories) == len(gaps) == 10
     _assert_period1_invariant(trajectories)
+
+
+def test_institution_grid_smoke(tmp_path: Path) -> None:
+    """P15.2 (#84): the institution grid runs all four (horizon, flow history)
+    institutions with gap records and provenance; the fixed/carried cell
+    reproduces the open-loop plan (null test) and the rolling/reset cell is the
+    core institution."""
+    from fresh_daugherty.experiments import INSTITUTIONS, run_institution_grid
+    from fresh_daugherty.instance.thesis import HARVEST_FLOW_POLICIES
+
+    pol = {p.code: p for p in HARVEST_FLOW_POLICIES}
+    summary, trajectories, gaps = run_institution_grid(
+        landbases=(1,),
+        discount_rates=(0.04,),
+        policies=(pol["NDY"],),
+        institutions=INSTITUTIONS,
+        horizon=6,
+        workdir=tmp_path,
+    )
+    assert len(summary) == 4 and len(trajectories) == len(gaps) == 24
+    assert summary["fd_commit"].astype(bool).all()
+    _assert_period1_invariant(trajectories)
+    null = summary[(summary.horizon_institution == "fixed") & (summary.flow_history == "carried")]
+    assert null["mean_abs_rel_deviation"].iloc[0] < 1e-4
+    assert null["relax_share"].iloc[0] == 0.0
+
+
+def test_cap_search_grid_smoke(tmp_path: Path) -> None:
+    """P15.5 (#87): the E2 cap-search grid runs end to end at a non-default
+    rate, keeps the period-1 invariant, records commit provenance, and its gap
+    records carry revenue (for the NPV comparison with realized NDY)."""
+    import numpy as np
+
+    from fresh_daugherty.experiments import run_cap_search_grid
+
+    summary, trajectories, gaps = run_cap_search_grid(
+        landbases=(1,), discount_rates=(0.02,), horizon=5, workdir=tmp_path
+    )
+    assert len(summary) == 1 and bool(summary["converged"].iloc[0])
+    assert summary["fd_commit"].astype(bool).all()
+    _assert_period1_invariant(trajectories)
+    assert {"announced_revenue", "realized_revenue"} <= set(gaps.columns)
+    assert np.isfinite(gaps["realized_revenue"]).all()
+
+
+def test_seed_grid_smoke(tmp_path: Path) -> None:
+    """P15.6 (#88): the seed grid runs; seed 42 reproduces the default landbase
+    and another seed produces a different random landbase."""
+    from fresh_daugherty.experiments import run_seed_grid
+    from fresh_daugherty.instance.landbases import landbase_areas
+    from fresh_daugherty.instance.thesis import HARVEST_FLOW_POLICIES
+
+    assert landbase_areas(11).equals(landbase_areas(11, seed=42))
+    assert not landbase_areas(11).equals(landbase_areas(11, seed=1042))
+    pol = {p.code: p for p in HARVEST_FLOW_POLICIES}
+    summary, trajectories = run_seed_grid(
+        landbases=(11,),
+        seeds=(42, 1042),
+        discount_rates=(0.04,),
+        policies=(pol["NDY"],),
+        horizon=5,
+        workdir=tmp_path,
+    )
+    assert len(summary) == 2 and summary["fd_commit"].astype(bool).all()
+    _assert_period1_invariant(trajectories)

@@ -43,6 +43,14 @@ from fresh_daugherty.instance.thesis import (
 )
 from fresh_daugherty.model import MATURE_RX, ecoclass_code
 
+#: Relative slack on bounds built from *realized* harvests (the carried flow
+#: anchor and the realized-history rolling-mean floor). Realized volumes carry
+#: float noise of ~1e-9--1e-6 relative; an exact bound at the realized level can
+#: then be infeasible by that noise, which triggered the anchor/floor relaxation
+#: fallback and silently switched the replanning institution (P15.1, #83). Six
+#: orders of magnitude below any policy tolerance.
+HISTORY_RTOL = 1e-6
+
 
 def _ecoclass_economics() -> dict[str, tuple[float, float]]:
     """Net delivered log price and harvest cost ($/MCF) per ecoclass code.
@@ -303,9 +311,11 @@ def add_open_loop_problem(
         dec = flow_coefficient if flow_decrease is None else flow_decrease
         cgen_data = cgen_data or {}
         hv_bounds = cgen_data.setdefault("cflw_hv", {"lb": {}, "ub": {}})
-        hv_bounds.setdefault("lb", {})[1] = prev_harvest_mcf * (1.0 - dec)
+        hv_bounds.setdefault("lb", {})[1] = prev_harvest_mcf * (1.0 - dec) * (1.0 - HISTORY_RTOL)
         if flow_increase is not None:
-            hv_bounds.setdefault("ub", {})[1] = prev_harvest_mcf * (1.0 + flow_increase)
+            hv_bounds.setdefault("ub", {})[1] = (
+                prev_harvest_mcf * (1.0 + flow_increase) * (1.0 + HISTORY_RTOL)
+            )
 
     problem = model.add_problem(
         name=name,
@@ -452,7 +462,7 @@ def _add_rolling_mean_flow(
                 for ij, v in mu.get(ref, {}).items():
                     coeffs[xnames[ij]] = coeffs.get(xnames[ij], 0.0) - scale * v
             else:
-                rhs += scale * float(ref)
+                rhs += scale * float(ref) * (1.0 - HISTORY_RTOL)
         problem.add_constraint(f"flw-rm_{t:03d}_{flow_key}", coeffs, opt.SENSE_GEQ, rhs)
 
 

@@ -11,14 +11,16 @@ Analysis writeup: [p10 writeup](../results/analysis/p10_cap_search/writeup.md).
 
 ## Headline
 
-Cap calibration ELIMINATES dynamic inconsistency: occurrence
-0% across the grid (mean divergence
-0.001, max
+Under the calibrated caps, occurrence is 0% across the
+grid (mean divergence 0.001, max
 0.008 — all below the 5% tolerance), with
-100% convergence. Removing the inter-period link removes the inconsistency.
-The calibrated level on landbase 1 (~9,400 MCF/period) is ~8% below the NDY
-plan's announced level — an automated allowable-cut calibration pricing the
-credibility of the flow promise.
+100% convergence; single periods can still deviate by more than 5% in
+2/72 cells. The calibrated
+level on landbase 1 (~9,400 MCF/period) is ~8% below the NDY plan's
+*announced* level; against the volume that replanned NDY actually delivers,
+the cap's total volume is about equal (median
+-0.5%) and its NPV is
+-4.6% (median; page 10).
 
 ![Landbase 1 at 4%: NDY flow link vs calibrated cap](figures/e2_ndy_vs_cap.png)
 

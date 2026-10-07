@@ -95,6 +95,39 @@ fresh-daugherty grid-rolling-mean \
   --out results/experiments/grid_rolling_mean.csv
 ```
 
+## Replanning-institution grid (P15, #84)
+
+`grid_institutions.csv` (+ `_trajectories`, `_gaps`): the 432 core cells under
+each of four replanning institutions — rolling or fixed (shrinking) horizon x
+reset or carried flow history — with the objective-gap diagnostic (1,728
+cells). The rolling/reset cells are the core grid's institution and reproduce
+`grid.csv` exactly; fixed/carried is the null reference (exact tail problem).
+Analysis: `PYTHONPATH=src python scripts/analyze_p15_institutions.py`.
+
+```bash
+fresh-daugherty grid-institutions \
+  --landbases "1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18" \
+  --discount-rates 0.0,0.02,0.04,0.06 \
+  --policies "NHF,NDY,-10%,-20%,+/-10%,+/-20%" \
+  --institutions "rolling/reset,rolling/carried,fixed/reset,fixed/carried" \
+  --horizon 15 --workers 48 \
+  --out results/experiments/grid_institutions.csv
+```
+
+## Seed-sensitivity grid (P15, #88)
+
+`grid_seeds.csv` (+ `_trajectories`): the random landbases 11-18 under five
+generator seeds (42 = the tracked draw, reproducing `grid.csv`; 1042-4042 fresh
+draws) x 4 rates x 6 policies, core institution (960 cells).
+Analysis: `PYTHONPATH=src python scripts/analyze_p15_seeds.py`.
+
+```bash
+fresh-daugherty grid-seeds \
+  --landbases "11,12,13,14,15,16,17,18" --seeds "42,1042,2042,3042,4042" \
+  --discount-rates 0.0,0.02,0.04,0.06 --policies "NHF,NDY,-10%,-20%,+/-10%,+/-20%" \
+  --horizon 15 --workers 48 --out results/experiments/grid_seeds.csv
+```
+
 ## Environment
 
 Key dependency versions used for the reported results (see `pyproject.toml` for
@@ -117,6 +150,11 @@ record.
 E3 (`grid_value_flow*`) and E2 (`grid_cap_search*`) were regenerated in P14
 (#75) at `83c7b16` after two defects were fixed (E3 revenue cells announced the
 volume plan; E2 projected at the 4% default rate); see `CHANGE_LOG.md`.
+E2 was re-run in P15 (#87) at `8b8ffd5` to add revenue columns to its gap
+records (all other columns identical to the P14 records).
+E4 (`grid_rolling_mean*`) was regenerated in P15 (#83) at `268fa6a` after bounds
+built from realized harvests received a 1e-6 relative slack (`lp.HISTORY_RTOL`);
+within-plan cells are bit-identical, realized-history cells changed.
 
 All seed-dependent runs are fixed-seeded. The experiment is deterministic (LP
 solves), so the grid CSVs regenerate bit-for-bit given the environment.
