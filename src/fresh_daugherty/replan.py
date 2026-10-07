@@ -44,7 +44,7 @@ OCCURRENCE_TOLERANCE = 0.05
 
 #: The thesis's observation window (thesis p. 83: planners 2-11, periods 2-11),
 #: the paper's headline basis (P17.4, #105); periods beyond it are prone to
-#: end-of-horizon effects because the thesis's terminal constraints are off.
+#: end-of-horizon effects (each replan has its own end periods).
 THESIS_WINDOW: tuple[int, int] = (2, 11)
 
 

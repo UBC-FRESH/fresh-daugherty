@@ -77,9 +77,17 @@ Known limitations
   run requires the final-period standing volume to be at least 80% of the
   average inventory of the forest regulated under the regeneration
   prescriptions, and caps the final-period harvest at 120% of its long-term
-  sustained yield, both at the highest-PNV rotations
-  (``lp.regulated_forest_targets``); not used without a flow policy or with the
-  E2 cap (thesis p. 80). Every record also carries the metrics on the thesis's
+  sustained yield, both at the thesis's highest-PNV rotations (Table 5.3;
+  ``lp.regulated_forest_targets``); not used without a flow policy or with the
+  E2 cap (thesis p. 80). The model's own highest-PNV rotations differ: the
+  shortest permitted rotation for every productive prescription, the longest
+  for CM-CE (``feis.model_lev``); ``terminal_rotation="model"`` uses them, a
+  sensitivity (``grid_terminal_rotation_model.csv``).
+- **Price escalation**: the 1%/yr real escalation (50 years) applies to each
+  ecoclass's net value per unit volume (stumpage less access cost), so the
+  negatively valued CM-CE stratum also becomes more negative over time; the
+  thesis escalated log prices and logging costs but held hauling and road
+  costs constant (p. 74). Every record also carries the metrics on the thesis's
   observation window, periods 2-11 (``*_2_11`` columns).
 - **Young-age yields**: below the first tabled FEIS age, yield curves follow
   the cell's calibrated Chapman-Richards shape scaled to the first FEIS value.
