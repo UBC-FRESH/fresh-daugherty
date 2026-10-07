@@ -1,0 +1,9 @@
+institution,policies,replans,optimal,suboptimal,infeasible,material_loosening
+fixed/carried,flow-constrained,3600,0.9989,0.0008,0.0003,0.0
+fixed/carried,NHF,720,1.0,0.0,0.0,
+fixed/reset,flow-constrained,3600,0.6131,0.3222,0.0647,
+fixed/reset,NHF,720,1.0,0.0,0.0,
+rolling/carried,flow-constrained,3600,0.6578,0.0994,0.2428,0.1306
+rolling/carried,NHF,720,0.7514,0.2222,0.0264,
+rolling/reset,flow-constrained,3600,0.4208,0.3947,0.1844,
+rolling/reset,NHF,720,0.7514,0.2222,0.0264,

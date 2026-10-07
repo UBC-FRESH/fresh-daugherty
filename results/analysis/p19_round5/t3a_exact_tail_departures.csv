@@ -1,0 +1,3 @@
+window,scenarios,max_dev_gt_0.1pct,max_dev_gt_1pct,max_dev_gt_5pct
+periods 2-11,360,10,4,2
+periods 2-15,360,14,5,2

@@ -1,2 +1,2 @@
-landbase,discount_rate,calibrated_cap_mcf,cap_total_realized_mcf,ndy_total_announced_mcf,ndy_total_realized_mcf,cap_npv,ndy_realized_npv,volume_cap_vs_realized_ndy,volume_cap_vs_announced_ndy,npv_cap_vs_realized_ndy
-1,0.04,7949.59,119136.44,133705.99,118328.12,17779253.84,18937179.27,0.01,-0.11,-0.06
+landbase,discount_rate,calibrated_cap_mcf,cap_realized_mcf_1_11,ndy_realized_mcf_1_11,ndy_announced_mcf_1_11,cap_npv_1_11,ndy_realized_npv_1_11,volume_cap_vs_realized_ndy_1_11,volume_cap_vs_announced_ndy_1_11,npv_cap_vs_realized_ndy_1_11,cap_realized_mcf_1_15,ndy_realized_mcf_1_15,ndy_announced_mcf_1_15,cap_npv_1_15,ndy_realized_npv_1_15,volume_cap_vs_realized_ndy_1_15,volume_cap_vs_announced_ndy_1_15,npv_cap_vs_realized_ndy_1_15
+1,0.04,7949.59,87445.52,89546.09,98051.06,17558756.03,18734328.82,-0.02,-0.11,-0.06,119136.44,118328.12,133705.99,17779253.84,18937179.27,0.01,-0.11,-0.06

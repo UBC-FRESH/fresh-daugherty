@@ -1,0 +1,8 @@
+| index | value |
+| --- | --- |
+| scenarios_with_nonoptimal_replan | 324 |
+| first_deviation_infeasible | 40 |
+| first_suboptimal_gap_median_pct | 0.051 |
+| first_suboptimal_gap_p90_pct | 0.95 |
+| inconsistent_with_flag | 178/178 |
+| consistent_with_flag | 146/182 |

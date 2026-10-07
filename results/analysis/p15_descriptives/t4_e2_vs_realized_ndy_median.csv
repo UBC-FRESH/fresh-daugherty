@@ -1,6 +1,8 @@
-discount_rate,volume_cap_vs_realized_ndy,volume_cap_vs_announced_ndy,npv_cap_vs_realized_ndy
-0.0,0.0631,-0.0853,0.0456
-0.02,0.0544,-0.0049,0.0337
-0.04,0.011,-0.0507,-0.0189
-0.06,0.0162,-0.0436,-0.0203
-all (median),0.0233,-0.0523,-0.0058
+discount_rate,volume_cap_vs_realized_ndy_1_11,volume_cap_vs_announced_ndy_1_11,npv_cap_vs_realized_ndy_1_11,volume_cap_vs_realized_ndy_1_15,volume_cap_vs_announced_ndy_1_15,npv_cap_vs_realized_ndy_1_15
+0.0,0.0656,-0.051,0.0374,0.0631,-0.0853,0.0456
+0.02,0.0407,-0.0013,0.0284,0.0544,-0.0049,0.0337
+0.04,-0.0034,-0.0493,-0.0196,0.011,-0.0507,-0.0189
+0.06,0.0024,-0.0431,-0.0205,0.0162,-0.0436,-0.0203
+all (median),0.0136,-0.0425,-0.005,0.0233,-0.0523,-0.0058
+all (min),-0.1479,-0.2201,-0.0764,-0.1555,-0.2341,-0.0902
+all (max),0.3536,0.0626,0.4419,0.1619,0.0146,0.1802

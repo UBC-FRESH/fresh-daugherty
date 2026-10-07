@@ -1,0 +1,6 @@
+discount_rate,material_loosening,median_loosening_pct,max_loosening_pct,dropped
+0.0,0.4,,,
+0.02,0.7194,,,
+0.04,0.7389,,,
+0.06,0.7361,,,
+all,0.6486,1.279,2.256,0.0
