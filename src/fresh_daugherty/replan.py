@@ -3,15 +3,15 @@
 Reproduces Daugherty (1991)'s iterative LP simulation of sequential
 replanning. The open-loop LP is solved; then, repeatedly, the current
 period's decision is taken, the forest state is advanced, and the LP is
-re-solved from the realized state over the remaining horizon (the future
-planner re-optimizing under the same goals). The open-loop plan's projected
-trajectory is compared with the realized replanned trajectory; their
-divergence is the dynamic inconsistency.
-
-The open-loop LP is an *open-loop* formulation: it precommits future planners
-to a schedule. The realized trajectory is what actually unfolds when each
-future planner re-optimizes. Their divergence — the plan "not being followed"
-— is the failure of Bellman's principle of optimality.
+re-solved from the realized state (the future planner re-optimizing under the
+same goals). By default each replan covers a full horizon rolled forward from
+the realized state with a fresh flow constraint (``rolling_horizon=True``,
+``carry_flow_history=False``), as in the thesis; ``rolling_horizon=False`` keeps
+the original terminal date and ``carry_flow_history=True`` anchors each
+replan's first harvest to the realized previous harvest (both together: the
+exact tail problem). The open-loop plan's projected trajectory is compared with
+the realized replanned trajectory; their divergence is the dynamic
+inconsistency under the chosen replanning institution.
 """
 
 from __future__ import annotations
@@ -41,6 +41,11 @@ _AREA_COLS = ("forest", "ecoclass", "rx", "origin", "state", "age", "area_ac")
 #: classification is robust to the exact choice; it is stated explicitly here
 #: (and in the paper) so the "occurs in N% of cells" claim is well-defined.
 OCCURRENCE_TOLERANCE = 0.05
+
+#: The thesis's observation window (thesis p. 83: planners 2-11, periods 2-11),
+#: the paper's headline basis (P17.4, #105); periods beyond it are prone to
+#: end-of-horizon effects because the thesis's terminal constraints are off.
+THESIS_WINDOW: tuple[int, int] = (2, 11)
 
 
 def extract_areas(model: ws3.forest.ForestModel, period: int) -> pd.DataFrame:
@@ -129,7 +134,10 @@ def history_note(rtol: float) -> str:
 
 
 def minimal_history_relaxation(solve) -> tuple[object | None, float | None]:
-    """Smallest loosening of the history bound that makes the subproblem feasible.
+    """Smallest loosening (to within ``HISTORY_RTOL_PRECISION`` above the
+    numerical steps) of the history lower bound that makes the subproblem
+    feasible. Only the lower bound is loosened; a carried upper bound (bounded
+    increase) keeps ``lp.HISTORY_RTOL`` (P17.3, #104).
 
     ``solve(rtol)`` builds and solves the subproblem with the history bound
     loosened by ``rtol`` and returns the problem. Returns ``(problem, rtol)``,
@@ -334,7 +342,9 @@ def consistency_gap_replan(
     merely choosing an alternate LP optimum (which would give gap ~ 0).
 
     Returns a per-period frame: period, announced, realized, obj_free,
-    obj_fixed, objective_gap.
+    obj_fixed, objective_gap, tail_status ("optimal" / "suboptimal" /
+    "infeasible"), solver_note (see ``sequential_replan``), and, with
+    ``collect_revenue``, announced_revenue and realized_revenue.
     """
     workdir = Path(workdir)
     horizon = model.horizon
@@ -533,7 +543,9 @@ def sequential_replan(
     True: the window reaches back into the *realized* past harvests.
 
     ``record_solver_notes`` (E4): add a per-period ``solver_note`` column
-    ("ok" / "relaxed_anchor" / "dropped_flow") recording fallback events —
+    ("ok"; "history_rtol=<r>" when a history bound was loosened by r;
+    "relaxed_anchor" / "relaxed_floor" when it was dropped; "dropped_flow"
+    when every flow row was dropped) recording fallback events —
     relevant when a realized-history rolling-mean floor cannot be sustained.
     """
     workdir = Path(workdir)
@@ -601,7 +613,9 @@ def inconsistency_metrics(
     lull that the replanning fills, or vice versa, gives delta_t ~ 1 rather than
     an exploding ratio). ``eps`` is a small floor so a both-zero period scores 0.
     The reported magnitudes are the mean and max of ``delta_t`` over the horizon
-    and the relative change in total volume ``(sum r - sum p) / max(|sum p|, 1)``.
+    and the relative change in total volume ``(sum r - sum p) / max(|sum p|, 1)``;
+    the ``*_2_11`` entries give the mean, its occurrence and the thesis's volume
+    inconsistency (eq. 5-1) on the thesis's window, periods 2-11.
     A plan is judged dynamically inconsistent (``occurrence``) when the mean
     relative deviation exceeds ``occurrence_tolerance`` (default
     ``OCCURRENCE_TOLERANCE``). The first-period decision is consistent by
@@ -615,6 +629,12 @@ def inconsistency_metrics(
     denom = np.maximum(np.maximum(np.abs(p), np.abs(r)), floor)
     rel = np.abs(p - r) / denom
     mean_rel = float(rel.mean())
+    # Thesis window (1-based periods lo..hi, clipped to the horizon).
+    lo, hi = THESIS_WINDOW
+    w = slice(lo - 1, min(hi, n))
+    mean_w = float(rel[w].mean()) if n >= lo else 0.0
+    proj_w = float(p[w].sum()) if n >= lo else 0.0
+    thesis_iv = float(np.abs(p[w] - r[w]).sum() / proj_w) if proj_w > 0 else 0.0
     return {
         "max_abs_rel_deviation": float(rel.max()),
         "mean_abs_rel_deviation": mean_rel,
@@ -623,11 +643,18 @@ def inconsistency_metrics(
         "total_rel_change": float((r.sum() - p.sum()) / max(abs(p.sum()), 1.0)),
         "occurrence": bool(mean_rel > occurrence_tolerance),
         "occurrence_tolerance": float(occurrence_tolerance),
+        # Thesis-window basis (periods 2-11): mean symmetric divergence, its
+        # occurrence, and the thesis's volume inconsistency (eq. 5-1,
+        # sum |p - r| / sum p over the window).
+        "mean_abs_rel_deviation_2_11": mean_w,
+        "occurrence_2_11": bool(mean_w > occurrence_tolerance),
+        "thesis_volume_inconsistency_2_11": thesis_iv,
     }
 
 
 __all__ = [
     "OCCURRENCE_TOLERANCE",
+    "THESIS_WINDOW",
     "build_model",
     "extract_areas",
     "inconsistency_metrics",

@@ -127,7 +127,7 @@ def mature_volume_crosscheck() -> pd.DataFrame:
 
     The case study's mature (existing over-mature) volumes are back-computed
     from the thesis's Table 5.4 PNV anchors (``model.mature_volume_mcf``), so
-    matching Table 5.4 is *by construction*, not independent validation. This
+    matching Table 5.4 in period 1 is a calibration, not independent validation. This
     function compares those back-computed volumes against an **independent**
     source — the FEIS standing-volume-by-age curves evaluated at each mature
     type's age — to check they are at least the same order of magnitude.
@@ -136,11 +136,12 @@ def mature_volume_crosscheck() -> pd.DataFrame:
     volume, and their ratio per mature type.
     """
     from fresh_daugherty.instance.thesis import MATURE_TYPE_PNV
+    from fresh_daugherty.model import mature_volume_mcf
 
     rows = []
     for mt in MATURE_TYPE_PNV:
         net = real_ecoclass_net_revenue(mt.ecoclass)
-        backcalc = mt.pnv_period1_per_ac / net if net > 0 else float("nan")
+        backcalc = mature_volume_mcf(mt, net) if net > 0 else float("nan")
         curve = standing_volume_curve(mt.ecoclass)
         ages = sorted(curve)
         feis = float(np.interp(mt.age_yr, ages, [curve[a] for a in ages])) if ages else float("nan")

@@ -141,7 +141,7 @@ constraint form):
 - matplotlib 3.11.1 (figures under `results/analysis/` and `supplementary/figures/`;
   3.11.2 renders the same figures with different bytes)
 
-Every summary record (core, E1–E4, institutions, seeds) carries `fd_version`
+Every record (summaries and, since P17, per-period trajectories and gaps) carries `fd_commit`; summaries also carry `fd_version`
 (package version), `fd_commit` (the git commit of the source that produced it;
 `+dirty` if `src/` had uncommitted changes) and `ws3_version`.
 `tests/test_records.py` checks provenance (one clean commit per summary), the
@@ -150,7 +150,16 @@ the rolling/reset institution and seed 42 reproduce `grid.csv`, that no
 objective gap is materially negative, and that under the exact tail problem
 (fixed horizon, carried history) no anchor is relaxed while the path is on plan.
 
-**All records were regenerated in P16 (#91, re-run #97)** after the defects found
+**All records were regenerated again in P17 (#101, re-run #106) at `042c345`**
+after a third review: E4's realized-history window read the realized harvests in
+reverse order (#102); mature volumes are calibrated so the model's own
+discounted period-1 value equals thesis Table 5.4 (#103); history loosening is
+one-sided and per-period records carry `fd_commit` (#104); every summary carries
+the thesis-window metrics (`*_2_11`, periods 2-11; #105), the paper's headline
+basis. Old-vs-new: `PYTHONPATH=src python scripts/compare_p16_records.py
+--old-ref 7693024 --out results/analysis/p17_rerun`.
+
+Earlier: **All records were regenerated in P16 (#91, re-run #97)** after the defects found
 by a second pre-submission review were fixed (gap-diagnostic bound composition,
 spurious and over-coarse relaxation of history bounds, relax accounting,
 landbases rebuilt to thesis p. 79, CH-CW two-storied mature volume; see

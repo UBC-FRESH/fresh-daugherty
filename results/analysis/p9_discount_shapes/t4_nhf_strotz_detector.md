@@ -1,6 +1,6 @@
 | index | scheme | occurrence_nhf | mean_magnitude_nhf | genuine_share_nhf |
 | --- | --- | --- | --- | --- |
-| 0 | const 0% | 1.0 | 0.475 | nan |
+| 0 | const 0% | 1.0 | 0.505 | nan |
 | 1 | const 2% | 0.556 | 0.044 | nan |
 | 2 | const 4% | 0.0 | 0.0 | nan |
 | 3 | const 6% | 0.0 | 0.0 | nan |

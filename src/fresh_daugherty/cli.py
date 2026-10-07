@@ -18,6 +18,16 @@ app = typer.Typer(
 )
 
 
+def _stamp(df):
+    """Add the producing source commit to a per-period record (P17.3, #104;
+    summaries already carry fd_version/fd_commit/ws3_version)."""
+    from fresh_daugherty.experiments import _fd_commit
+
+    out = df.copy()
+    out["fd_commit"] = _fd_commit
+    return out
+
+
 @app.command("version")
 def version() -> None:
     """Print the package version."""
@@ -148,7 +158,7 @@ def grid(
     out.parent.mkdir(parents=True, exist_ok=True)
     summary.to_csv(out, index=False)
     traj_out = out.with_name(out.stem + "_trajectories.csv")
-    trajectories.to_csv(traj_out, index=False)
+    _stamp(trajectories).to_csv(traj_out, index=False)
     typer.echo(f"wrote {traj_out} ({len(trajectories)} trajectory rows)")
     typer.echo(f"wrote {out} ({len(summary)} cells)")
     typer.echo(f"  occurrence rate: {summary['occurrence'].mean():.0%} of cells")
@@ -206,9 +216,9 @@ def grid_discount_paths(
     out.parent.mkdir(parents=True, exist_ok=True)
     summary.to_csv(out, index=False)
     traj_out = out.with_name(out.stem + "_trajectories.csv")
-    trajectories.to_csv(traj_out, index=False)
+    _stamp(trajectories).to_csv(traj_out, index=False)
     gaps_out = out.with_name(out.stem + "_gaps.csv")
-    gaps.to_csv(gaps_out, index=False)
+    _stamp(gaps).to_csv(gaps_out, index=False)
     typer.echo(f"wrote {gaps_out} ({len(gaps)} gap rows)")
     typer.echo(f"wrote {traj_out} ({len(trajectories)} trajectory rows)")
     typer.echo(f"wrote {out} ({len(summary)} cells)")
@@ -255,9 +265,9 @@ def grid_cap_search(
     out.parent.mkdir(parents=True, exist_ok=True)
     summary.to_csv(out, index=False)
     traj_out = out.with_name(out.stem + "_trajectories.csv")
-    trajectories.to_csv(traj_out, index=False)
+    _stamp(trajectories).to_csv(traj_out, index=False)
     gaps_out = out.with_name(out.stem + "_gaps.csv")
-    gaps.to_csv(gaps_out, index=False)
+    _stamp(gaps).to_csv(gaps_out, index=False)
     typer.echo(f"wrote {gaps_out} ({len(gaps)} gap rows)")
     typer.echo(f"wrote {traj_out} ({len(trajectories)} trajectory rows)")
     typer.echo(f"wrote {out} ({len(summary)} cells)")
@@ -319,9 +329,9 @@ def grid_value_flow(
     out.parent.mkdir(parents=True, exist_ok=True)
     summary.to_csv(out, index=False)
     traj_out = out.with_name(out.stem + "_trajectories.csv")
-    trajectories.to_csv(traj_out, index=False)
+    _stamp(trajectories).to_csv(traj_out, index=False)
     gaps_out = out.with_name(out.stem + "_gaps.csv")
-    gaps.to_csv(gaps_out, index=False)
+    _stamp(gaps).to_csv(gaps_out, index=False)
     typer.echo(f"wrote {gaps_out} ({len(gaps)} gap rows)")
     typer.echo(f"wrote {traj_out} ({len(trajectories)} trajectory rows)")
     typer.echo(f"wrote {out} ({len(summary)} cells)")
@@ -373,9 +383,9 @@ def grid_rolling_mean(
     out.parent.mkdir(parents=True, exist_ok=True)
     summary.to_csv(out, index=False)
     traj_out = out.with_name(out.stem + "_trajectories.csv")
-    trajectories.to_csv(traj_out, index=False)
+    _stamp(trajectories).to_csv(traj_out, index=False)
     gaps_out = out.with_name(out.stem + "_gaps.csv")
-    gaps.to_csv(gaps_out, index=False)
+    _stamp(gaps).to_csv(gaps_out, index=False)
     typer.echo(f"wrote {gaps_out} ({len(gaps)} gap rows)")
     typer.echo(f"wrote {traj_out} ({len(trajectories)} trajectory rows)")
     typer.echo(f"wrote {out} ({len(summary)} cells)")
@@ -436,9 +446,9 @@ def grid_institutions(
     out.parent.mkdir(parents=True, exist_ok=True)
     summary.to_csv(out, index=False)
     traj_out = out.with_name(out.stem + "_trajectories.csv")
-    trajectories.to_csv(traj_out, index=False)
+    _stamp(trajectories).to_csv(traj_out, index=False)
     gaps_out = out.with_name(out.stem + "_gaps.csv")
-    gaps.to_csv(gaps_out, index=False)
+    _stamp(gaps).to_csv(gaps_out, index=False)
     typer.echo(f"wrote {gaps_out} ({len(gaps)} gap rows)")
     typer.echo(f"wrote {traj_out} ({len(trajectories)} trajectory rows)")
     typer.echo(f"wrote {out} ({len(summary)} cells)")
@@ -488,7 +498,7 @@ def grid_seeds(
     out.parent.mkdir(parents=True, exist_ok=True)
     summary.to_csv(out, index=False)
     traj_out = out.with_name(out.stem + "_trajectories.csv")
-    trajectories.to_csv(traj_out, index=False)
+    _stamp(trajectories).to_csv(traj_out, index=False)
     typer.echo(f"wrote {traj_out} ({len(trajectories)} trajectory rows)")
     typer.echo(f"wrote {out} ({len(summary)} cells)")
 

@@ -440,6 +440,8 @@ def _run_value_cell(args: tuple) -> tuple[dict, list[dict], list[dict]]:
         "max_abs_rel_deviation",
         "total_rel_change",
         "occurrence",
+        "mean_abs_rel_deviation_2_11",
+        "occurrence_2_11",
     )
     rev_metrics = {
         f"rev_{k}": v for k, v in inconsistency_metrics(rev_p, rev_r).items() if k in _rev_keys

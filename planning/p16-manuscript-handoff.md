@@ -1,5 +1,9 @@
 # P16 hand-off to the manuscript (issue #98)
 
+> **Superseded (P17, #101).** Numbers below predate the P17 re-run; use
+> `planning/p17-manuscript-handoff.md`.
+
+
 Supersedes `planning/p15-manuscript-handoff.md`. Every number below comes from
 the P16 records (core, E1, E2, E3, seeds at `45563fa`; E4 and the institution
 grid at `a1bf7c4`) via the tracked analyses (`scripts/analyze_*.py`, re-run by

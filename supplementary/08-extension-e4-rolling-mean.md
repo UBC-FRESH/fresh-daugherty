@@ -11,12 +11,12 @@ Analysis writeup: [p12 writeup](../results/analysis/p12_rolling_mean/writeup.md)
 ## Headline
 
 Constraint SHAPE is not the operative margin: within-plan rolling-mean
-occurrence 84% vs pointwise NDY (82%). The ANCHORING
+occurrence 87% vs pointwise NDY (86%). The ANCHORING
 INSTITUTION is: realized-history anchoring mitigates (occurrence
-40%, magnitude 0.058)
+35%, magnitude 0.050)
 but the floor cannot be held exactly in 52% of replans
 (mean relax_share), where it is loosened minimally (median
-1.0%, maximum 22% of the floor; dropped in
+0.9%, maximum 3% of the floor; dropped in
 0 replans) — the declining-NDY mechanism as small, persistent
 shortfalls.
 
@@ -26,7 +26,7 @@ shortfalls.
 
 | anchoring | flow_window | occurrence | mean_abs_rel_deviation | relax_share |
 | --- | --- | --- | --- | --- |
-| realized-history | 2 | 0.361 | 0.057 | 0.514 |
-| realized-history | 3 | 0.431 | 0.06 | 0.518 |
-| within-plan | 2 | 0.833 | 0.081 | 0.0 |
-| within-plan | 3 | 0.847 | 0.085 | 0.0 |
+| realized-history | 2 | 0.347 | 0.05 | 0.519 |
+| realized-history | 3 | 0.347 | 0.05 | 0.528 |
+| within-plan | 2 | 0.861 | 0.082 | 0.0 |
+| within-plan | 3 | 0.875 | 0.085 | 0.0 |

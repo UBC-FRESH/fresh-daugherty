@@ -273,3 +273,40 @@ def test_each_mature_type_has_its_own_yield_in_the_built_model(tmp_path) -> None
         expected = mature_volume_mcf(mt, real_ecoclass_net_revenue(mt.ecoclass))
         got = existing[key].ycomp("totvol")[mt.age_yr]
         assert got == pytest.approx(expected, rel=1e-6), (mt.vegetation_type, got, expected)
+
+
+def test_mature_volumes_reproduce_table_5_4_in_the_lp_convention() -> None:
+    """P17.2 (#103, review T02): the model's own discounted value (4%, price
+    escalation, end-of-period discounting) of harvesting each mature type in
+    period 1 equals Table 5.4; before, volumes ignored discounting and the LP
+    valued the stands at 0.746 x Table 5.4. Period 2 is not forced (flat
+    volumes); it stays within 15% of Table 5.4."""
+    from fresh_daugherty.model import mature_value_check
+
+    df = mature_value_check()
+    p1 = df[df["period"] == 1]
+    assert p1["ratio"].to_numpy() == pytest.approx(1.0, rel=1e-9)
+    p2 = df[df["period"] == 2]
+    assert p2["ratio"].between(0.85, 1.16).all()
+
+
+def test_mature_calibration_uses_the_lp_value_convention() -> None:
+    """The calibration factor is the LP's own: the period-1 discount factor of
+    the 4% constant path times the price escalation at the end of period 1."""
+    from fresh_daugherty.instance.discount import constant_path
+    from fresh_daugherty.lp import _escalated
+    from fresh_daugherty.model import MATURE_PERIOD1_VALUE_FACTOR
+
+    lp_factor = constant_path(0.04).factors(horizon=1)[0] * _escalated(1.0, 10)
+    assert lp_factor == pytest.approx(MATURE_PERIOD1_VALUE_FACTOR, rel=1e-12)
+
+
+def test_history_loosening_is_one_sided() -> None:
+    """P17.3 (#104, review T20): loosening a carried anchor widens only the
+    lower bound; the bounded-increase upper bound keeps HISTORY_RTOL."""
+    from fresh_daugherty.lp import HISTORY_RTOL
+
+    flow = {"flow_geometry": "consecutive", "flow_decrease": 0.1, "flow_increase": 0.1}
+    lb, ub = _period1_bounds(prev_harvest_mcf=10000.0, history_rtol=0.05, **flow)
+    assert lb == pytest.approx(9000.0 * 0.95)
+    assert ub == pytest.approx(11000.0 * (1 + HISTORY_RTOL))

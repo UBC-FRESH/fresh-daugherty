@@ -132,3 +132,41 @@ def test_no_negative_objective_gaps(name: str) -> None:
     g = pd.read_csv(RECORDS / name).dropna(subset=["objective_gap"])
     bad = g[g["objective_gap"] < -1e-5 * g["obj_free"].abs().clip(lower=1.0)]
     assert bad.empty, bad.head()
+
+
+PER_PERIOD = [
+    "grid_trajectories.csv",
+    "grid_discount_paths_trajectories.csv",
+    "grid_discount_paths_gaps.csv",
+    "grid_cap_search_trajectories.csv",
+    "grid_cap_search_gaps.csv",
+    "grid_value_flow_trajectories.csv",
+    "grid_value_flow_gaps.csv",
+    "grid_rolling_mean_trajectories.csv",
+    "grid_rolling_mean_gaps.csv",
+    "grid_institutions_trajectories.csv",
+    "grid_institutions_gaps.csv",
+    "grid_seeds_trajectories.csv",
+]
+
+
+@pytest.mark.parametrize("name", PER_PERIOD)
+def test_per_period_provenance_matches_summary(name: str) -> None:
+    """P17.3 (#104, review T30): per-period records carry the same clean
+    fd_commit as their summary."""
+    df = pd.read_csv(RECORDS / name)
+    summary = name.replace("_trajectories", "").replace("_gaps", "")
+    commits = set(df["fd_commit"].astype(str))
+    assert commits == set(pd.read_csv(RECORDS / summary)["fd_commit"].astype(str)), commits
+
+
+@pytest.mark.parametrize("name", SUMMARIES)
+def test_thesis_window_metrics_recorded(name: str) -> None:
+    """P17.4 (#105): every summary carries the periods 2-11 metrics."""
+    df = pd.read_csv(RECORDS / name)
+    for col in (
+        "mean_abs_rel_deviation_2_11",
+        "occurrence_2_11",
+        "thesis_volume_inconsistency_2_11",
+    ):
+        assert col in df.columns, f"{name} lacks {col}"

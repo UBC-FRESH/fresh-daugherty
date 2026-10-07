@@ -42,6 +42,8 @@ ANALYSIS_SCRIPTS = [
     "scripts/analyze_p15_gaps.py",
     "scripts/analyze_p15_descriptives.py",
     "scripts/analyze_p15_seeds.py",
+    "scripts/analyze_p17_headline.py",
+    "scripts/analyze_p17_thesis_comparison.py",
 ]
 
 #: (page filename, title) — the supplement's table of contents.
@@ -212,6 +214,9 @@ the tracked experiment records by `scripts/build_supplement.py` (see
             if eco in list(Ecoclass) and rx in list(Prescription)
         ]
     )
+    from fresh_daugherty.model import mature_value_check
+
+    mature_check = mature_value_check().round(3)
     _write(
         "01-case-study-data.md",
         f"""# 01 — Case-study data and validation anchors
@@ -227,13 +232,21 @@ scanned sources at runtime.
 
 The typed records below are the calibration targets; the tests
 (`tests/test_calibration.py`, `tests/test_thesis_data.py`) assert the
-reconstruction reproduces them (mature-type PNVs match Table 5.4 exactly;
-managed prescriptions match Table 5.3 in sign and broad rotation range;
-CM-CE is the negatively-valued stratum).
+reconstruction reproduces them: managed prescriptions match Table 5.3 in
+sign and broad rotation range, and CM-CE is the negatively valued stratum.
+The mature-type volumes are *calibrated* to Table 5.4: each is chosen so that
+the model's own discounted value (4%, price escalation, end-of-period
+discounting) of harvesting the stand in period 1 equals Table 5.4's period-1
+PNV (`model.mature_volume_mcf`). Volumes are flat over age, so the period-2
+values are not matched exactly (table below; `model.mature_value_check`).
 
 ### Table 5.4 — mature-type PNVs ($/ac, 4% discount)
 
 {_md_table(t54)}
+
+### Model value of a mature harvest vs Table 5.4 ($/ac, 4%)
+
+{_md_table(mature_check)}
 
 ### Table 5.3 — managed-prescription PNV anchors ($/ac, 4% discount)
 
@@ -707,7 +720,42 @@ issue #82). Every table regenerates from the tracked records via the
 {_link(RESULTS / "grid_seeds.csv", "seed grid")}; core, E2-E4 records as in
 pages 02 and 06-08.
 
-## Replanning institution
+## Headline basis: the thesis's observation window (P17)
+
+Since P17 (#101) the paper's headline basis is the thesis's observation window,
+periods 2-11 (thesis p. 83), because without the thesis's terminal constraints
+end-of-horizon effects inflate the full-horizon metric; periods 1-15 are kept as
+a sensitivity. Both bases side by side (`scripts/analyze_p17_headline.py`):
+
+{_tab("p17_headline", "t1_core_overall")}
+
+{_tab("p17_headline", "t2_core_by_rate")}
+
+{_tab("p17_headline", "t6_institutions")}
+
+## Comparison with the thesis on matched populations
+
+The thesis's volume inconsistency (eq. 5-1, periods 2-11) on full-choice
+equivalents of its combination sets vs its Table 6.2 (p. 99), its
+carried-history test (pp. 118-120) and its per-landbase reference run (NDY, 4%,
+p. 124) (`scripts/analyze_p17_thesis_comparison.py`):
+
+{_tab("p17_thesis_comparison", "t1_by_landbase_subset")}
+
+{_tab("p17_thesis_comparison", "t2_carried_history_subset")}
+
+{_tab("p17_thesis_comparison", "t3_reference_run_by_landbase")}
+
+By harvest-flow policy on the thesis's Table 6.8 populations (p. 111; 4%, full
+choices; bounded decline on landbases 1-10 only):
+
+{_tab("p17_thesis_comparison", "t4_by_policy_table_6_8")}
+
+Institutions by discount rate (both bases):
+
+{_tab("p17_headline", "t6b_institutions_by_rate")}
+
+## Replanning institution (full horizon, periods 1-15)
 
 Flow-constrained occurrence: rolling horizon + reset flow history (the core
 grid) {_io("rolling", "reset")}; fixed horizon + reset {_io("fixed", "reset")};
@@ -729,11 +777,6 @@ Gap-diagnostic tail status by institution (flow-constrained, periods > 1):
 ## Occurrence threshold and evaluation window
 
 {_tab("p15_metrics", "t1_occurrence_vs_tolerance")}
-
-The thesis's volume-inconsistency measure (eq. 5-1, periods 2-11) against its
-reported distribution:
-
-{_tab("p15_metrics", "t2_thesis_volume_inconsistency")}
 
 {_tab("p15_metrics", "t3_window")}
 

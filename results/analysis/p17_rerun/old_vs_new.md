@@ -1,0 +1,29 @@
+| grid | subset | inconsistent_old | occurrence_old | magnitude_old | inconsistent_new | occurrence_new | magnitude_new |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| E1 | NHF | 72/72 | 1.0 | 0.3337 | 72/72 | 1.0 | 0.3337 |
+| E1 | flow-constrained | 349/360 | 0.969 | 0.1594 | 352/360 | 0.978 | 0.16 |
+| E2 | all | 0/72 | 0.0 | 0.0013 | 0/72 | 0.0 | 0.0015 |
+| E3 revenue | NHF | 28/72 | 0.389 | 0.1297 | 28/72 | 0.389 | 0.1372 |
+| E3 revenue | flow-constrained | 190/360 | 0.528 | 0.102 | 187/360 | 0.519 | 0.0981 |
+| E3 volume | NHF | 28/72 | 0.389 | 0.1297 | 28/72 | 0.389 | 0.1372 |
+| E3 volume | flow-constrained | 235/360 | 0.653 | 0.1014 | 239/360 | 0.664 | 0.1006 |
+| E4 realized-history | NDY | 57/144 | 0.396 | 0.0583 | 50/144 | 0.347 | 0.0496 |
+| E4 within-plan | NDY | 121/144 | 0.84 | 0.0829 | 125/144 | 0.868 | 0.0835 |
+| core | NHF | 28/72 | 0.389 | 0.1297 | 28/72 | 0.389 | 0.1372 |
+| core | NHF, 0% | 18/18 | 1.0 | 0.4747 | 18/18 | 1.0 | 0.5048 |
+| core | NHF, 2% | 10/18 | 0.556 | 0.0441 | 10/18 | 0.556 | 0.0441 |
+| core | NHF, 4% | 0/18 | 0.0 | 0.0 | 0/18 | 0.0 | 0.0 |
+| core | NHF, 6% | 0/18 | 0.0 | 0.0 | 0/18 | 0.0 | 0.0 |
+| core | flow-constrained | 235/360 | 0.653 | 0.1014 | 239/360 | 0.664 | 0.1006 |
+| core | flow-constrained, 0% | 90/90 | 1.0 | 0.2141 | 90/90 | 1.0 | 0.2113 |
+| core | flow-constrained, 2% | 52/90 | 0.578 | 0.0633 | 54/90 | 0.6 | 0.0638 |
+| core | flow-constrained, 4% | 46/90 | 0.511 | 0.0587 | 46/90 | 0.511 | 0.0568 |
+| core | flow-constrained, 6% | 47/90 | 0.522 | 0.0693 | 49/90 | 0.544 | 0.0706 |
+| institutions fixed/carried | NHF | 2/72 | 0.028 | 0.0021 | 2/72 | 0.028 | 0.0021 |
+| institutions fixed/carried | flow-constrained | 4/360 | 0.011 | 0.0017 | 4/360 | 0.011 | 0.0017 |
+| institutions fixed/reset | NHF | 2/72 | 0.028 | 0.0021 | 2/72 | 0.028 | 0.0021 |
+| institutions fixed/reset | flow-constrained | 147/360 | 0.408 | 0.0763 | 143/360 | 0.397 | 0.0757 |
+| institutions rolling/carried | NHF | 28/72 | 0.389 | 0.1297 | 28/72 | 0.389 | 0.1372 |
+| institutions rolling/carried | flow-constrained | 118/360 | 0.328 | 0.0652 | 124/360 | 0.344 | 0.0658 |
+| institutions rolling/reset | NHF | 28/72 | 0.389 | 0.1297 | 28/72 | 0.389 | 0.1372 |
+| institutions rolling/reset | flow-constrained | 235/360 | 0.653 | 0.1014 | 239/360 | 0.664 | 0.1006 |

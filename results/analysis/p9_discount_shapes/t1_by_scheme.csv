@@ -1,9 +1,9 @@
 ,scheme,family,cells,occurrence_all,occurrence_flow_constrained,mean_magnitude_flow_constrained,mean_total_rel_change_flow_constrained
-0,const 0%,constant (control),108,1.0,1.0,0.214,-0.164
-1,const 2%,constant (control),108,0.574,0.578,0.063,-0.036
-2,const 4%,constant (control),108,0.426,0.511,0.059,-0.023
-3,const 6%,constant (control),108,0.435,0.522,0.069,-0.019
-4,linear 4%→0%,linear,108,0.972,0.967,0.136,-0.07
-5,linear 6%→0%,linear,108,0.926,0.911,0.126,-0.065
-6,inv-j 4% (k=1),inverse-j,108,1.0,1.0,0.2,-0.098
-7,inv-j 4% (k=2),inverse-j,108,1.0,1.0,0.176,-0.097
+0,const 0%,constant (control),108,1.0,1.0,0.211,-0.162
+1,const 2%,constant (control),108,0.593,0.6,0.064,-0.037
+2,const 4%,constant (control),108,0.426,0.511,0.057,-0.023
+3,const 6%,constant (control),108,0.454,0.544,0.071,-0.023
+4,linear 4%→0%,linear,108,0.981,0.978,0.136,-0.07
+5,linear 6%→0%,linear,108,0.944,0.933,0.129,-0.065
+6,inv-j 4% (k=1),inverse-j,108,1.0,1.0,0.199,-0.098
+7,inv-j 4% (k=2),inverse-j,108,1.0,1.0,0.176,-0.096

@@ -1,0 +1,4 @@
+| anchoring | n | inconsistent_2-11 | occurrence_2-11 | magnitude_2-11 | inconsistent_1-15 | occurrence_1-15 | magnitude_1-15 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| realized-history | 144 | 23 | 0.16 | 0.0277 | 50 | 0.347 | 0.0496 |
+| within-plan | 144 | 95 | 0.66 | 0.0645 | 125 | 0.868 | 0.0835 |

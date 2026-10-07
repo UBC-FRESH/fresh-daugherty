@@ -1,5 +1,5 @@
 horizon_institution,flow_history,inconsistent,cells,occurrence,mean_magnitude,relax_share
 fixed,carried,4,360,0.0111,0.0017,0.0
-fixed,reset,147,360,0.4083,0.0763,0.0
-rolling,carried,118,360,0.3278,0.0652,0.0865
-rolling,reset,235,360,0.6528,0.1014,0.0
+fixed,reset,143,360,0.3972,0.0757,0.0
+rolling,carried,124,360,0.3444,0.0658,0.0988
+rolling,reset,239,360,0.6639,0.1006,0.0

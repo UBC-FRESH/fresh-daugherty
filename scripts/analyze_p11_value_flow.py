@@ -123,6 +123,10 @@ def main() -> None:
             for denom in ("volume", "revenue"):
                 rows.append(_cmce_share(lb, rate, denom, workdir / f"lb{lb}_r{rate}_{denom}"))
     t4 = pd.DataFrame(rows).round(4)
+    # Fresh solves (not read from the records): stamp the producing commit.
+    from fresh_daugherty.experiments import _fd_commit
+
+    t4["fd_commit"] = _fd_commit
     _md(t4, OUT / "t4_cmce_filler_channel")
 
     # --- F1: landbase 1, NDY, 4%: volume- vs revenue-denominated ---

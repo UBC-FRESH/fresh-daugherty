@@ -138,4 +138,33 @@ def test_realized_history_reading_floors_against_realized(tmp_path) -> None:
             continue
         rtol = float(notes[t].split("=")[1]) if notes[t].startswith("history_rtol=") else 1e-6
         window = v[max(0, t - k) : t]
-        assert v[t] >= (sum(window) / len(window)) * (1 - rtol) * (1 - 1e-6)
+        # 1e-5: float drift between the LP solution and the applied schedule (P16.2)
+        assert v[t] >= (sum(window) / len(window)) * (1 - rtol) * (1 - 1e-5)
+
+
+@pytest.mark.parametrize(
+    ("window", "hist", "expected"),
+    [
+        # rhs = (1 - rtol) * mean of the realized part of each window
+        (2, (100.0, 200.0), {1: (100 + 200) / 2, 2: 200 / 2}),
+        (3, (100.0, 200.0, 300.0), {1: 600 / 3, 2: (200 + 300) / 3, 3: 300 / 3}),
+    ],
+)
+def test_realized_history_window_uses_most_recent_harvests(tmp_path, window, hist, expected):
+    """P17.1 (#102, review T01): window positions before the plan's present map
+    to the realized harvests most recent first (the floor of period 2 under a
+    2-window uses the latest realized harvest, not the oldest)."""
+    from fresh_daugherty.lp import HISTORY_RTOL, add_open_loop_problem
+
+    build_woodstock_sections(tmp_path / "m", areas=landbase_areas(1))
+    model = prepare_optimization(bootstrap_model(tmp_path / "m", horizon=4), horizon=4)
+    problem = add_open_loop_problem(
+        model, flow_geometry="rolling_mean", flow_window=window, realized_history=hist
+    )
+    rhs = {
+        int(n.split("_")[1]): c.rhs
+        for n, c in problem._constraints.items()
+        if n.startswith("flw-rm")
+    }
+    for t, mean_part in expected.items():
+        assert rhs[t] == pytest.approx(mean_part * (1 - HISTORY_RTOL)), (t, rhs[t])

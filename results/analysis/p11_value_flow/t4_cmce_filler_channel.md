@@ -1,10 +1,10 @@
-| index | landbase | discount_rate | flow_denominator | projected_total_mcf | projected_cmce_mcf | projected_cmce_share |
-| --- | --- | --- | --- | --- | --- | --- |
-| 0 | 1 | 0.0 | volume | 147303.8745 | 1318.7339 | 0.009 |
-| 1 | 1 | 0.0 | revenue | 148733.8499 | 0.0 | 0.0 |
-| 2 | 1 | 0.04 | volume | 148184.291 | 5333.538 | 0.036 |
-| 3 | 1 | 0.04 | revenue | 143309.5671 | 0.0 | 0.0 |
-| 4 | 2 | 0.0 | volume | 181518.4596 | 0.0 | 0.0 |
-| 5 | 2 | 0.0 | revenue | 185917.3124 | 0.0 | 0.0 |
-| 6 | 2 | 0.04 | volume | 174936.7549 | 0.0 | 0.0 |
-| 7 | 2 | 0.04 | revenue | 179136.9588 | 0.0 | 0.0 |
+| index | landbase | discount_rate | flow_denominator | projected_total_mcf | projected_cmce_mcf | projected_cmce_share | fd_commit |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 0 | 1 | 0.0 | volume | 169794.9591 | 7147.186 | 0.0421 | b9176da15e23 |
+| 1 | 1 | 0.0 | revenue | 163882.087 | 0.0 | 0.0 | b9176da15e23 |
+| 2 | 1 | 0.04 | volume | 166167.899 | 7147.186 | 0.043 | b9176da15e23 |
+| 3 | 1 | 0.04 | revenue | 161521.6126 | 0.0 | 0.0 | b9176da15e23 |
+| 4 | 2 | 0.0 | volume | 197292.4377 | 0.0 | 0.0 | b9176da15e23 |
+| 5 | 2 | 0.0 | revenue | 204852.6087 | 0.0 | 0.0 | b9176da15e23 |
+| 6 | 2 | 0.04 | volume | 193158.733 | 0.0 | 0.0 | b9176da15e23 |
+| 7 | 2 | 0.04 | revenue | 201902.0157 | 0.0 | 0.0 | b9176da15e23 |
