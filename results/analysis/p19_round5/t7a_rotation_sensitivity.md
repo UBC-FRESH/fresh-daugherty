@@ -1,0 +1,4 @@
+| terminal_rotations | flow_constrained_2_11 | flow_constrained_1_15 | magnitude_2_11 | positive_rates_2_11 | NHF_2_11 | volume_inconsistency_2_11 | occ_0 | occ_0.02 | occ_0.04 | occ_0.06 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Table 5.3 rotations (core) | 178/360 | 203/360 | 0.0719 | 88/270 | 34/72 | 7.61 | 90/90 | 26/90 | 28/90 | 34/90 |
+| model-optimal rotations | 161/360 | 212/360 | 0.0768 | 75/270 | 34/72 | 8.12 | 86/90 | 24/90 | 22/90 | 29/90 |
