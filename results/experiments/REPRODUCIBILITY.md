@@ -150,7 +150,15 @@ the rolling/reset institution and seed 42 reproduce `grid.csv`, that no
 objective gap is materially negative, and that under the exact tail problem
 (fixed horizon, carried history) no anchor is relaxed while the path is on plan.
 
-**All records were regenerated again in P17 (#101, re-run #106) at `042c345`**
+**All records were regenerated in P18 (#110, re-run #113) at `35f6a65`** with the
+thesis's terminal constraints on every flow-constrained run (ending inventory
+>= 80% of the regulated forest's average inventory, final harvest <= 120% of
+its LTSY; not NHF, not the E2 cap; #112) and young-age yields following the
+calibrated Chapman-Richards shape below the first FEIS age (#111). Old-vs-new:
+`PYTHONPATH=src python scripts/compare_p16_records.py --old-ref 0fba036 --out
+results/analysis/p18_rerun`.
+
+Earlier: **All records were regenerated again in P17 (#101, re-run #106) at `042c345`**
 after a third review: E4's realized-history window read the realized harvests in
 reverse order (#102); mature volumes are calibrated so the model's own
 discounted period-1 value equals thesis Table 5.4 (#103); history loosening is
