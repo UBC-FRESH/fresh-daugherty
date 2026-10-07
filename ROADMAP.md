@@ -30,7 +30,7 @@ synchronized with GitHub issues, planning notes, pull requests, and
 | P17 Audit-3 fixes (third antagonistic review) | [#101](https://github.com/UBC-FRESH/fresh-daugherty/issues/101) (children #102–#108) | `feature/p17-audit3-fixes` | Complete (PR [#109](https://github.com/UBC-FRESH/fresh-daugherty/pull/109) merged; released in `v0.2.0`) |
 | P18 Terminal constraints and young-age yields | [#110](https://github.com/UBC-FRESH/fresh-daugherty/issues/110) (children #111–#115) | `feature/p18-terminal-constraints` | Complete (PR [#116](https://github.com/UBC-FRESH/fresh-daugherty/pull/116) merged; released in `v0.2.0`) |
 | P19 Audit-5 fixes (final antagonistic review) | [#117](https://github.com/UBC-FRESH/fresh-daugherty/issues/117) (children #118–#121) | `feature/p19-audit5-fixes` | Complete (PR [#122](https://github.com/UBC-FRESH/fresh-daugherty/pull/122) merged; released in `v0.2.0`) |
-| Release v0.2.0 | [#123](https://github.com/UBC-FRESH/fresh-daugherty/issues/123) | `release/v0.2.0` | In progress |
+| Release v0.2.0 | [#123](https://github.com/UBC-FRESH/fresh-daugherty/issues/123) | `release/v0.2.0` | Complete (PR [#124](https://github.com/UBC-FRESH/fresh-daugherty/pull/124) merged; tag `v0.2.0`; Zenodo DOI 10.5281/zenodo.23218533) |
 
 ## v0.2.0 Scope Expansion (2026-09)
 

@@ -182,8 +182,8 @@ the rolling/reset institution and seed 42 reproduce `grid.csv`, that no
 objective gap is materially negative, and that under the exact tail problem
 (fixed horizon, carried history) no anchor is relaxed while the path is on plan.
 
-Release: these records are archived in release `v0.2.0` (Zenodo concept DOI
-10.5281/zenodo.21981433). They were produced before the version bump, so
+Release: these records are archived in release `v0.2.0` (Zenodo DOI
+10.5281/zenodo.23218533; concept DOI 10.5281/zenodo.21981433). They were produced before the version bump, so
 summaries carry `fd_version=0.1.0b1`; `fd_commit` identifies the source
 (`35f6a65` for every grid, `545d8ca` for the terminal-rotation sensitivity;
 the source at `545d8ca` differs only by the default-preserving

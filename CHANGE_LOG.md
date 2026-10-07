@@ -9,6 +9,9 @@ PRs #81, #90, #100, #109, #116 and #122 merged into `main` (P14-P19); version
 10.5281/zenodo.21981433). The "v0.2.0 (unreleased)" entries below are the
 phase narrative of this release.
 
+Release published 2026-10-07 (tag `v0.2.0` at `f723b05`); Zenodo version DOI
+10.5281/zenodo.23218533; the manuscript cites it.
+
 ## v0.2.0 (unreleased) — P19 audit-5 fixes
 
 Phase 19 on `feature/p19-audit5-fixes` (parent #117; children #118-#121;
