@@ -1,10 +1,10 @@
 | flow_denominator | flow_policy | occurrence | mean_abs_rel_deviation | rev_mean_abs_rel_deviation |
 | --- | --- | --- | --- | --- |
-| revenue | +/-10% | 1.0 | 0.146 | 0.157 |
-| revenue | +/-20% | 1.0 | 0.162 | 0.174 |
-| revenue | -10% | 0.986 | 0.161 | 0.179 |
-| revenue | -20% | 0.986 | 0.186 | 0.202 |
-| revenue | NDY | 1.0 | 0.133 | 0.155 |
+| revenue | +/-10% | 0.75 | 0.135 | 0.136 |
+| revenue | +/-20% | 0.847 | 0.147 | 0.15 |
+| revenue | -10% | 0.375 | 0.095 | 0.093 |
+| revenue | -20% | 0.403 | 0.106 | 0.106 |
+| revenue | NDY | 0.403 | 0.057 | 0.053 |
 | revenue | NHF | 0.375 | 0.132 | 0.13 |
 | volume | +/-10% | 0.708 | 0.112 | 0.124 |
 | volume | +/-20% | 0.792 | 0.13 | 0.148 |

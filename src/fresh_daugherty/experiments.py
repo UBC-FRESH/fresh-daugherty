@@ -31,6 +31,37 @@ from fresh_daugherty.replan import (
 _ws3_version = _ws3.__version__
 
 
+def _source_commit() -> str:
+    """Git commit of the package source (``+dirty`` if ``src`` has uncommitted
+    changes), or ``"unknown"`` outside a git checkout. Recorded per cell so that
+    records regenerated after a code change are distinguishable from stale ones
+    (P14.2, issue #77: the package version alone could not tell them apart)."""
+    import subprocess
+
+    src = Path(__file__).resolve().parent
+    try:
+        commit = subprocess.run(
+            ["git", "-C", str(src), "rev-parse", "--short=12", "HEAD"],
+            capture_output=True,
+            text=True,
+            check=True,
+            timeout=10,
+        ).stdout.strip()
+        dirty = subprocess.run(
+            ["git", "-C", str(src), "status", "--porcelain", "--", str(src)],
+            capture_output=True,
+            text=True,
+            check=True,
+            timeout=10,
+        ).stdout.strip()
+    except (OSError, subprocess.SubprocessError):
+        return "unknown"
+    return commit + ("+dirty" if dirty else "")
+
+
+_fd_commit = _source_commit()
+
+
 @dataclass(frozen=True)
 class ExperimentResult:
     """One experiment cell: open-loop projection vs realized replan."""
@@ -190,6 +221,7 @@ def _run_path_cell(args: tuple) -> tuple[dict, list[dict], list[dict]]:
         "max_increase": pol.max_increase,
         "horizon": horizon,
         "fd_version": _fd_version,
+        "fd_commit": _fd_commit,
         "ws3_version": _ws3_version,
         **inconsistency_metrics(announced, realized),
     }
@@ -290,6 +322,7 @@ def _run_cap_cell(args: tuple) -> tuple[dict, list[dict], list[dict]]:
         "realized_max_fluctuation": rec.realized_report.max_fluctuation,
         "projected_cv": rec.projected_report.cv,
         "fd_version": _fd_version,
+        "fd_commit": _fd_commit,
         "ws3_version": _ws3_version,
         **metrics,
     }
@@ -410,6 +443,7 @@ def _run_value_cell(args: tuple) -> tuple[dict, list[dict], list[dict]]:
         "max_increase": pol.max_increase,
         "horizon": horizon,
         "fd_version": _fd_version,
+        "fd_commit": _fd_commit,
         "ws3_version": _ws3_version,
         **inconsistency_metrics(vol_p, vol_r),
         **rev_metrics,
@@ -520,6 +554,7 @@ def _run_rolling_cell(args: tuple) -> tuple[dict, list[dict], list[dict]]:
         "horizon": horizon,
         "relax_share": relax_share,
         "fd_version": _fd_version,
+        "fd_commit": _fd_commit,
         "ws3_version": _ws3_version,
         **inconsistency_metrics(announced, realized),
     }

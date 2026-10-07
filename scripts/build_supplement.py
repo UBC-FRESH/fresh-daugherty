@@ -521,15 +521,25 @@ gap diagnostic and dual volume+revenue trajectory records. Records:
 {_link(RESULTS / "grid_value_flow_gaps.csv", "gaps")}.
 Analysis writeup: {_link(ANALYSIS / "p11_value_flow" / "writeup.md", "p11 writeup")}.
 
+> Correction (P14, issue #75): the E3 records were regenerated after a defect
+> that announced the volume-denominated plan in revenue-denominated cells; the
+> earlier conclusion (revenue denominating worsens inconsistency) is reversed.
+
 ## Headline
 
-Revenue denominating makes inconsistency MORE pervasive: flow-constrained
-occurrence {rev_fc.occurrence.mean():.0%} (revenue) vs
-{vol_fc.occurrence.mean():.0%} (volume), with roughly doubled magnitude. The
-CM-CE filler channel is confirmed as the TELL, not the fuel: revenue NDY
-drives projected CM-CE harvest to exactly zero (vs 2.5-3.5% of projected
-volume under volume NDY on landbase 1), yet the plan is still not followed.
-See the writeup's Table T4 for the focal solves.
+Revenue denominating MITIGATES inconsistency without eliminating it:
+flow-constrained occurrence {int(rev_fc.occurrence.sum())}/{len(rev_fc)}
+({rev_fc.occurrence.mean():.0%}, revenue) vs
+{int(vol_fc.occurrence.sum())}/{len(vol_fc)} ({vol_fc.occurrence.mean():.0%},
+volume); mean magnitude {rev_fc.mean_abs_rel_deviation.mean():.3f} vs
+{vol_fc.mean_abs_rel_deviation.mean():.3f}. The effect differs by policy form
+(table below): NDY and bounded decline fall sharply, symmetric bounded
+deviation rises slightly. Revenue NDY drives projected CM-CE harvest to
+exactly zero (vs 2.5-3.5% of projected volume under volume NDY on
+landbase 1), and on the paired landbases (with vs without CM-CE) the extra
+inconsistency associated with negatively valued strata disappears under
+revenue denominating; inconsistency persists through the remaining strata.
+See the writeup's Table T4 and paired-landbase table.
 
 ![Landbase 1 at 4%: NDY by flow-row denominator]({f1})
 

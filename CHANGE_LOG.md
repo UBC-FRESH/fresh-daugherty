@@ -2,6 +2,39 @@
 
 Append-only project narrative, reverse-chronological.
 
+## v0.2.0 (unreleased) — P14 E3 corrective (E3 and E2 records regenerated)
+
+Phase 14 on `feature/p14-e3-fix` (parent #75; children #76–#80). Found in
+pre-submission review of the manuscript.
+
+- P14.1 (#76): the E3 records committed in `8cf2aa8` announced the
+  *volume*-denominated plan in every revenue-denominated cell
+  (`consistency_gap_replan` called `open_loop_projection` without
+  `flow_denominator`); period-1 announced != realized in 322/360
+  flow-constrained revenue cells. The code was fixed incidentally in
+  `e72ab2b` (P12.2) but E3 was never re-run. Regression test added (fails at
+  `8cf2aa8`, passes on `main`).
+- P14.2 (#77): `tests/test_records.py` checks the period-1 invariant over every
+  tracked trajectory CSV (no solves); period-1 invariant added to the core and
+  E1 smoke tests and a new E4 grid smoke test; `fd_commit` (git commit,
+  `+dirty` if `src` is modified) recorded in every E1–E4 cell.
+- P14.3 (#78): a second instance of the same defect class in E2 —
+  `calibrate_even_flow_cap` computed the announced plan and the bisection
+  bracket at the 4% default rate. Fixed with a regression test; call-site
+  audit of all projection/replan calls found no other instance.
+- P14.4 (#79): E3 (864 cells) and E2 (72 cells) re-run at `83c7b16`.
+  Invariant now holds in every cell of every grid; E3 volume cells and
+  spot-checked core/E1/E4 cells regenerate bit-identically.
+  **Corrections to earlier entries:** the P11 entry's conclusion (revenue
+  denominating makes inconsistency more pervasive; the CM-CE filler is "the
+  tell, not the fuel") is reversed — revenue denominating *mitigates*
+  inconsistency (flow-constrained occurrence 200/360 vs 263/360; NDY 86% →
+  40%), and the extra inconsistency of CM-CE landbases under volume (77/80
+  vs 51/80) disappears under revenue (58/80 vs 56/80). E2's headline holds
+  (0% occurrence); caps changed only at 0%/2% (median 0%, max +2.9%).
+- P14.5 (#80): docs, roadmap, reproducibility record (matplotlib 3.11.1 pin;
+  `fd_commit`), manuscript update in `fresh_daugherty_manuscript`.
+
 ## v0.2.0 (unreleased) — P9–P13 complete (scope expansion done)
 
 Phase 13 (E5: curated supplementary material + manuscript pointers) on

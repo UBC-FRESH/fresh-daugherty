@@ -105,6 +105,18 @@ constraint form):
 - ws3 1.1.0a5 (PyPI; the cflw sequential-flow feature, UBC-FRESH/ws3#152)
 - femic 0.2.0a1, freshforge 0.1.0a6
 - numpy 2.4.6, pandas 3.0.5, highspy 1.15.1, typer 0.27.1, pydantic 2.13.4
+- matplotlib 3.11.1 (figures under `results/analysis/` and `supplementary/figures/`;
+  3.11.2 renders the same figures with different bytes)
+
+Every E1–E4 cell record carries `fd_version` (package version), `fd_commit`
+(the git commit of the source that produced it; `+dirty` if `src/` had
+uncommitted changes) and `ws3_version`. `tests/test_records.py` checks the
+period-1 invariant (announced == realized) over every tracked trajectory
+record.
+
+E3 (`grid_value_flow*`) and E2 (`grid_cap_search*`) were regenerated in P14
+(#75) at `83c7b16` after two defects were fixed (E3 revenue cells announced the
+volume plan; E2 projected at the 4% default rate); see `CHANGE_LOG.md`.
 
 All seed-dependent runs are fixed-seeded. The experiment is deterministic (LP
 solves), so the grid CSVs regenerate bit-for-bit given the environment.

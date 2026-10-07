@@ -92,6 +92,8 @@ def test_policy_grid_occurrence_and_nhf_baseline(tmp_path: Path) -> None:
     # NDY on the all-mature landbase is strongly inconsistent.
     assert ndy["mean_abs_rel_deviation"] > 0.05
     assert ndy["occurrence"] == True  # noqa: E712
+    # P14.2 (#77): the realized period-1 harvest is the open-loop period-1 decision.
+    _assert_period1_invariant(trajectories)
 
 
 def test_flow_tolerance_changes_projection(tmp_path: Path) -> None:
@@ -133,3 +135,34 @@ def test_discount_path_grid_smoke(tmp_path: Path) -> None:
     assert {"period", "announced", "realized", "objective_gap", "tail_status"} <= set(gaps.columns)
     # NDY on the all-mature landbase is strongly inconsistent under the path too.
     assert row["mean_abs_rel_deviation"] > 0.05
+    # P14.2 (#77): period-1 invariant and commit-level provenance.
+    _assert_period1_invariant(trajectories)
+    assert row["fd_commit"]
+
+
+def _assert_period1_invariant(trajectories) -> None:
+    """Period-1 announced equals period-1 realized in every cell (P14.2, #77)."""
+    import numpy as np
+
+    first = trajectories[trajectories["period"] == 1]
+    assert len(first) > 0
+    assert np.allclose(first["projected_mcf"], first["realized_mcf"], rtol=1e-6, atol=1e-6)
+
+
+def test_rolling_mean_grid_smoke(tmp_path: Path) -> None:
+    """P14.2 (#77): the E4 rolling-mean grid runs end to end for both anchoring
+    readings, keeps the period-1 invariant, and records commit provenance."""
+    from fresh_daugherty.experiments import run_rolling_mean_grid
+
+    summary, trajectories, gaps = run_rolling_mean_grid(
+        landbases=(1,),
+        discount_rates=(0.04,),
+        windows=(2,),
+        readings=(False, True),
+        horizon=5,
+        workdir=tmp_path,
+    )
+    assert len(summary) == 2
+    assert summary["fd_commit"].astype(bool).all()
+    assert len(trajectories) == len(gaps) == 10
+    _assert_period1_invariant(trajectories)
