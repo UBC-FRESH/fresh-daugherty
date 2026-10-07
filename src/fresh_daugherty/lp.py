@@ -126,19 +126,30 @@ def _tighten_period1_harvest(
     return _tighten_period_harvest(cgen_data, period=1, lb=lb, ub=ub)
 
 
-def regulated_forest_targets(model: ws3.forest.ForestModel) -> dict[str, float]:
+#: Rotations for the terminal targets (P19.1, #118): "table53" uses the
+#: thesis's highest-PNV rotations (Table 5.3; thesis p. 77), "model" the
+#: model's own highest-PNV rotations (``feis.model_lev``), a sensitivity.
+TERMINAL_ROTATIONS = ("table53", "model")
+
+
+def regulated_forest_targets(
+    model: ws3.forest.ForestModel, *, terminal_rotation: str = "table53"
+) -> dict[str, float]:
     """Average inventory and long-term sustained yield of the forest regulated
     under each stratum's regeneration prescription (thesis p. 77).
 
     Each stratum's area (at the subproblem's first period) regenerates under a
     fixed prescription: mature (existing) stands under planting (rx2), managed
     stands under their own prescription. For each (ecoclass, prescription) the
-    rotation is the Table 5.3 highest-PNV rotation R; the average inventory per
+    rotation R is the thesis's Table 5.3 highest-PNV rotation
+    (``terminal_rotation="table53"``) or the model's own highest-PNV rotation
+    (``"model"``, ``feis.model_lev``); the average inventory per
     acre is the mean standing volume over a rotation (trapezoid over ages 0..R
     on the period grid) and the sustained yield per acre per period is
     V(R) / R x period length, from the model's own yield curves. Returns total
     ``avg_inventory_mcf`` and ``ltsy_mcf_per_period``.
     """
+    from fresh_daugherty.instance.feis import model_lev
     from fresh_daugherty.instance.reconstruct import calibrated_params
     from fresh_daugherty.instance.thesis import (
         PNV_ROTATION_ANCHORS,
@@ -147,6 +158,8 @@ def regulated_forest_targets(model: ws3.forest.ForestModel) -> dict[str, float]:
     )
     from fresh_daugherty.model import MAX_AGE, _yield_points_for
 
+    if terminal_rotation not in TERMINAL_ROTATIONS:
+        raise ValueError(f"terminal_rotation must be one of {TERMINAL_ROTATIONS}")
     params = calibrated_params()
     by_code = {ecoclass_code(e).lower(): e for e in Ecoclass}
     # Read the subproblem's initial areas: building or applying a previous
@@ -166,7 +179,10 @@ def regulated_forest_targets(model: ws3.forest.ForestModel) -> dict[str, float]:
     inv = ltsy = 0.0
     step = model.period_length
     for (eco, rx), a in area.items():
-        r = PNV_ROTATION_ANCHORS[(eco, rx)].optimal_rotation_yr
+        if terminal_rotation == "model":
+            r = model_lev(eco, rx)[0]
+        else:
+            r = PNV_ROTATION_ANCHORS[(eco, rx)].optimal_rotation_yr
         curve = dict(_yield_points_for(eco, rx, params[(eco, rx)], MAX_AGE))
         vols = [curve[age] for age in range(0, r + 1, step)]
         avg = sum((v0 + v1) / 2 for v0, v1 in itertools.pairwise(vols)) / (len(vols) - 1)
@@ -188,6 +204,7 @@ def add_open_loop_problem(
     flow_decrease: float | None = None,
     flow_increase: float | None = None,
     terminal_constraints: bool = True,
+    terminal_rotation: str = "table53",
     abs_period: int = 1,
     fix_period1_harvest_mcf: float | None = None,
     prev_harvest_mcf: float | None = None,
@@ -236,9 +253,11 @@ def add_open_loop_problem(
     average inventory of the forest regulated under each stratum's regeneration
     prescription, and (ii) a final-harvest cap, harvest <= 120% of that
     forest's long-term sustained yield, both at the Table 5.3 highest-PNV
-    rotation (``regulated_forest_targets``). The inventory coefficient is ws3's
-    own inventory of each column's post-action state (P18.2, #112; an earlier
-    hand-rolled coefficient used per-acre units and the pre-action state).
+    rotation (``regulated_forest_targets``; ``terminal_rotation="model"``
+    uses the model's own highest-PNV rotations instead, a sensitivity). The
+    inventory coefficient is ws3's own inventory of each column's post-action
+    state (P18.2, #112; an earlier hand-rolled coefficient used per-acre units
+    and the pre-action state).
     """
     period_length = model.period_length
     path = discount_path if discount_path is not None else constant_path(discount_rate)
@@ -359,7 +378,7 @@ def add_open_loop_problem(
         cflw_e = {flow_key: spec}
 
     if use_terminal_inv:
-        targets = regulated_forest_targets(model)
+        targets = regulated_forest_targets(model, terminal_rotation=terminal_rotation)
         final_period = list(model.periods)[-1]
         cgen_data = cgen_data or {}
         cgen_data["inventory"] = {"lb": {final_period: 0.8 * targets["avg_inventory_mcf"]}}

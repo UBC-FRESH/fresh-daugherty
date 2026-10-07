@@ -417,6 +417,11 @@ def grid_institutions(
     workers: int = typer.Option(
         1, "--workers", min=1, help="Parallel processes (grid is embarrassingly parallel)."
     ),
+    terminal_rotation: str = typer.Option(
+        "table53",
+        "--terminal-rotation",
+        help="Rotations of the terminal targets: table53 (thesis) or model (sensitivity).",
+    ),
     out: Path = typer.Option(Path("results") / "experiments" / "grid_institutions.csv", "--out"),
 ) -> None:
     """Run the replanning-institution grid (P15.2): landbase x rate x policy x
@@ -442,6 +447,7 @@ def grid_institutions(
         horizon=horizon,
         workdir=out.parent / "grid_work",
         workers=workers,
+        terminal_rotation=terminal_rotation,
     )
     out.parent.mkdir(parents=True, exist_ok=True)
     summary.to_csv(out, index=False)

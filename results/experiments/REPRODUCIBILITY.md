@@ -114,6 +114,24 @@ fresh-daugherty grid-institutions \
   --out results/experiments/grid_institutions.csv
 ```
 
+## Terminal-rotation sensitivity (P19, #118)
+
+The core institution (rolling horizon, reset flow history) with terminal
+targets at the model's own highest-PNV rotations (`feis.model_lev`; the
+shortest permitted rotation for every productive prescription) instead of the
+thesis's Table 5.3 rotations. Analysis:
+`PYTHONPATH=src python scripts/analyze_p19_round5.py`.
+
+```bash
+fresh-daugherty grid-institutions \
+  --landbases "1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18" \
+  --discount-rates 0.0,0.02,0.04,0.06 \
+  --policies "NHF,NDY,-10%,-20%,+/-10%,+/-20%" \
+  --institutions "rolling/reset" --terminal-rotation model \
+  --horizon 15 --workers 48 \
+  --out results/experiments/grid_terminal_rotation_model.csv
+```
+
 ## Seed-sensitivity grid (P15, #88)
 
 `grid_seeds.csv` (+ `_trajectories`): the random landbases 11-18 under five

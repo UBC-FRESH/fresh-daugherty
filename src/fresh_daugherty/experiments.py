@@ -647,7 +647,7 @@ def _run_institution_cell(args: tuple) -> tuple[dict, list[dict], list[dict]]:
     """
     from fresh_daugherty.instance.reconstruct import calibrate
 
-    lb, rate, pol, (horizon_kind, history), horizon, cell_workdir = args
+    lb, rate, pol, (horizon_kind, history), horizon, cell_workdir, terminal_rotation = args
     calibrate()
     areas = landbase_areas(lb)
     build_woodstock_sections(cell_workdir / "model", areas=areas)
@@ -664,6 +664,7 @@ def _run_institution_cell(args: tuple) -> tuple[dict, list[dict], list[dict]]:
         flow_increase=flow_kwargs.get("flow_increase"),
         rolling_horizon=(horizon_kind == "rolling"),
         carry_flow_history=(history == "carried"),
+        terminal_rotation=terminal_rotation,
     )
     announced = [float(v) for v in gap["announced"]]
     realized = [float(v) for v in gap["realized"]]
@@ -673,6 +674,7 @@ def _run_institution_cell(args: tuple) -> tuple[dict, list[dict], list[dict]]:
         "flow_policy": pol.code,
         "horizon_institution": horizon_kind,
         "flow_history": history,
+        "terminal_rotation": terminal_rotation,
     }
     relax_share, numeric_share = _relaxation_shares(gap)
     summary = {
@@ -704,14 +706,21 @@ def run_institution_grid(
     horizon: int,
     workdir: str | Path,
     workers: int = 1,
+    terminal_rotation: str = "table53",
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """Run the replanning-institution grid: landbase x rate x policy x institution.
 
     Each cell is a full sequential-replanning simulation with the
     objective-gap diagnostic under one (horizon, flow-history) institution
     (see ``INSTITUTIONS``). The ("rolling", "reset") cells are the core grid's
-    institution and reproduce it. Returns ``(summary, trajectories, gaps)``.
+    institution and reproduce it. ``terminal_rotation`` selects the rotations
+    of the terminal targets (``lp.TERMINAL_ROTATIONS``; P19.1 sensitivity).
+    Returns ``(summary, trajectories, gaps)``.
     """
+    from fresh_daugherty.lp import TERMINAL_ROTATIONS
+
+    if terminal_rotation not in TERMINAL_ROTATIONS:
+        raise ValueError(f"terminal_rotation must be one of {TERMINAL_ROTATIONS}")
     workdir = Path(workdir)
     cells = [
         (
@@ -720,7 +729,9 @@ def run_institution_grid(
             pol,
             inst,
             horizon,
-            workdir / f"lb{lb}_r{rate}_{_policy_slug(pol.code)}_{inst[0]}_{inst[1]}",
+            workdir
+            / f"lb{lb}_r{rate}_{_policy_slug(pol.code)}_{inst[0]}_{inst[1]}_{terminal_rotation}",
+            terminal_rotation,
         )
         for lb in landbases
         for rate in discount_rates

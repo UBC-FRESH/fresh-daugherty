@@ -186,6 +186,7 @@ def _solve_and_apply(
     flow_geometry: str,
     flow_decrease: float | None,
     flow_increase: float | None,
+    terminal_rotation: str = "table53",
     abs_period: int = 1,
     prev_harvest_mcf: float | None = None,
     notes: list[str] | None = None,
@@ -209,6 +210,7 @@ def _solve_and_apply(
             flow_geometry=flow_geometry,
             flow_decrease=flow_decrease,
             flow_increase=flow_increase,
+            terminal_rotation=terminal_rotation,
             abs_period=abs_period,
             prev_harvest_mcf=prev_harvest,
             name="open",
@@ -278,6 +280,7 @@ def _solve_subproblem(
     flow_decrease: float | None,
     flow_increase: float | None,
     abs_period: int,
+    terminal_rotation: str = "table53",
     fix_period1_harvest_mcf: float | None = None,
     prev_harvest_mcf: float | None = None,
     history_rtol: float = HISTORY_RTOL,
@@ -296,6 +299,7 @@ def _solve_subproblem(
         flow_geometry=flow_geometry,
         flow_decrease=flow_decrease,
         flow_increase=flow_increase,
+        terminal_rotation=terminal_rotation,
         abs_period=abs_period,
         fix_period1_harvest_mcf=fix_period1_harvest_mcf,
         prev_harvest_mcf=prev_harvest_mcf,
@@ -323,6 +327,7 @@ def consistency_gap_replan(
     flow_increase: float | None = None,
     carry_flow_history: bool = False,
     rolling_horizon: bool = True,
+    terminal_rotation: str = "table53",
     collect_revenue: bool = False,
 ) -> pd.DataFrame:
     """Sequential replanning with an objective-gap consistency diagnostic.
@@ -359,6 +364,7 @@ def consistency_gap_replan(
         flow_geometry=flow_geometry,
         flow_decrease=flow_decrease,
         flow_increase=flow_increase,
+        terminal_rotation=terminal_rotation,
     )
     # Announced revenue trajectory: the open-loop schedule is still applied
     # on `model` from the projection above (absolute period == period here).
@@ -383,6 +389,7 @@ def consistency_gap_replan(
             "flow_decrease": flow_decrease,
             "flow_increase": flow_increase,
             "abs_period": t,
+            "terminal_rotation": terminal_rotation,
             # Carried flow history (P15.1, #83): anchor the subproblem's first
             # period to the realized previous harvest, as `sequential_replan` does.
             "prev_harvest_mcf": realized[-1] if carry_flow_history and realized else None,
@@ -491,6 +498,7 @@ def open_loop_projection(
     flow_decrease: float | None = None,
     flow_increase: float | None = None,
     abs_period: int = 1,
+    terminal_rotation: str = "table53",
 ) -> list[float]:
     """The open-loop plan's projected per-period harvest volume (full horizon)."""
     return _solve_and_apply(
@@ -506,6 +514,7 @@ def open_loop_projection(
         flow_decrease=flow_decrease,
         flow_increase=flow_increase,
         abs_period=abs_period,
+        terminal_rotation=terminal_rotation,
     )
 
 
@@ -526,6 +535,7 @@ def sequential_replan(
     carry_flow_history: bool = False,
     rolling_horizon: bool = True,
     record_solver_notes: bool = False,
+    terminal_rotation: str = "table53",
 ) -> pd.DataFrame:
     """Run the sequential-replanning simulation.
 
@@ -574,6 +584,7 @@ def sequential_replan(
             flow_increase=flow_increase,
             abs_period=t,
             prev_harvest_mcf=prev_harvest if carry_flow_history else None,
+            terminal_rotation=terminal_rotation,
             notes=notes,
         )
         realized.append(volumes[0])

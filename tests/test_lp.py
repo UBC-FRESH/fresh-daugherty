@@ -413,3 +413,18 @@ def test_terminal_rows_do_not_depend_on_previous_builds(tmp_path) -> None:
         assert p2._constraints[n].rhs == pytest.approx(p1._constraints[n].rhs), n
     p2.solve(verbose=False)
     assert p2.z() == pytest.approx(p1.z(), rel=1e-9)
+
+
+def test_terminal_rotation_option(tmp_path) -> None:
+    """P19.1 (#118): the model-optimal rotations (shorter for productive
+    prescriptions) give a lower average-inventory target; unknown values are
+    rejected rather than silently read as the default."""
+    from fresh_daugherty.lp import regulated_forest_targets
+
+    build_woodstock_sections(tmp_path / "m", areas=landbase_areas(1))
+    model = prepare_optimization(bootstrap_model(tmp_path / "m", horizon=4), horizon=4)
+    table = regulated_forest_targets(model)
+    own = regulated_forest_targets(model, terminal_rotation="model")
+    assert own["avg_inventory_mcf"] < table["avg_inventory_mcf"]
+    with pytest.raises(ValueError):
+        regulated_forest_targets(model, terminal_rotation="Table 5.3")
