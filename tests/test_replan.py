@@ -337,3 +337,36 @@ def test_thesis_window_metrics() -> None:
     assert m["mean_abs_rel_deviation"] == pytest.approx((10 * 0.1 + 4 * 0.9) / 15)
     short = inconsistency_metrics([100.0] * 5, [100.0] * 4 + [80.0])
     assert short["mean_abs_rel_deviation_2_11"] == pytest.approx(0.05)
+
+
+@pytest.mark.parametrize("institution", [(True, False), (False, True)])
+def test_terminal_rotation_reaches_every_targets_call(tmp_path, monkeypatch, institution) -> None:
+    """P19.1 (#118), guard against the recurring defect class (an option
+    silently dropped on some call path): every terminal-target computation of
+    the announced plan, the free and the tail-fixed replans uses the requested
+    rotations."""
+    import fresh_daugherty.lp as lp
+    from fresh_daugherty.replan import consistency_gap_replan
+
+    seen: list[str] = []
+    real = lp.regulated_forest_targets
+
+    def spy(model, *, terminal_rotation="table53"):
+        seen.append(terminal_rotation)
+        return real(model, terminal_rotation=terminal_rotation)
+
+    monkeypatch.setattr(lp, "regulated_forest_targets", spy)
+    rolling, carried = institution
+    build_woodstock_sections(tmp_path / "m", areas=landbase_areas(1))
+    model = prepare_optimization(bootstrap_model(tmp_path / "m", horizon=4), horizon=4)
+    consistency_gap_replan(
+        model,
+        workdir=tmp_path,
+        discount_rate=0.04,
+        flow_geometry="consecutive",
+        flow_decrease=0.0,
+        rolling_horizon=rolling,
+        carry_flow_history=carried,
+        terminal_rotation="model",
+    )
+    assert len(seen) >= 1 + 2 * 4 and set(seen) == {"model"}

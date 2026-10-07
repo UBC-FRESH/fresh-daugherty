@@ -219,25 +219,42 @@ def real_ecoclass_net_revenue(ecoclass: Ecoclass) -> float:
 
 
 def model_lev(
-    ecoclass: Ecoclass, prescription: Prescription, *, max_age: int = 200
+    ecoclass: Ecoclass,
+    prescription: Prescription,
+    *,
+    discount_rate: float | None = None,
+    max_age: int = 200,
 ) -> tuple[int, float]:
-    """The model's max Faustmann LEV ($/ac) + optimal rotation for a cell.
+    """The model's highest-PNV rotation and its Faustmann LEV ($/ac) for a cell.
 
     Computed from the real FEIS yield curve and the real per-ecoclass net
-    revenue (stumpage less access cost) at the thesis 4% discount rate. This
-    is the exact-vintage validation against the thesis's Table 5.3 anchors.
+    revenue (stumpage less access cost; no escalation) at ``discount_rate``
+    (default the thesis's 4%), with the LP's annual compounding, over the
+    rotations of the thesis's permitted range (Table 5.3) that lie on the
+    model's period grid. The model's optima differ from Table 5.3: for every
+    productive prescription with a range they are at its shortest rotation,
+    and for CM-CE at its longest (P19.1, #118; the earlier search also
+    visited off-grid ages, where the curve has no volume, so its range and
+    CM-CE sign checks could not fail).
     """
-    from fresh_daugherty.instance.thesis import ROTATION_RANGES, THESIS_DISCOUNT_RATE
+    from fresh_daugherty.instance.thesis import (
+        PERIOD_LENGTH_YEARS,
+        ROTATION_RANGES,
+        THESIS_DISCOUNT_RATE,
+    )
 
+    rate = THESIS_DISCOUNT_RATE if discount_rate is None else discount_rate
     curve = real_yield_curve(ecoclass, prescription, max_age=max_age)
     net = real_ecoclass_net_revenue(ecoclass)
     rng = ROTATION_RANGES[(ecoclass, prescription)]
     assert rng is not None
-    best_r, best_lev = rng.lo, -np.inf
-    for r in range(rng.lo, rng.hi + 1):
-        vol = curve.get(min(r, max_age), 0.0)
-        npv = net * vol * np.exp(-THESIS_DISCOUNT_RATE * r)
-        lev = npv / (1.0 - np.exp(-THESIS_DISCOUNT_RATE * r))
+    ages = [r for r in range(rng.lo, min(rng.hi, max_age) + 1) if r % PERIOD_LENGTH_YEARS == 0]
+    if not ages:
+        raise ValueError(f"no grid rotation in the range of {ecoclass.value} rx{int(prescription)}")
+    best_r, best_lev = ages[0], -np.inf
+    for r in ages:
+        disc = (1.0 + rate) ** (-r)
+        lev = net * curve[r] * disc / (1.0 - disc)
         if lev > best_lev:
             best_r, best_lev = r, lev
     return best_r, float(best_lev)

@@ -10,9 +10,11 @@ pages 02 and 06-08.
 ## Headline basis: the thesis's observation window (P17)
 
 Since P17 (#101) the paper's headline basis is the thesis's observation window,
-periods 2-11 (thesis p. 83), because without the thesis's terminal constraints
-end-of-horizon effects inflate the full-horizon metric; periods 1-15 are kept as
-a sensitivity. Both bases side by side (`scripts/analyze_p17_headline.py`):
+periods 2-11 (thesis p. 83); periods 1-15 are kept as a sensitivity. Since P18
+(#110) the thesis's terminal constraints are imposed on every flow-constrained
+run; they remove end-of-horizon liquidation, but each replan still has its own
+end periods, which carry about half of a scenario's summed divergence. Both
+bases side by side (`scripts/analyze_p17_headline.py`):
 
 | group | n | inconsistent_2-11 | occurrence_2-11 | magnitude_2-11 | inconsistent_1-15 | occurrence_1-15 | magnitude_1-15 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -177,8 +179,8 @@ Gap-diagnostic tail status by institution (flow-constrained, periods > 1):
 
 | window | inconsistent | cells | mean_magnitude |
 | --- | --- | --- | --- |
-| periods 1-15 (paper) | 203 | 360 | 0.0878 |
-| periods 2-11 (thesis) | 178 | 360 | 0.0719 |
+| periods 1-15 (sensitivity) | 203 | 360 | 0.0878 |
+| periods 2-11 (thesis; paper headline) | 178 | 360 | 0.0719 |
 
 ## Objective-gap diagnostic (core institution)
 
@@ -215,32 +217,37 @@ First non-optimal period per cell (gap as % of the subproblem NPV):
 
 ## Descriptives
 
-Paired landbases with/without the negatively valued CM-CE ecoclass:
+Since P19 (#119) these tables are scored over periods 2-11 (the E2
+comparison over periods 1-11 and 1-15). Paired landbases with/without the
+negatively valued CM-CE ecoclass:
 
 | grid | with_cmce | without_cmce | with_magnitude | without_magnitude |
 | --- | --- | --- | --- | --- |
-| core (volume) | 72/80 | 38/80 | 0.1357 | 0.0895 |
-| E3 volume | 72/80 | 38/80 | 0.1357 | 0.0895 |
-| E3 revenue | 53/80 | 45/80 | 0.1296 | 0.1109 |
+| core (volume) | 67/80 | 37/80 | 0.1259 | 0.081 |
+| E3 volume | 67/80 | 37/80 | 0.1259 | 0.081 |
+| E3 revenue | 50/80 | 45/80 | 0.1242 | 0.1067 |
 
 By discount rate (flow-constrained):
 
 | discount_rate | inconsistent | cells | occurrence | mean_magnitude |
 | --- | --- | --- | --- | --- |
-| 0.0 | 90.0 | 90.0 | 1.0 | 0.192 |
-| 0.02 | 43.0 | 90.0 | 0.4778 | 0.0536 |
-| 0.04 | 32.0 | 90.0 | 0.3556 | 0.0476 |
-| 0.06 | 38.0 | 90.0 | 0.4222 | 0.0581 |
+| 0.0 | 90.0 | 90.0 | 1.0 | 0.1611 |
+| 0.02 | 26.0 | 90.0 | 0.2889 | 0.0434 |
+| 0.04 | 28.0 | 90.0 | 0.3111 | 0.0378 |
+| 0.06 | 34.0 | 90.0 | 0.3778 | 0.0453 |
 
-E2 calibrated cap vs the *realized* NDY path (median relative difference):
+E2 calibrated cap vs the *realized* NDY path (relative difference; medians by
+rate, then median, minimum and maximum over the 72 scenarios):
 
-| discount_rate | volume_cap_vs_realized_ndy | volume_cap_vs_announced_ndy | npv_cap_vs_realized_ndy |
-| --- | --- | --- | --- |
-| 0.0 | 0.0631 | -0.0853 | 0.0456 |
-| 0.02 | 0.0544 | -0.0049 | 0.0337 |
-| 0.04 | 0.011 | -0.0507 | -0.0189 |
-| 0.06 | 0.0162 | -0.0436 | -0.0203 |
-| all (median) | 0.0233 | -0.0523 | -0.0058 |
+| discount_rate | volume_cap_vs_realized_ndy_1_11 | volume_cap_vs_announced_ndy_1_11 | npv_cap_vs_realized_ndy_1_11 | volume_cap_vs_realized_ndy_1_15 | volume_cap_vs_announced_ndy_1_15 | npv_cap_vs_realized_ndy_1_15 |
+| --- | --- | --- | --- | --- | --- | --- |
+| 0.0 | 0.0656 | -0.051 | 0.0374 | 0.0631 | -0.0853 | 0.0456 |
+| 0.02 | 0.0407 | -0.0013 | 0.0284 | 0.0544 | -0.0049 | 0.0337 |
+| 0.04 | -0.0034 | -0.0493 | -0.0196 | 0.011 | -0.0507 | -0.0189 |
+| 0.06 | 0.0024 | -0.0431 | -0.0205 | 0.0162 | -0.0436 | -0.0203 |
+| all (median) | 0.0136 | -0.0425 | -0.005 | 0.0233 | -0.0523 | -0.0058 |
+| all (min) | -0.1479 | -0.2201 | -0.0764 | -0.1555 | -0.2341 | -0.0902 |
+| all (max) | 0.3536 | 0.0626 | 0.4419 | 0.1619 | 0.0146 | 0.1802 |
 
 ## Random landbases: seed sensitivity
 
@@ -251,3 +258,161 @@ E2 calibrated cap vs the *realized* NDY path (median relative difference):
 | 2042.0 | 74.0 | 160.0 | 0.4625 | 0.07 |
 | 3042.0 | 78.0 | 160.0 | 0.4875 | 0.0698 |
 | 4042.0 | 76.0 | 160.0 | 0.475 | 0.0721 |
+
+## Final pre-submission audit (P19, periods 2-11)
+
+Tables behind the manuscript numbers added after the final referee audit
+(`scripts/analyze_p19_round5.py`).
+
+Replan status (objective-gap diagnostic) by institution; "material_loosening"
+is the share of replans whose carried anchor had to be loosened beyond
+numerical tolerance:
+
+| institution | policies | replans | optimal | suboptimal | infeasible | material_loosening |
+| --- | --- | --- | --- | --- | --- | --- |
+| fixed/carried | flow-constrained | 3600 | 0.9989 | 0.0008 | 0.0003 | 0.0 |
+| fixed/carried | NHF | 720 | 1.0 | 0.0 | 0.0 | nan |
+| fixed/reset | flow-constrained | 3600 | 0.6131 | 0.3222 | 0.0647 | nan |
+| fixed/reset | NHF | 720 | 1.0 | 0.0 | 0.0 | nan |
+| rolling/carried | flow-constrained | 3600 | 0.6578 | 0.0994 | 0.2428 | 0.1306 |
+| rolling/carried | NHF | 720 | 0.7514 | 0.2222 | 0.0264 | nan |
+| rolling/reset | flow-constrained | 3600 | 0.4208 | 0.3947 | 0.1844 | nan |
+| rolling/reset | NHF | 720 | 0.7514 | 0.2222 | 0.0264 | nan |
+
+Core institution by rate:
+
+| discount_rate | policies | replans | optimal | suboptimal | infeasible |
+| --- | --- | --- | --- | --- | --- |
+| 0.0 | flow-constrained | 900 | 0.1333 | 0.7456 | 0.1211 |
+| 0.0 | NHF | 180 | 0.5056 | 0.4944 | 0.0 |
+| 0.02 | flow-constrained | 900 | 0.4611 | 0.3233 | 0.2156 |
+| 0.02 | NHF | 180 | 0.5 | 0.3944 | 0.1056 |
+| 0.04 | flow-constrained | 900 | 0.55 | 0.2522 | 0.1978 |
+| 0.04 | NHF | 180 | 1.0 | 0.0 | 0.0 |
+| 0.06 | flow-constrained | 900 | 0.5389 | 0.2578 | 0.2033 |
+| 0.06 | NHF | 180 | 1.0 | 0.0 | 0.0 |
+
+Landbase 1, non-optimal replans of ten:
+
+| flow_policy | 0.0 | 0.02 | 0.04 | 0.06 |
+| --- | --- | --- | --- | --- |
+| NDY | 9 | 10 | 10 | 10 |
+| NHF | 1 | 0 | 0 | 0 |
+
+First deviation (flow-constrained, core):
+
+| index | value |
+| --- | --- |
+| scenarios_with_nonoptimal_replan | 324 |
+| first_deviation_infeasible | 40 |
+| first_suboptimal_gap_median_pct | 0.051 |
+| first_suboptimal_gap_p90_pct | 0.95 |
+| inconsistent_with_flag | 178/178 |
+| consistent_with_flag | 146/182 |
+
+Extension grids:
+
+| grid | replans | optimal | suboptimal | infeasible |
+| --- | --- | --- | --- | --- |
+| E2 cap | 720 | 0.9569 | 0.0431 | 0.0 |
+| E3 revenue | 3600 | 0.3964 | 0.4944 | 0.1092 |
+| E3 volume | 3600 | 0.4208 | 0.3947 | 0.1844 |
+
+| discount_rate | material_loosening | median_loosening_pct | max_loosening_pct | dropped |
+| --- | --- | --- | --- | --- |
+| 0.0 | 0.4 | nan | nan | nan |
+| 0.02 | 0.7194 | nan | nan | nan |
+| 0.04 | 0.7389 | nan | nan | nan |
+| 0.06 | 0.7361 | nan | nan | nan |
+| all | 0.6486 | 1.279 | 2.256 | 0.0 |
+
+Paired CM-CE landbases on all 80 flow-constrained pairs (volume inconsistency,
+eq. 5-1, percentage points):
+
+| pair | occurrence_with | occurrence_without | volume_inconsistency_diff_pts | share_higher_with |
+| --- | --- | --- | --- | --- |
+| 1 vs 2 | 20/20 | 9/20 | 5.76 | 0.9 |
+| 3 vs 4 | 17/20 | 9/20 | 7.14 | 0.9 |
+| 5 vs 6 | 18/20 | 12/20 | 3.14 | 0.75 |
+| 7 vs 8 | 12/20 | 7/20 | 2.79 | 0.8 |
+| all 80 pairs | 67/80 | 37/80 | 4.71 | 0.838 |
+
+Exact tail problem (fixed horizon, carried flow history): scenarios whose
+realized harvest departs from the announced plan in some period, by size of
+the largest departure. These arise from ties among stand-level alternatives of
+equal value, which the aggregate harvest-flow diagnostic does not see.
+
+| window | scenarios | max_dev_gt_0.1pct | max_dev_gt_1pct | max_dev_gt_5pct |
+| --- | --- | --- | --- | --- |
+| periods 2-11 | 360 | 10 | 4 | 2 |
+| periods 2-15 | 360 | 14 | 5 | 2 |
+
+| landbase | discount_rate | flow_policy | max_period_deviation |
+| --- | --- | --- | --- |
+| 1 | 0.06 | +/-10% | 0.0384 |
+| 5 | 0.0 | -10% | 0.025 |
+| 8 | 0.0 | -10% | 0.4016 |
+| 10 | 0.0 | -20% | 0.1299 |
+| 15 | 0.06 | +/-20% | 0.0149 |
+
+Occurrence by institution at zero and positive rates:
+
+| horizon_institution | flow_history | 0% | 2-6% |
+| --- | --- | --- | --- |
+| fixed | carried | 1/90 | 0/270 |
+| fixed | reset | 40/90 | 58/270 |
+| rolling | carried | 81/90 | 6/270 |
+| rolling | reset | 90/90 | 88/270 |
+
+The model's own highest-PNV rotations (FEIS yields, the model's net values,
+4%, rotations on the 10-year grid within the thesis's permitted range) vs
+Table 5.3, which the terminal targets use:
+
+| ecoclass | prescription | permitted | table_5_3 | model_optimum | model_lev_per_ac |
+| --- | --- | --- | --- | --- | --- |
+| CH-CW | 2 | 60-150 | 90 | 60 | 449.5 |
+| CH-CW | 3 | 100-180 | 100 | 100 | 147.5 |
+| CH-CW | 4 | 70-150 | 80 | 70 | 409.7 |
+| CH-CW | 5 | 60-150 | 70 | 60 | 555.1 |
+| CH-CW | 6 | 70-150 | 90 | 70 | 373.7 |
+| CH-CW | 7 | 60-150 | 80 | 60 | 449.5 |
+| CD-CP | 2 | 70-150 | 90 | 70 | 230.1 |
+| CD-CP | 3 | 120-180 | 120 | 120 | 58.8 |
+| CD-CP | 4 | 80-150 | 90 | 80 | 302.7 |
+| CD-CP | 5 | 70-150 | 100 | 70 | 397.9 |
+| CD-CP | 6 | 80-150 | 110 | 80 | 175.3 |
+| CD-CP | 7 | 80-150 | 100 | 80 | 187.3 |
+| CR-CF | 1 | 80-150 | 90 | 80 | 210.8 |
+| CR-CF | 2 | 80-150 | 100 | 80 | 210.8 |
+| CR-CF | 4 | 80-150 | 100 | 80 | 302.2 |
+| CR-CF | 6 | 80-150 | 120 | 80 | 210.8 |
+| CM-CE | 2 | 110-190 | 150 | 190 | -1.8 |
+| CM-CE | 4 | 110-190 | 150 | 190 | -1.7 |
+| CM-CE | 6 | 120-200 | 150 | 200 | -1.2 |
+
+Revenue-denominated NDY: the projected plan's volume from one period to the
+next (a 1%/yr escalation alone allows about 0.905 per period):
+
+| index | value |
+| --- | --- |
+| landbase1_4pc_period2_over_period1 | 0.6216 |
+| min_ratio_from_positive_harvest | 0.2992 |
+| p5_of_cell_minima | 0.6216 |
+| median_of_cell_minima | 0.8625 |
+| escalation_only_10yr | 0.9053 |
+
+Terminal-rotation sensitivity: the core grid with terminal targets at the
+model's own highest-PNV rotations instead of Table 5.3's
+([records](../results/experiments/grid_terminal_rotation_model.csv)):
+
+| terminal_rotations | flow_constrained_2_11 | flow_constrained_1_15 | magnitude_2_11 | positive_rates_2_11 | NHF_2_11 | volume_inconsistency_2_11 | occ_0 | occ_0.02 | occ_0.04 | occ_0.06 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Table 5.3 rotations (core) | 178/360 | 203/360 | 0.0719 | 88/270 | 34/72 | 7.61 | 90/90 | 26/90 | 28/90 | 34/90 |
+| model-optimal rotations | 161/360 | 212/360 | 0.0768 | 75/270 | 34/72 | 8.12 | 86/90 | 24/90 | 22/90 | 29/90 |
+
+| index | scenarios |
+| --- | --- |
+| both_inconsistent | 155 |
+| core_only | 23 |
+| model_only | 6 |
+| both_consistent | 176 |

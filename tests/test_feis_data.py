@@ -54,9 +54,16 @@ def test_species_economics() -> None:
 
 def test_model_lev_reproduces_anchor_signs() -> None:
     """Exact-vintage validation: the real-data model reproduces the Table 5.3
-    anchors' signs (productive ecoclasses positive, CM-CE non-positive)."""
-    from fresh_daugherty.instance.feis import model_lev
-    from fresh_daugherty.instance.thesis import PNV_ROTATION_ANCHORS, ROTATION_RANGES
+    anchors' signs (productive ecoclasses positive, CM-CE negative) on rotations
+    of the model's period grid, where the curves carry volume (P19.1, #118: the
+    earlier search visited off-grid ages with zero volume, so CM-CE "passed"
+    with LEV = 0)."""
+    from fresh_daugherty.instance.feis import model_lev, real_yield_curve
+    from fresh_daugherty.instance.thesis import (
+        PERIOD_LENGTH_YEARS,
+        PNV_ROTATION_ANCHORS,
+        ROTATION_RANGES,
+    )
 
     for (eco, rx), anchor in PNV_ROTATION_ANCHORS.items():
         if anchor is None:
@@ -64,13 +71,31 @@ def test_model_lev_reproduces_anchor_signs() -> None:
         opt_r, lev = model_lev(eco, rx)
         rng = ROTATION_RANGES[(eco, rx)]
         assert rng is not None
-        # Optimal rotation within the thesis range.
-        assert rng.lo <= opt_r <= rng.hi
-        # Sign matches the anchor (CM-CE non-positive, others positive).
+        assert rng.lo <= opt_r <= rng.hi and opt_r % PERIOD_LENGTH_YEARS == 0
+        assert real_yield_curve(eco, rx, max_age=300)[opt_r] > 0
         if anchor.max_pnv_per_ac < 0:
-            assert lev <= 0, f"{eco.value} rx{int(rx)} should be non-positive"
+            assert lev < 0, f"{eco.value} rx{int(rx)} should be negative"
         else:
             assert lev > 0, f"{eco.value} rx{int(rx)} should be positive"
+
+
+def test_model_optimal_rotations_differ_from_table_5_3() -> None:
+    """Audit V02/V03 (P19.1, #118), recorded rather than hidden: the model's
+    highest-PNV rotation is the shortest permitted one for every productive
+    prescription (the thesis's Table 5.3 rotations are longer or equal), and
+    the longest permitted one for the negatively valued CM-CE."""
+    from fresh_daugherty.instance.feis import model_lev
+    from fresh_daugherty.instance.thesis import PNV_ROTATION_ANCHORS, ROTATION_RANGES
+
+    for (eco, rx), anchor in PNV_ROTATION_ANCHORS.items():
+        if anchor is None:
+            continue
+        opt_r, _ = model_lev(eco, rx)
+        rng = ROTATION_RANGES[(eco, rx)]
+        if anchor.max_pnv_per_ac < 0:
+            assert opt_r > anchor.optimal_rotation_yr
+        else:
+            assert opt_r == rng.lo <= anchor.optimal_rotation_yr
 
 
 def test_mature_volume_crosscheck_independent() -> None:

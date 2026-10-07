@@ -29,20 +29,26 @@ peer-reviewed paper.
 ## What it does
 
 - Reproduces the Daugherty (1991) open-loop harvest-scheduling LP in ws3
-  (Model I, and Model II via a ws3 extension).
+  (Model I; the thesis's Model II formulation is not implemented), with the
+  thesis's terminal constraints on every flow-constrained run.
 - A sequential-replanning simulator that measures the occurrence and
-  magnitude of dynamic inconsistency (changes in decisions and in projected
-  output levels over time).
-- The consistent-solution (subgame-perfect) construct.
+  magnitude of dynamic inconsistency, with an objective-gap diagnostic that
+  separates strictly suboptimal announced plans from alternate optima, under
+  four replanning institutions (rolling or fixed horizon, reset or carried
+  flow history).
 - The case-study experiments across initial forest conditions, harvest
-  policies (harvest-flow constraints), and interest rates.
+  policies (harvest-flow constraints), and interest rates, plus four
+  extension experiments (declining discount rates, a calibrated harvest cap,
+  a revenue-denominated flow, a rolling-mean flow). Consistent (closed-loop)
+  solutions are not computed.
 
 ## Status
 
-`v0.1.0a1`. The reproduction pipeline (case-study instance, open-loop Model I
-LP, sequential-replanning simulator, experiment grid) is implemented and
-tested; the dynamic-inconsistency result is reproduced. See `ROADMAP.md` and
-`planning/v0.1.0a1-plan.md`.
+`v0.1.0b1` is released (archived on Zenodo); v0.2.0 (phases P14-P19) is in
+development and produces the records behind the manuscript
+(`results/experiments/`, documented in `results/experiments/REPRODUCIBILITY.md`;
+curated summaries in `supplementary/`). See `ROADMAP.md` and
+`planning/v0.2.0-plan.md`.
 
 ## Quick Start
 
@@ -58,7 +64,7 @@ fresh-daugherty --help
   inconsistency motivated this reproduction (documented in its
   `planning/dynamic-inconsistency-note.md`).
 - [`ws3`](https://github.com/UBC-FRESH/ws3) — the wood-supply engine this
-  reproduction is built on (and extends with a Model II LP formulation).
+  reproduction is built on.
 
 ## Companion reference
 

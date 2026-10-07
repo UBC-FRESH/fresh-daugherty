@@ -1,0 +1,10 @@
+| discount_rate | policies | replans | optimal | suboptimal | infeasible |
+| --- | --- | --- | --- | --- | --- |
+| 0.0 | flow-constrained | 900 | 0.1333 | 0.7456 | 0.1211 |
+| 0.0 | NHF | 180 | 0.5056 | 0.4944 | 0.0 |
+| 0.02 | flow-constrained | 900 | 0.4611 | 0.3233 | 0.2156 |
+| 0.02 | NHF | 180 | 0.5 | 0.3944 | 0.1056 |
+| 0.04 | flow-constrained | 900 | 0.55 | 0.2522 | 0.1978 |
+| 0.04 | NHF | 180 | 1.0 | 0.0 | 0.0 |
+| 0.06 | flow-constrained | 900 | 0.5389 | 0.2578 | 0.2033 |
+| 0.06 | NHF | 180 | 1.0 | 0.0 | 0.0 |

@@ -44,6 +44,7 @@ ANALYSIS_SCRIPTS = [
     "scripts/analyze_p15_seeds.py",
     "scripts/analyze_p17_headline.py",
     "scripts/analyze_p17_thesis_comparison.py",
+    "scripts/analyze_p19_round5.py",
 ]
 
 #: (page filename, title) — the supplement's table of contents.
@@ -545,6 +546,8 @@ effect (the control at a constant 0% rate: {const0_nhf:.0%}).
         ].iloc[0]
     )
     lb1_gap = 1 - lb1_cap / lb1_ndy
+    e2_n_2_11 = int((e2.occurrence_2_11.astype(str) == "True").sum())
+    e2_n_1_15 = int((e2.occurrence.astype(str) == "True").sum())
     e2r = pd.read_csv(ANALYSIS / "p15_descriptives" / "t4_e2_vs_realized_ndy_median.csv").set_index(
         "discount_rate"
     )
@@ -563,17 +566,21 @@ Analysis writeup: {_link(ANALYSIS / "p10_cap_search" / "writeup.md", "p10 writeu
 
 ## Headline
 
-Under the calibrated caps, occurrence is {e2.occurrence.mean():.0%} across the
-grid (mean divergence {e2.mean_abs_rel_deviation.mean():.3f}, max
-{e2.mean_abs_rel_deviation.max():.3f} — all below the 5% tolerance), with
-100% convergence; single periods can still deviate by more than 5% in
-{int((e2.max_abs_rel_deviation > 0.05).sum())}/{len(e2)} scenarios. The calibrated
+Under the calibrated caps, with 100% convergence, occurrence over the thesis's
+observation window (periods 2-11) is {e2_n_2_11}/{len(e2)}
+scenarios (mean divergence {e2.mean_abs_rel_deviation_2_11.mean():.3f}, max
+{e2.mean_abs_rel_deviation_2_11.max():.3f}); over periods 1-15 it is
+{e2_n_1_15}/{len(e2)} (max
+{e2.mean_abs_rel_deviation.max():.3f}). Single periods deviate by more than 5% in
+{int((e2.max_abs_rel_deviation > 0.05).sum())}/{len(e2)} scenarios (periods 1-15). The calibrated
 level on landbase 1 at 4% ({lb1_cap:,.0f} MCF/period) is {lb1_gap:.0%} below the
 NDY plan's *announced* level ({lb1_ndy:,.0f}). Against what replanned NDY
-actually delivers, the cap's total volume differs by
-{e2r.loc["all (median)", "volume_cap_vs_realized_ndy"]:+.1%} and its NPV by
-{e2r.loc["all (median)", "npv_cap_vs_realized_ndy"]:+.1%} (medians over
-scenarios; per-scenario spread on page 10).
+actually delivers over periods 1-11 (before the end periods, where the NDY runs
+carry the thesis's terminal constraints and the cap runs do not), the cap's
+total volume differs by
+{e2r.loc["all (median)", "volume_cap_vs_realized_ndy_1_11"]:+.1%} and its NPV by
+{e2r.loc["all (median)", "npv_cap_vs_realized_ndy_1_11"]:+.1%} (medians over
+scenarios; full horizon and per-scenario spread on page 10).
 
 ![Landbase 1 at 4%: NDY flow link vs calibrated cap]({f1})
 
@@ -706,6 +713,19 @@ shortfalls.
     def _tab(sub: str, name: str) -> str:
         return (ANALYSIS / sub / f"{name}.md").read_text().strip()
 
+    def _rotation_sensitivity() -> str:
+        if not (ANALYSIS / "p19_round5" / "t7a_rotation_sensitivity.md").exists():
+            return ""
+        return f"""
+Terminal-rotation sensitivity: the core grid with terminal targets at the
+model's own highest-PNV rotations instead of Table 5.3's
+({_link(RESULTS / "grid_terminal_rotation_model.csv", "records")}):
+
+{_tab("p19_round5", "t7a_rotation_sensitivity")}
+
+{_tab("p19_round5", "t7b_rotation_sensitivity_agreement")}
+"""
+
     inst = pd.read_csv(ANALYSIS / "p15_institutions" / "t1_flow_constrained_by_institution.csv")
     inst = inst.set_index(["horizon_institution", "flow_history"])
 
@@ -727,9 +747,11 @@ pages 02 and 06-08.
 ## Headline basis: the thesis's observation window (P17)
 
 Since P17 (#101) the paper's headline basis is the thesis's observation window,
-periods 2-11 (thesis p. 83), because without the thesis's terminal constraints
-end-of-horizon effects inflate the full-horizon metric; periods 1-15 are kept as
-a sensitivity. Both bases side by side (`scripts/analyze_p17_headline.py`):
+periods 2-11 (thesis p. 83); periods 1-15 are kept as a sensitivity. Since P18
+(#110) the thesis's terminal constraints are imposed on every flow-constrained
+run; they remove end-of-horizon liquidation, but each replan still has its own
+end periods, which carry about half of a scenario's summed divergence. Both
+bases side by side (`scripts/analyze_p17_headline.py`):
 
 {_tab("p17_headline", "t1_core_overall")}
 
@@ -796,7 +818,9 @@ First non-optimal period per cell (gap as % of the subproblem NPV):
 
 ## Descriptives
 
-Paired landbases with/without the negatively valued CM-CE ecoclass:
+Since P19 (#119) these tables are scored over periods 2-11 (the E2
+comparison over periods 1-11 and 1-15). Paired landbases with/without the
+negatively valued CM-CE ecoclass:
 
 {_tab("p15_descriptives", "t1_paired_cmce_landbases")}
 
@@ -804,13 +828,73 @@ By discount rate (flow-constrained):
 
 {_tab("p15_descriptives", "t2_by_rate")}
 
-E2 calibrated cap vs the *realized* NDY path (median relative difference):
+E2 calibrated cap vs the *realized* NDY path (relative difference; medians by
+rate, then median, minimum and maximum over the 72 scenarios):
 
 {_tab("p15_descriptives", "t4_e2_vs_realized_ndy_median")}
 
 ## Random landbases: seed sensitivity
 
 {_tab("p15_seeds", "t1_flow_constrained_by_seed")}
+
+## Final pre-submission audit (P19, periods 2-11)
+
+Tables behind the manuscript numbers added after the final referee audit
+(`scripts/analyze_p19_round5.py`).
+
+Replan status (objective-gap diagnostic) by institution; "material_loosening"
+is the share of replans whose carried anchor had to be loosened beyond
+numerical tolerance:
+
+{_tab("p19_round5", "t1a_replan_status_by_institution")}
+
+Core institution by rate:
+
+{_tab("p19_round5", "t1b_core_replan_status_by_rate")}
+
+Landbase 1, non-optimal replans of ten:
+
+{_tab("p19_round5", "t1c_landbase1_nonoptimal_replans")}
+
+First deviation (flow-constrained, core):
+
+{_tab("p19_round5", "t1d_core_first_deviation")}
+
+Extension grids:
+
+{_tab("p19_round5", "t1e_extension_replan_status")}
+
+{_tab("p19_round5", "t1f_e4_realized_history_loosening")}
+
+Paired CM-CE landbases on all 80 flow-constrained pairs (volume inconsistency,
+eq. 5-1, percentage points):
+
+{_tab("p19_round5", "t2_paired_cmce")}
+
+Exact tail problem (fixed horizon, carried flow history): scenarios whose
+realized harvest departs from the announced plan in some period, by size of
+the largest departure. These arise from ties among stand-level alternatives of
+equal value, which the aggregate harvest-flow diagnostic does not see.
+
+{_tab("p19_round5", "t3a_exact_tail_departures")}
+
+{_tab("p19_round5", "t3b_exact_tail_cases")}
+
+Occurrence by institution at zero and positive rates:
+
+{_tab("p19_round5", "t4_institutions_by_rate")}
+
+The model's own highest-PNV rotations (FEIS yields, the model's net values,
+4%, rotations on the 10-year grid within the thesis's permitted range) vs
+Table 5.3, which the terminal targets use:
+
+{_tab("p19_round5", "t5_rotations")}
+
+Revenue-denominated NDY: the projected plan's volume from one period to the
+next (a 1%/yr escalation alone allows about 0.905 per period):
+
+{_tab("p19_round5", "t6_revenue_ndy_volume_ratios")}
+{_rotation_sensitivity()}
 """,
     )
 

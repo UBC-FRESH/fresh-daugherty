@@ -120,7 +120,7 @@ def main() -> None:
     # T3: occurrence and magnitude on the periods 2-11 window vs 1-15.
     t3 = pd.DataFrame(
         {
-            "window": ["periods 1-15 (paper)", "periods 2-11 (thesis)"],
+            "window": ["periods 1-15 (sensitivity)", "periods 2-11 (thesis; paper headline)"],
             "inconsistent": [int((fc.dbar_1_15 > 0.05).sum()), int((fc.dbar_2_11 > 0.05).sum())],
             "cells": [len(fc), len(fc)],
             "mean_magnitude": [round(fc.dbar_1_15.mean(), 4), round(fc.dbar_2_11.mean(), 4)],

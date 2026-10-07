@@ -29,6 +29,7 @@ synchronized with GitHub issues, planning notes, pull requests, and
 | P16 Audit fixes (second antagonistic review) | [#91](https://github.com/UBC-FRESH/fresh-daugherty/issues/91) (children #92–#99) | `feature/p16-audit-fixes` | Complete — PR [#100](https://github.com/UBC-FRESH/fresh-daugherty/pull/100) open (stacked on PR #90) |
 | P17 Audit-3 fixes (third antagonistic review) | [#101](https://github.com/UBC-FRESH/fresh-daugherty/issues/101) (children #102–#108) | `feature/p17-audit3-fixes` | Complete — PR [#109](https://github.com/UBC-FRESH/fresh-daugherty/pull/109) open (stacked on PR #100) |
 | P18 Terminal constraints and young-age yields | [#110](https://github.com/UBC-FRESH/fresh-daugherty/issues/110) (children #111–#115) | `feature/p18-terminal-constraints` | Complete — PR [#116](https://github.com/UBC-FRESH/fresh-daugherty/pull/116) open (stacked on PR #109) |
+| P19 Audit-5 fixes (final antagonistic review) | [#117](https://github.com/UBC-FRESH/fresh-daugherty/issues/117) (children #118–#121) | `feature/p19-audit5-fixes` | Complete — PR [#122](https://github.com/UBC-FRESH/fresh-daugherty/pull/122) open (stacked on PR #116) |
 
 ## v0.2.0 Scope Expansion (2026-09)
 
