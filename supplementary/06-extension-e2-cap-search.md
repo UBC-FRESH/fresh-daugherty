@@ -31,9 +31,9 @@ scenarios; full horizon and per-scenario spread on page 10).
 
 ## By discount rate
 
-| discount_rate | occurrence | mean_abs_rel_deviation | calibrated_cap_mcf | converged |
-| --- | --- | --- | --- | --- |
-| 0.0 | 0.1111 | 0.0187 | 8842.2277 | 1.0 |
-| 0.02 | 0.0 | 0.0012 | 9235.1168 | 1.0 |
-| 0.04 | 0.0 | 0.0005 | 8830.3974 | 1.0 |
-| 0.06 | 0.0 | 0.0007 | 8791.7611 | 1.0 |
+| discount_rate | occ_2_11 | mag_2_11 | occ_1_15 | mag_1_15 | calibrated_cap_mcf | converged |
+| --- | --- | --- | --- | --- | --- | --- |
+| 0.0 | 0.111 | 0.014 | 0.111 | 0.019 | 8842.228 | 1.0 |
+| 0.02 | 0.0 | 0.0 | 0.0 | 0.001 | 9235.117 | 1.0 |
+| 0.04 | 0.0 | 0.0 | 0.0 | 0.0 | 8830.397 | 1.0 |
+| 0.06 | 0.0 | 0.0 | 0.0 | 0.001 | 8791.761 | 1.0 |

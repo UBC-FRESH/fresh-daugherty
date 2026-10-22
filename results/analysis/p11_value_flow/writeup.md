@@ -68,45 +68,46 @@ it, and the effect differs by policy form.
 
 ## The filler channel
 
-The CM-CE test (Table T4, focal open-loop solves; unaffected by the defect)
-confirms that revenue denominating disables the channel:
+Corrected (2026-10-22): revenue denominating does **not** disable the channel.
+Current focal-solve values (Table T4; landbase 1, NDY):
 
-- Landbase 1 (CM-CE present), volume NDY: the open-loop plan schedules
-  3,970–5,334 MCF of negatively valued CM-CE harvest (2.5–3.5% of projected
-  volume at 0%/4%).
-- Landbase 1, revenue NDY: CM-CE harvest is **zero**.
-- Landbase 2 (CM-CE excluded): zero under both denominators (control).
+- Volume denominator: CM-CE share 0.0% at 0% and 5.3% at 4% (7,147 MCF at 4%).
+- Revenue denominator: CM-CE share 3.2% at 0% and 2.2% at 4% (2,968 MCF at 4%).
+
+Under revenue NDY the CM-CE harvest is confined to the first period, where it
+lowers the anchor `R_1` of the non-declining revenue floor (`R_t >= R_1`), so
+the channel narrows rather than closes. Under volume NDY it appears mid-horizon
+as a volume filler. Landbase 2 (CM-CE excluded) is zero under both denominators
+(control).
 
 The paired landbases show what the channel contributes. Landbases 1, 3, 5, 7
 contain CM-CE and landbases 2, 4, 6, 8 are the same forests without it:
 
 | flow-constrained occurrence | with CM-CE (1, 3, 5, 7) | without CM-CE (2, 4, 6, 8) |
 | --- | --- | --- |
-| volume denominator | 77/80 | 51/80 |
-| revenue denominator | 58/80 | 56/80 |
+| volume denominator | 67/80 | 37/80 |
+| revenue denominator | 50/80 | 45/80 |
 
 Under volume, the presence of negatively valued strata raises occurrence
-substantially; under revenue, where they cannot enter as filler, the
-difference disappears. The negatively valued strata therefore *contribute*
-to inconsistency through the filler channel — they are not merely a marker —
-but they are not its only source: with the channel disabled, about 70% of
-flow-constrained cells on these landbases remain inconsistent, and the gap
-diagnostic shows those tails to be genuinely suboptimal.
+substantially; under revenue the difference shrinks but does not disappear.
+The negatively valued strata therefore *contribute* to inconsistency through
+the filler channel — they are not merely a marker — but they are not its
+only source.
 
 Fig. F1 shows landbase 1 at 4%: the revenue-NDY plan front-loads (period-1
-harvest 13,707 MCF vs 10,245 under volume NDY), because with 1%/yr price
+harvest 16,222 MCF vs 8,914 under volume NDY), because with 1%/yr price
 escalation a level *revenue* promise permits declining volume.
 
 ## Interpretation for the paper
 
 E3 qualifies the causal attribution rather than sharpening it in one
 direction. The unit in which the flow promise is denominated matters: a
-revenue promise roughly halves the occurrence of inconsistency under NDY and
-bounded-decline policies, and removes the additional inconsistency associated
-with negatively valued strata, while symmetric bounded-deviation policies are
-slightly more inconsistent under revenue. Inconsistency persists under every
-revenue-denominated policy, so the between-period link remains a source of
-non-credible plans in either unit.
+revenue promise roughly halves the occurrence of inconsistency under NDY,
+leaves bounded decline little changed, and is slightly more inconsistent under
+symmetric bounded deviation. The additional inconsistency associated with
+negatively valued strata shrinks but does not disappear. Inconsistency persists
+under every revenue-denominated policy, so the between-period link remains a
+source of non-credible plans in either unit.
 
 ## Notes and caveats
 

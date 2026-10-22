@@ -8,8 +8,12 @@ Per-cell records: [grid.csv](../results/experiments/grid.csv) and
 
 ## Headline
 
-- Flow-constrained cells: **56%** exhibit dynamic
-  inconsistency (mean relative divergence > 5%).
+Basis: the thesis's observation window, periods 2-11 (thesis p. 83); periods
+1-15 are the sensitivity. Both windows are tabulated below.
+
+- Flow-constrained cells: **49%** exhibit dynamic
+  inconsistency over periods 2-11 (mean relative divergence > 5%;
+  56% over periods 1-15).
 - Flow-unconstrained (NHF) control: **47%**; by
   discount rate 0%: 18/18, 2%: 16/18, 4%: 0/18, 6%: 0/18. Under a fixed horizon the control's
   divergence falls to 0/72 (a rolling-horizon effect; see
@@ -21,30 +25,30 @@ Per-cell records: [grid.csv](../results/experiments/grid.csv) and
 
 ## Occurrence and magnitude by harvest-flow policy
 
-| flow_policy | occurrence | mean_abs_rel_deviation |
-| --- | --- | --- |
-| +/-10% | 0.514 | 0.079 |
-| +/-20% | 0.639 | 0.1 |
-| -10% | 0.375 | 0.076 |
-| -20% | 0.431 | 0.098 |
-| NDY | 0.861 | 0.087 |
-| NHF | 0.472 | 0.171 |
+| flow_policy | occ_2_11 | mag_2_11 | occ_1_15 | mag_1_15 |
+| --- | --- | --- | --- | --- |
+| +/-10% | 0.472 | 0.062 | 0.514 | 0.079 |
+| +/-20% | 0.556 | 0.077 | 0.639 | 0.1 |
+| -10% | 0.361 | 0.063 | 0.375 | 0.076 |
+| -20% | 0.389 | 0.08 | 0.431 | 0.098 |
+| NDY | 0.694 | 0.077 | 0.861 | 0.087 |
+| NHF | 0.472 | 0.168 | 0.472 | 0.171 |
 
 Flow-constrained policies only:
 
-| flow_policy | occurrence | mean_abs_rel_deviation |
-| --- | --- | --- |
-| +/-10% | 0.514 | 0.079 |
-| +/-20% | 0.639 | 0.1 |
-| -10% | 0.375 | 0.076 |
-| -20% | 0.431 | 0.098 |
-| NDY | 0.861 | 0.087 |
+| flow_policy | occ_2_11 | mag_2_11 | occ_1_15 | mag_1_15 |
+| --- | --- | --- | --- | --- |
+| +/-10% | 0.472 | 0.062 | 0.514 | 0.079 |
+| +/-20% | 0.556 | 0.077 | 0.639 | 0.1 |
+| -10% | 0.361 | 0.063 | 0.375 | 0.076 |
+| -20% | 0.389 | 0.08 | 0.431 | 0.098 |
+| NDY | 0.694 | 0.077 | 0.861 | 0.087 |
 
-## Occurrence and magnitude by discount rate
+## Occurrence and magnitude by discount rate (flow-constrained)
 
-| discount_rate | occurrence | mean_abs_rel_deviation |
-| --- | --- | --- |
-| 0.0 | 1.0 | 0.246 |
-| 0.02 | 0.546 | 0.073 |
-| 0.04 | 0.296 | 0.04 |
-| 0.06 | 0.352 | 0.048 |
+| discount_rate | occ_2_11 | mag_2_11 | occ_1_15 | mag_1_15 |
+| --- | --- | --- | --- | --- |
+| 0.0 | 1.0 | 0.161 | 1.0 | 0.192 |
+| 0.02 | 0.289 | 0.043 | 0.478 | 0.054 |
+| 0.04 | 0.311 | 0.038 | 0.356 | 0.048 |
+| 0.06 | 0.378 | 0.045 | 0.422 | 0.058 |

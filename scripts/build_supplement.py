@@ -74,6 +74,34 @@ def _md_table(df: pd.DataFrame) -> str:
     return "\n".join([header, sep, *body])
 
 
+def _window_table(
+    df: pd.DataFrame, by: list[str], extra: list[str] | None = None
+) -> pd.DataFrame:
+    """Grouped occurrence/magnitude table carrying both scoring windows.
+
+    The manuscript's headline basis is the thesis's observation window,
+    periods 2-11 (thesis p. 83); periods 1-15 are the sensitivity. Both are
+    shown here so the supplement cannot appear to disagree with the paper,
+    which quotes the 2-11 values.
+    """
+    cols = [
+        "occurrence_2_11",
+        "mean_abs_rel_deviation_2_11",
+        "occurrence",
+        "mean_abs_rel_deviation",
+        *(extra or []),
+    ]
+    out = df.groupby(by, dropna=False)[cols].mean().round(3)
+    return out.rename(
+        columns={
+            "occurrence_2_11": "occ_2_11",
+            "mean_abs_rel_deviation_2_11": "mag_2_11",
+            "occurrence": "occ_1_15",
+            "mean_abs_rel_deviation": "mag_1_15",
+        }
+    ).reset_index()
+
+
 def _write(name: str, content: str) -> None:
     (SUPP / name).write_text(content.rstrip() + "\n")
 
@@ -271,15 +299,9 @@ values are not matched exactly (table below; `model.mature_value_check`).
     )
 
     # ----- 02 core grid ------------------------------------------------------
-    by_policy = (
-        core.groupby("flow_policy")[["occurrence", "mean_abs_rel_deviation"]].mean().round(3)
-    ).reset_index()
-    by_rate = (
-        core.groupby("discount_rate")[["occurrence", "mean_abs_rel_deviation"]].mean().round(3)
-    ).reset_index()
-    by_policy_fc = (
-        fc.groupby("flow_policy")[["occurrence", "mean_abs_rel_deviation"]].mean().round(3)
-    ).reset_index()
+    by_policy = _window_table(core, ["flow_policy"])
+    by_rate = _window_table(fc, ["discount_rate"])
+    by_policy_fc = _window_table(fc, ["flow_policy"])
 
     _write(
         "02-core-grid.md",
@@ -293,9 +315,13 @@ Per-cell records: {_link(RESULTS / "grid.csv", "grid.csv")} and
 
 ## Headline
 
-- Flow-constrained cells: **{fc.occurrence.mean():.0%}** exhibit dynamic
-  inconsistency (mean relative divergence > 5%).
-- Flow-unconstrained (NHF) control: **{nhf.occurrence.mean():.0%}**; by
+Basis: the thesis's observation window, periods 2-11 (thesis p. 83); periods
+1-15 are the sensitivity. Both windows are tabulated below.
+
+- Flow-constrained cells: **{fc.occurrence_2_11.mean():.0%}** exhibit dynamic
+  inconsistency over periods 2-11 (mean relative divergence > 5%;
+  {fc.occurrence.mean():.0%} over periods 1-15).
+- Flow-unconstrained (NHF) control: **{nhf.occurrence_2_11.mean():.0%}**; by
   discount rate {facts["nhf_by_rate"]}. Under a fixed horizon the control's
   divergence falls to {facts["nhf_fixed"]} (a rolling-horizon effect; see
   [03](03-gap-diagnostic.md) and [10](10-review-analyses.md)).
@@ -312,7 +338,7 @@ Flow-constrained policies only:
 
 {_md_table(by_policy_fc)}
 
-## Occurrence and magnitude by discount rate
+## Occurrence and magnitude by discount rate (flow-constrained)
 
 {_md_table(by_rate)}
 """,
@@ -364,12 +390,8 @@ optimum, or infeasible) and mostly disappear under a fixed horizon
     )
 
     # ----- 04 per-landbase ---------------------------------------------------
-    by_lb = (
-        core.groupby("landbase")[["occurrence", "mean_abs_rel_deviation"]].mean().round(3)
-    ).reset_index()
-    by_lb_fc = (
-        fc.groupby("landbase")[["occurrence", "mean_abs_rel_deviation"]].mean().round(3)
-    ).reset_index()
+    by_lb = _window_table(core, ["landbase"])
+    by_lb_fc = _window_table(fc, ["landbase"])
     from fresh_daugherty.instance.landbases import LANDBASE_ASSUMPTIONS
 
     assumptions = "\n".join(f"- {line}" for line in LANDBASE_ASSUMPTIONS)
@@ -463,21 +485,16 @@ def _extension_pages(e1, e2, e3, e4) -> None:
 
     # --- E1 ---
     e1_fc = e1[e1.flow_policy != "NHF"]
-    by_path = (
-        e1_fc.groupby("discount_path")[["occurrence", "mean_abs_rel_deviation"]]
-        .mean()
-        .round(3)
-        .reset_index()
-    )
+    by_path = _window_table(e1_fc, ["discount_path"])
     nhf_e1 = e1[e1.flow_policy == "NHF"]
     core = pd.read_csv(RESULTS / "grid.csv")
     core_fc = core[core.flow_policy != "NHF"]
     const_mag = ", ".join(
         f"{r:.0%}: {m:.2f}"
-        for r, m in core_fc.groupby("discount_rate").mean_abs_rel_deviation.mean().items()
+        for r, m in core_fc.groupby("discount_rate").mean_abs_rel_deviation_2_11.mean().items()
     )
     core_nhf0 = core[(core.flow_policy == "NHF") & (core.discount_rate == 0.0)]
-    const0_nhf = float((core_nhf0.occurrence.astype(str) == "True").mean())
+    const0_nhf = float(core_nhf0.occurrence_2_11.mean())
     f1 = _pdf_to_png(
         ANALYSIS / "p9_discount_shapes" / "f1_occurrence_magnitude_by_scheme.pdf",
         "e1_occurrence_magnitude.png",
@@ -501,14 +518,19 @@ Analysis writeup: {_link(ANALYSIS / "p9_discount_shapes" / "writeup.md", "p9 wri
 
 ## Headline
 
+Basis: periods 2-11 (thesis p. 83); the table also carries periods 1-15.
+
 Declining rates make inconsistency MORE pervasive, not less: flow-constrained
-occurrence is {e1_fc.occurrence.mean():.0%} across the E1 paths, with mean
-magnitude {e1_fc.mean_abs_rel_deviation.mean():.2f} (constant rates, by
-rate: {const_mag}). The flow-unconstrained control under declining paths
-diverges at {nhf_e1.occurrence.mean():.0%} occurrence, consistent with the
-preference-level (Strotz) channel of re-applying a declining schedule from each
-planner's present, but not separated here from the low-rate rolling-horizon
-effect (the control at a constant 0% rate: {const0_nhf:.0%}).
+occurrence is {e1_fc.occurrence_2_11.mean():.0%} across the E1 paths over
+periods 2-11, with mean magnitude
+{e1_fc.mean_abs_rel_deviation_2_11.mean():.2f} (constant-rate control, by
+rate: {const_mag}); over periods 1-15 it is {e1_fc.occurrence.mean():.0%}, mean
+magnitude {e1_fc.mean_abs_rel_deviation.mean():.2f}. The flow-unconstrained
+control under declining paths diverges at {nhf_e1.occurrence_2_11.mean():.0%}
+occurrence, consistent with the preference-level (Strotz) channel of
+re-applying a declining schedule from each planner's present, but not separated
+here from the low-rate rolling-horizon effect (the control at a constant 0%
+rate: {const0_nhf:.0%}).
 
 ![Occurrence and magnitude by discount scheme]({f1})
 
@@ -525,13 +547,8 @@ effect (the control at a constant 0% rate: {const0_nhf:.0%}).
         ANALYSIS / "p10_cap_search" / "f1_landbase1_ndy_vs_cap.pdf",
         "e2_ndy_vs_cap.png",
     )
-    e2_rate = (
-        e2.groupby("discount_rate")[
-            ["occurrence", "mean_abs_rel_deviation", "calibrated_cap_mcf", "converged"]
-        ]
-        .mean()
-        .round(4)
-        .reset_index()
+    e2_rate = _window_table(
+        e2, ["discount_rate"], extra=["calibrated_cap_mcf", "converged"]
     )
     lb1_cap = float(
         e2.loc[(e2.landbase == 1) & (e2.discount_rate == 0.04), "calibrated_cap_mcf"].iloc[0]
@@ -598,13 +615,11 @@ scenarios; full horizon and per-scenario spread on page 10).
     rev_fc = rev[rev.flow_policy != "NHF"]
     t4 = pd.read_csv(ANALYSIS / "p11_value_flow" / "t4_cmce_filler_channel.csv")
     t4v = t4[(t4.landbase == 1) & (t4.flow_denominator == "volume")].projected_cmce_share
-    cmce_lo, cmce_hi = float(t4v.min()), float(t4v.max())
-    by_denom = (
-        e3[e3.flow_policy != "NHF"]
-        .groupby(["flow_denominator", "flow_policy"])[["occurrence", "mean_abs_rel_deviation"]]
-        .mean()
-        .round(3)
-        .reset_index()
+    t4r = t4[(t4.landbase == 1) & (t4.flow_denominator == "revenue")].projected_cmce_share
+    cmce_vol_lo, cmce_vol_hi = float(t4v.min()), float(t4v.max())
+    cmce_rev_lo, cmce_rev_hi = float(t4r.min()), float(t4r.max())
+    by_denom = _window_table(
+        e3[e3.flow_policy != "NHF"], ["flow_denominator", "flow_policy"]
     )
     f1 = _pdf_to_png(
         ANALYSIS / "p11_value_flow" / "f1_landbase1_ndy_by_denominator.pdf",
@@ -629,19 +644,27 @@ Analysis writeup: {_link(ANALYSIS / "p11_value_flow" / "writeup.md", "p11 writeu
 
 ## Headline
 
-Revenue denominating MITIGATES inconsistency without eliminating it:
-flow-constrained occurrence {int(rev_fc.occurrence.sum())}/{len(rev_fc)}
-({rev_fc.occurrence.mean():.0%}, revenue) vs
-{int(vol_fc.occurrence.sum())}/{len(vol_fc)} ({vol_fc.occurrence.mean():.0%},
-volume); mean magnitude {rev_fc.mean_abs_rel_deviation.mean():.3f} vs
-{vol_fc.mean_abs_rel_deviation.mean():.3f}. The effect differs by policy form
-(table below): NDY and bounded decline fall sharply, symmetric bounded
-deviation rises slightly. Revenue NDY drives projected CM-CE harvest to
-exactly zero (vs {cmce_lo:.1%}-{cmce_hi:.1%} of projected volume under volume NDY on
-landbase 1), and on the paired landbases (with vs without CM-CE) the extra
-inconsistency associated with negatively valued strata disappears under
-revenue denominating; inconsistency persists through the remaining strata.
-See the writeup's Table T4 and paired-landbase table.
+Basis: periods 2-11 (thesis p. 83); the table also carries periods 1-15.
+
+Revenue denominating does not mitigate inconsistency over the headline window:
+flow-constrained occurrence {int(rev_fc.occurrence_2_11.sum())}/{len(rev_fc)}
+({rev_fc.occurrence_2_11.mean():.0%}, revenue) vs
+{int(vol_fc.occurrence_2_11.sum())}/{len(vol_fc)}
+({vol_fc.occurrence_2_11.mean():.0%}, volume); mean magnitude
+{rev_fc.mean_abs_rel_deviation_2_11.mean():.3f} vs
+{vol_fc.mean_abs_rel_deviation_2_11.mean():.3f}. Over periods 1-15 the
+occurrence is {int(rev_fc.occurrence.sum())}/{len(rev_fc)} vs
+{int(vol_fc.occurrence.sum())}/{len(vol_fc)}, a modest reduction. The effect
+differs by policy form (table below): NDY and bounded decline fall sharply,
+symmetric bounded deviation rises slightly. The revenue floor does not keep
+CM-CE out of the plan: on landbase 1 the revenue-denominated NDY plan harvests
+{cmce_rev_lo:.1%}-{cmce_rev_hi:.1%} CM-CE (vs {cmce_vol_lo:.1%}-{cmce_vol_hi:.1%}
+of projected volume under volume NDY), confined to the first period, where it
+lowers the non-declining revenue anchor; the channel narrows rather than
+closes. On the paired landbases (with vs without CM-CE) the extra inconsistency
+associated with negatively valued strata shrinks but does not disappear, and
+inconsistency persists through the remaining strata. See the writeup's Table T4
+and paired-landbase table.
 
 ![Landbase 1 at 4%: NDY by flow-row denominator]({f1})
 
@@ -652,13 +675,8 @@ See the writeup's Table T4 and paired-landbase table.
     )
 
     # --- E4 ---
-    by_anchor = (
-        e4.groupby(["anchoring", "flow_window"])[
-            ["occurrence", "mean_abs_rel_deviation", "relax_share"]
-        ]
-        .mean()
-        .round(3)
-        .reset_index()
+    by_anchor = _window_table(
+        e4, ["anchoring", "flow_window"], extra=["relax_share"]
     )
     f1 = _pdf_to_png(
         ANALYSIS / "p12_rolling_mean" / "f1_landbase1_rolling_vs_pointwise.pdf",
@@ -666,18 +684,17 @@ See the writeup's Table T4 and paired-landbase table.
     )
     wp = e4[e4.anchoring == "within-plan"]
     rh = e4[e4.anchoring == "realized-history"]
-    _g4 = pd.read_csv(RESULTS / "grid_rolling_mean_gaps.csv")
-    _n4 = _g4.loc[(_g4.anchoring == "realized-history") & (_g4.period > 1), "solver_note"].astype(
-        str
-    )
-    _r4 = _n4[_n4.str.startswith("history_rtol=")].str.split("=").str[1].astype(float)
-    _r4 = _r4[_r4 > 1e-4]
-    rh_loosen_med, rh_loosen_max = float(_r4.median()), float(_r4.max())
-    rh_dropped = int((_n4 == "relaxed_floor").sum())
     _core = pd.read_csv(RESULTS / "grid.csv")
-    ndy_occ = float(
-        (_core.loc[_core.flow_policy == "NDY", "occurrence"].astype(str) == "True").mean()
-    )
+    _ndy = _core[_core.flow_policy == "NDY"]
+    ndy_occ = float(_ndy.occurrence_2_11.mean())
+    ndy_occ_1_15 = float(_ndy.occurrence.mean())
+    _loosen = pd.read_csv(
+        ANALYSIS / "p19_round5" / "t1f_e4_realized_history_loosening.csv"
+    ).set_index("discount_rate")
+    rh_loosen_share = float(_loosen.loc["all", "material_loosening"])
+    rh_loosen_med = float(_loosen.loc["all", "median_loosening_pct"])
+    rh_loosen_max = float(_loosen.loc["all", "max_loosening_pct"])
+    rh_dropped = int(_loosen.loc["all", "dropped"])
     _write(
         "08-extension-e4-rolling-mean.md",
         f"""# 08 — E4: Rolling-mean NDY
@@ -692,15 +709,18 @@ Analysis writeup: {_link(ANALYSIS / "p12_rolling_mean" / "writeup.md", "p12 writ
 
 ## Headline
 
+Basis: periods 2-11 (thesis p. 83); the table also carries periods 1-15.
+
 Constraint SHAPE is not the operative margin: within-plan rolling-mean
-occurrence {wp.occurrence.mean():.0%} vs pointwise NDY ({ndy_occ:.0%}). The ANCHORING
-INSTITUTION is: realized-history anchoring mitigates (occurrence
-{rh.occurrence.mean():.0%}, magnitude {rh.mean_abs_rel_deviation.mean():.3f})
-but the floor cannot be held exactly in {rh.relax_share.mean():.0%} of replans
-(mean relax_share), where it is loosened minimally (median
-{rh_loosen_med:.1%}, maximum {rh_loosen_max:.0%} of the floor; dropped in
-{rh_dropped} replans) — the declining-NDY mechanism as small, persistent
-shortfalls.
+occurrence {wp.occurrence_2_11.mean():.0%} vs pointwise NDY ({ndy_occ:.0%}) over
+periods 2-11 (1-15: {wp.occurrence.mean():.0%} vs {ndy_occ_1_15:.0%}). The
+ANCHORING INSTITUTION is: realized-history anchoring mitigates (occurrence
+{rh.occurrence_2_11.mean():.0%}, magnitude
+{rh.mean_abs_rel_deviation_2_11.mean():.3f}; 1-15: {rh.occurrence.mean():.0%})
+but the floor cannot be held exactly in {rh_loosen_share:.0%} of replans, where
+it is loosened minimally (median {rh_loosen_med:.1f}%, maximum
+{rh_loosen_max:.1f}% of the floor; dropped in {rh_dropped} replans) — the declining-NDY mechanism
+as small, persistent shortfalls.
 
 ![Landbase 1 at 4%: pointwise NDY vs rolling-mean readings]({f1})
 
