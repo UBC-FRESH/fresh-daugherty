@@ -43,6 +43,10 @@ STYLE = {
     "axes.grid": True,
     "grid.alpha": 0.3,
     "savefig.dpi": 300,
+    # Embed fonts as TrueType (Type 42), not matplotlib's default Type 3
+    # bitmap, so the submission PDF carries no Type 3 fonts (journal rule).
+    "pdf.fonttype": 42,
+    "ps.fonttype": 42,
 }
 PLAN = "#1f4e79"  # announced / open-loop
 REAL = "#c00000"  # realized under replanning

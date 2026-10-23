@@ -21,3 +21,6 @@ paper/em-submission/*.pdf\npaper/em-submission/*.zip
 
 # Grid working dirs (intermediate, regenerable); benchmark CSVs stay tracked
 results/**/grid_work/
+
+# Unpublished submission bundles are local artifacts (AGENTS.md)
+paper/cjfr-submission/
