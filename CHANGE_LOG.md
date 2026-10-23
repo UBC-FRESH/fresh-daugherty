@@ -2,6 +2,17 @@
 
 Append-only project narrative, reverse-chronological.
 
+## v0.2.1 — released 2026-10-23
+
+Supplement/documentation patch on `main` (no phase branch; co-author review
+turnaround). Corrects `supplementary/` to match the manuscript: the E3 CM-CE
+claim (the negatively valued stratum is not driven out under revenue NDY; the
+period-1 floor anchor makes it a revenue sink), the scoring-window basis on
+pages 02/04/05/06/07/08 (periods 2-11 headline, 1-15 alongside), and the E4
+loosening numbers. Experiment records and package code unchanged.
+
+GitHub release `v0.2.1` archived on Zenodo; version DOI recorded below.
+
 ## v0.2.0 — released 2026-10-07 (#123)
 
 PRs #81, #90, #100, #109, #116 and #122 merged into `main` (P14-P19); version

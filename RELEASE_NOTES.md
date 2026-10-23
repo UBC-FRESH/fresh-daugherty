@@ -1,5 +1,30 @@
 # fresh-daugherty Release Notes
 
+## 0.2.1 — 2026-10-23
+
+Supplement/documentation patch for the CJFR manuscript. No change to the
+experiment records or the package code; the reported results are unchanged.
+
+- **Corrected the curated supplement** (`supplementary/`) to match the
+  manuscript:
+  - E3 (page 07): removed the incorrect claim that revenue-denominated NDY
+    drives CM-CE harvest to exactly zero. The negatively valued stratum is
+    still harvested (2.2-3.2% of projected volume on landbase 1 under
+    revenue NDY, vs 0.0-5.3% under volume NDY): a non-declining revenue floor
+    is anchored to period-1 revenue, so the CM-CE harvest there acts as a
+    revenue sink, narrowing the filler channel to the anchor period rather
+    than closing it. Its inclusion is strictly optimal, not an alternate
+    optimum, and it is not harvested at all with no flow constraint.
+  - Pages 02, 04, 05, 06, 07 and 08 now score on the thesis's observation
+    window (periods 2-11) as the headline basis, with periods 1-15 reported
+    alongside, matching the manuscript. This flips the E3 headline from
+    "mitigates inconsistency" (periods 1-15) to "no remarkable effect"
+    (periods 2-11).
+  - E4 (page 08) loosening numbers aligned with the manuscript (65% of
+    replans, median 1.3%, max 2.3%).
+- Regenerated the P11 analysis outputs and corrected the stale filler-channel
+  section of the P11 write-up.
+
 ## 0.2.0 — 2026-10-07
 
 The archived benchmark record behind the CJFR manuscript "Dynamic
