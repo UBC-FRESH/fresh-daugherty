@@ -11,7 +11,8 @@ period-1 floor anchor makes it a revenue sink), the scoring-window basis on
 pages 02/04/05/06/07/08 (periods 2-11 headline, 1-15 alongside), and the E4
 loosening numbers. Experiment records and package code unchanged.
 
-GitHub release `v0.2.1` archived on Zenodo; version DOI recorded below.
+GitHub release `v0.2.1` archived on Zenodo (version DOI
+10.5281/zenodo.23604804; concept DOI 10.5281/zenodo.21981433).
 
 ## v0.2.0 — released 2026-10-07 (#123)
 

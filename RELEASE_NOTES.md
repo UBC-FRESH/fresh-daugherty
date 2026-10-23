@@ -4,6 +4,8 @@
 
 Supplement/documentation patch for the CJFR manuscript. No change to the
 experiment records or the package code; the reported results are unchanged.
+Zenodo: 10.5281/zenodo.23604804 (this version; concept DOI
+10.5281/zenodo.21981433).
 
 - **Corrected the curated supplement** (`supplementary/`) to match the
   manuscript:

@@ -24,6 +24,6 @@ the tracked experiment records by `scripts/build_supplement.py` (see
 
 - Per-cell experiment records (CSVs): `results/experiments/` in this
   repository ([reproducibility record](../results/experiments/REPRODUCIBILITY.md)).
-- Archived benchmark release (DOI): <https://doi.org/10.5281/zenodo.21981434>
+- Archived benchmark release (DOI): <https://doi.org/10.5281/zenodo.23604804>
 - Source planning documents (public domain, HathiTrust records 002547999 and
   002439528): the 1990 Umpqua LRMP FEIS and the 1987 DEIS.

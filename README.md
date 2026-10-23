@@ -44,8 +44,8 @@ peer-reviewed paper.
 
 ## Status
 
-`v0.2.0` (phases P9-P19) is released and archived on Zenodo (concept DOI
-10.5281/zenodo.21981433); it holds the records behind the manuscript
+`v0.2.1` (phases P9-P19) is released and archived on Zenodo (version DOI
+10.5281/zenodo.23604804; concept DOI 10.5281/zenodo.21981433); it holds the records behind the manuscript
 (`results/experiments/`, documented in `results/experiments/REPRODUCIBILITY.md`;
 curated summaries in `supplementary/`). See `ROADMAP.md` and
 `planning/v0.2.0-plan.md`.

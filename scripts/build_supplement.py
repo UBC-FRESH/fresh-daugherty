@@ -204,7 +204,7 @@ the tracked experiment records by `scripts/build_supplement.py` (see
 
 - Per-cell experiment records (CSVs): `results/experiments/` in this
   repository ({_link(RESULTS / "REPRODUCIBILITY.md", "reproducibility record")}).
-- Archived benchmark release (DOI): <https://doi.org/10.5281/zenodo.21981434>
+- Archived benchmark release (DOI): <https://doi.org/10.5281/zenodo.23604804>
 - Source planning documents (public domain, HathiTrust records 002547999 and
   002439528): the 1990 Umpqua LRMP FEIS and the 1987 DEIS.
 """,
@@ -445,8 +445,8 @@ grids themselves regenerate via the tracked CLI entry points below.
 ## Archive
 
 The complete benchmark record is archived with a DOI:
-<https://doi.org/10.5281/zenodo.21981433> (concept DOI, resolving to the latest
-release; the manuscript's records are release v0.2.0).
+<https://doi.org/10.5281/zenodo.23604804> (release v0.2.1; the concept DOI
+<https://doi.org/10.5281/zenodo.21981433> resolves to the latest release).
 """,
     )
 
