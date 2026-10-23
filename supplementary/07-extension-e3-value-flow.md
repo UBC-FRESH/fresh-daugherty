@@ -31,8 +31,8 @@ symmetric bounded deviation rises slightly. The revenue floor does not keep
 CM-CE out of the plan: on landbase 1 the revenue-denominated NDY plan harvests
 2.2%-3.2% CM-CE (vs 0.0%-5.3%
 of projected volume under volume NDY), confined to the first period, where it
-lowers the non-declining revenue anchor; the channel narrows rather than
-closes. On the paired landbases (with vs without CM-CE) the extra inconsistency
+offsets positive-value revenue at the floor's anchor; the channel narrows
+rather than closes. On the paired landbases (with vs without CM-CE) the extra inconsistency
 associated with negatively valued strata shrinks but does not disappear, and
 inconsistency persists through the remaining strata. See the writeup's Table T4
 and paired-landbase table.
